@@ -1,0 +1,3 @@
+import {api} from './api'; import type {Page} from './customers';
+export type Vehicle={id:string;customer_id?:string;registration_number:string;chassis_number:string;engine_number?:string;manufacturer:string;model:string;variant?:string;fuel_type:string;colour?:string;manufacture_year?:number;registration_date?:string;status:string;notes?:string;customer?:{first_name:string;last_name:string}};
+export const vehicleApi={list:(q='')=>api<Page<Vehicle>>(`/vehicles${q}`),get:(id:string)=>api<Vehicle>(`/vehicles/${id}`),create:(body:unknown)=>api<Vehicle>('/vehicles',{method:'POST',body:JSON.stringify(body)}),update:(id:string,body:unknown)=>api<Vehicle>(`/vehicles/${id}`,{method:'PUT',body:JSON.stringify(body)}),remove:(id:string)=>api(`/vehicles/${id}`,{method:'DELETE'})};

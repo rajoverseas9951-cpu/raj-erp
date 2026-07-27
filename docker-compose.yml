@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-raj_erp}
+      POSTGRES_USER: ${DB_USERNAME:-raj_erp}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck: {test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-raj_erp} -d ${DB_DATABASE:-raj_erp}"], interval: 5s, timeout: 5s, retries: 10}
+    restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes: [redis_data:/data]
+    healthcheck: {test: ["CMD", "redis-cli", "ping"], interval: 5s, timeout: 3s, retries: 10}
+    restart: unless-stopped
+  backend:
+    build: {context: ., dockerfile: docker/backend/Dockerfile}
+    environment: &backend-env
+      APP_NAME: RAJ ERP
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY:?Set APP_KEY in .env}
+      APP_URL: ${APP_URL:-http://localhost:8000}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE:-raj_erp}
+      DB_USERNAME: ${DB_USERNAME:-raj_erp}
+      DB_PASSWORD: ${DB_PASSWORD:-secret}
+      REDIS_HOST: redis
+      CACHE_STORE: redis
+      SESSION_DRIVER: database
+      QUEUE_CONNECTION: redis
+      RUN_MIGRATIONS: "true"
+    ports: ["8000:80"]
+    depends_on: {postgres: {condition: service_healthy}, redis: {condition: service_healthy}}
+    restart: unless-stopped
+  queue:
+    build: {context: ., dockerfile: docker/backend/Dockerfile}
+    environment:
+      <<: *backend-env
+      RUN_MIGRATIONS: "false"
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--max-time=3600"]
+    depends_on: {backend: {condition: service_started}, redis: {condition: service_healthy}}
+    restart: unless-stopped
+  frontend:
+    build:
+      context: frontend
+      args: {NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:8000}"}
+    environment: {HOSTNAME: "0.0.0.0", PORT: "3000"}
+    ports: ["3000:3000"]
+    depends_on: [backend]
+    restart: unless-stopped
+volumes: {postgres_data: {}, redis_data: {}}

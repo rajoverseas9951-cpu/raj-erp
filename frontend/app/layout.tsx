@@ -1,0 +1,2 @@
+import './globals.css'; import type {Metadata} from 'next'; import AuthGuard from '@/components/AuthGuard'; import Sidebar from '@/components/Sidebar';
+export const metadata:Metadata={title:'RAJ ERP',description:'Customer and vehicle operations'}; export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="en"><body><AuthGuard><Sidebar/><main className="min-h-screen md:ml-64"><div className="mx-auto max-w-7xl p-8">{children}</div></main></AuthGuard></body></html>}
