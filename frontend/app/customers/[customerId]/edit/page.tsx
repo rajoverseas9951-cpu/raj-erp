@@ -1,0 +1,2 @@
+import { CustomerForm } from '@/components/customers/CustomerForm'; import { customerApi } from '@/lib/customers';
+export default async function EditCustomerPage({params}:{params:Promise<{customerId:string}>}){ const {customerId}=await params; const customer=await customerApi.get(customerId); return <main className="p-6"><h1 className="mb-6 text-2xl font-bold">Edit Customer</h1><CustomerForm customer={customer}/></main> }
