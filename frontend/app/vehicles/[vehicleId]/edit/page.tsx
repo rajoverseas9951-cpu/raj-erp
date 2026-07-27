@@ -1,0 +1,2 @@
+import { VehicleForm } from '@/components/vehicles/VehicleForm'; import { vehicleApi } from '@/lib/vehicles';
+export default async function EditVehiclePage({params}:{params:Promise<{vehicleId:string}>}){ const {vehicleId}=await params; const vehicle=await vehicleApi.get(vehicleId); return <main className="p-6"><h1 className="mb-6 text-2xl font-bold">Edit Vehicle</h1><VehicleForm vehicle={vehicle}/></main> }
