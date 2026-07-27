@@ -49,6 +49,8 @@ DB_CONNECTION=sqlite DB_DATABASE="$PWD/database/database.sqlite" php artisan mig
 
 Production and normal local development remain configured for PostgreSQL through environment variables.
 
-## Authentication frontend
+## Next.js frontend
 
-The Next.js application in `frontend/` intentionally provides only `/login`, `/forgot-password`, and `/reset-password`; no dashboard is included. Configure `NEXT_PUBLIC_API_URL` with the Laravel origin, then run `npm install` and `npm run dev` from that directory.
+The Next.js application in `frontend/` provides secure authentication screens, the existing Customer CRM and Vehicle Master interfaces, and a responsive tenant-aware administration dashboard at `/dashboard`. The dashboard uses reusable App Router layouts, permission-filtered navigation, Tailwind CSS, and persisted light/dark themes. Configure `NEXT_PUBLIC_API_URL` with the Laravel origin, then run `npm install` and `npm run dev` from that directory.
+
+Optional `RAJ_ERP_TENANT_ID` and `RAJ_ERP_TENANT_NAME` environment variables configure the server-rendered dashboard tenant context. In production, populate the same typed dashboard session contract from the authenticated server session without changing module business logic.
