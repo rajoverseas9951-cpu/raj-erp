@@ -1,0 +1,4 @@
+<?php
+namespace App\Notifications;
+use Illuminate\Bus\Queueable; use Illuminate\Notifications\Messages\MailMessage; use Illuminate\Notifications\Notification;
+class ResetPasswordNotification extends Notification { use Queueable; public function __construct(private string $token,private string $tenantId){} public function via(object $notifiable):array{return ['mail'];} public function toMail(object $notifiable):MailMessage{$url=rtrim(config('app.frontend_url'),'/').'/reset-password?'.http_build_query(['token'=>$this->token,'email'=>$notifiable->email,'tenant_id'=>$this->tenantId]);return (new MailMessage)->subject('Reset your Raj ERP password')->line('You requested a password reset.')->action('Reset password',$url)->line('This link expires in '.config('auth.passwords.users.expire').' minutes.');} }

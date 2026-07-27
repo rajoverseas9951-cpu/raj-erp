@@ -48,3 +48,7 @@ DB_CONNECTION=sqlite DB_DATABASE="$PWD/database/database.sqlite" php artisan mig
 ```
 
 Production and normal local development remain configured for PostgreSQL through environment variables.
+
+## Authentication frontend
+
+The Next.js application in `frontend/` intentionally provides only `/login`, `/forgot-password`, and `/reset-password`; no dashboard is included. Configure `NEXT_PUBLIC_API_URL` with the Laravel origin, then run `npm install` and `npm run dev` from that directory.
