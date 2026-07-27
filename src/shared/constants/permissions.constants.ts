@@ -11,6 +11,12 @@ export const PERMISSIONS = {
   CUSTOMER_DELETE: 'customer.delete',
   CUSTOMER_BULK: 'customer.bulk',
   CUSTOMER_EXPORT: 'customer.export',
+  VEHICLE_VIEW: 'vehicle.view',
+  VEHICLE_CREATE: 'vehicle.create',
+  VEHICLE_UPDATE: 'vehicle.update',
+  VEHICLE_DELETE: 'vehicle.delete',
+  VEHICLE_BULK: 'vehicle.bulk',
+  VEHICLE_EXPORT: 'vehicle.export',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

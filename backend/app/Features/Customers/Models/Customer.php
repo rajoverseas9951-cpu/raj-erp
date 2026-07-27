@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Features\Vehicles\Models\Vehicle;
 
 class Customer extends Model
 {
@@ -20,6 +21,7 @@ class Customer extends Model
 
     protected $casts = ['tags' => 'array', 'date_of_birth' => 'date'];
 
+    public function vehicles(): HasMany { return $this->hasMany(Vehicle::class); }
     public function documents(): HasMany { return $this->hasMany(CustomerDocument::class); }
     public function timelineEvents(): HasMany { return $this->hasMany(CustomerTimelineEvent::class)->latest(); }
 }
