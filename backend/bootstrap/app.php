@@ -18,7 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
         'api/v1/auth/login',
     ]);
 
-    $middleware->alias(['active' => \App\Http\Middleware\EnsureUserIsActive::class]);
+    $middleware->alias([
+        'active' => \App\Http\Middleware\EnsureUserIsActive::class,
+    ]);
 })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Laravel's standard exception rendering is used for the API.
