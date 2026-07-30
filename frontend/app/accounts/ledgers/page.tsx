@@ -16,21 +16,47 @@ export default function LedgersPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  function handleAuthError(message: string) {
+    if (/unauthenticated|401/i.test(message)) {
+      sessionStorage.removeItem('raj_erp_token');
+      window.location.href = '/login';
+      return true;
+    }
+    return false;
+  }
+
   async function load() {
-    setLoading(true); setError('');
-    try { setLedgers(await ledgerApi.list()); }
-    catch (e) { setError(e instanceof Error ? e.message : 'Ledgers load nahi hue.'); }
-    finally { setLoading(false); }
+    const token = sessionStorage.getItem('raj_erp_token');
+    if (!token) {
+      window.location.href = '/login';
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      setLedgers(await ledgerApi.list());
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Ledgers load nahi hue.';
+      if (!handleAuthError(message)) setError(message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => { void load(); }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setSaving(true); setError(''); setSuccess('');
+    event.preventDefault();
+    setSaving(true);
+    setError('');
+    setSuccess('');
     const form = new FormData(event.currentTarget);
+
     try {
       await ledgerApi.create({
-        ledger_name: String(form.get('ledger_name') ?? ''),
+        ledger_name: String(form.get('ledger_name') ?? '').toUpperCase(),
         ledger_group: String(form.get('ledger_group') ?? 'Other'),
         opening_balance: Number(form.get('opening_balance') ?? 0),
         balance_type: String(form.get('balance_type') ?? 'debit'),
@@ -43,14 +69,17 @@ export default function LedgersPage() {
       setSuccess('Ledger successfully create ho gaya.');
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Ledger create nahi hua.');
-    } finally { setSaving(false); }
+      const message = e instanceof Error ? e.message : 'Ledger create nahi hua.';
+      if (!handleAuthError(message)) setError(message);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return <main className="space-y-6 p-6">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div><h1 className="text-2xl font-bold">Ledger Master</h1><p className="text-slate-500">Customer, supplier, bank, cash, expense aur income ledgers.</p></div>
-      <a href="/customers" className="rounded-xl border px-4 py-2">Back to Customers</a>
+      <div className="flex gap-2"><a href="/dashboard" className="rounded-xl border px-4 py-2">Dashboard</a><a href="/customers" className="rounded-xl border px-4 py-2">Customers</a></div>
     </div>
 
     {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>}
@@ -59,7 +88,7 @@ export default function LedgersPage() {
     <section className="rounded-2xl border bg-white p-5 shadow-sm">
       <h2 className="text-lg font-bold">Add New Ledger</h2>
       <form onSubmit={submit} className="mt-4 grid gap-4 md:grid-cols-3">
-        <label className="text-sm font-semibold">Ledger Name<input name="ledger_name" required className="mt-2 w-full rounded-xl border px-4 py-3 font-normal" /></label>
+        <label className="text-sm font-semibold">Ledger Name<input name="ledger_name" required className="mt-2 w-full rounded-xl border px-4 py-3 font-normal uppercase" /></label>
         <label className="text-sm font-semibold">Ledger Group<select name="ledger_group" className="mt-2 w-full rounded-xl border bg-white px-4 py-3 font-normal">{groups.map((g)=><option key={g}>{g}</option>)}</select></label>
         <label className="text-sm font-semibold">Opening Balance<input name="opening_balance" type="number" step="0.01" defaultValue="0" className="mt-2 w-full rounded-xl border px-4 py-3 font-normal" /></label>
         <label className="text-sm font-semibold">Balance Type<select name="balance_type" className="mt-2 w-full rounded-xl border bg-white px-4 py-3 font-normal"><option value="debit">Debit</option><option value="credit">Credit</option></select></label>
