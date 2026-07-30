@@ -43,7 +43,7 @@ export default function AccountsPage() {
   }
 
   return <main className="space-y-6 p-6">
-    <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-3xl font-bold">Accounts</h1><p className="text-slate-500">Double-entry accounting, vouchers aur financial reports.</p></div><div className="flex gap-2"><a href="/accounts/ledgers" className="rounded-xl border px-4 py-2">Ledger Master</a><a href="/dashboard" className="rounded-xl border px-4 py-2">Dashboard</a></div></div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-3xl font-bold">Accounts</h1><p className="text-slate-500">Double-entry accounting, vouchers aur financial reports.</p></div><div className="flex flex-wrap gap-2"><a href="/accounts/insurance" className="rounded-xl bg-blue-700 px-4 py-2 text-white">Insurance Accounting</a><a href="/accounts/ledgers" className="rounded-xl border px-4 py-2">Ledger Master</a><a href="/dashboard" className="rounded-xl border px-4 py-2">Dashboard</a></div></div>
     {error&&<div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>}{success&&<div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-700">{success}</div>}
 
     <div className="grid gap-4 md:grid-cols-3">
