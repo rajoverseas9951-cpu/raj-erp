@@ -9,7 +9,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init?.headers || {}) },
     cache: 'no-store',
   });
-  const payload = await response.json().catch(() => ({}));
+  const payload = await response.json().catch(() => ({})) as { data?: T; message?: string; errors?: Record<string, string[]> };
   if (!response.ok) throw new Error(payload.message ?? Object.values(payload.errors ?? {})?.[0]?.[0] ?? `API request failed: ${response.status}`);
   return payload.data as T;
 }

@@ -2,8 +2,8 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createWorker } from 'tesseract.js';
 import { Customer, customerApi } from '@/lib/customers';
+import { scanDocument } from '@/lib/ocr';
 
 type FormValues = {
   first_name: string; middle_name: string; last_name: string;
@@ -90,26 +90,6 @@ function parseAadhaarText(frontText: string, backText: string): Partial<FormValu
   return result;
 }
 
-async function preprocessImage(file: File): Promise<Blob> {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.max(1, Math.min(2.5, 1800 / bitmap.width));
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return file;
-  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = image.data;
-  for (let i = 0; i < data.length; i += 4) {
-    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
-    const contrasted = gray > 165 ? 255 : gray < 80 ? 0 : Math.round((gray - 80) * 3);
-    data[i] = contrasted; data[i + 1] = contrasted; data[i + 2] = contrasted;
-  }
-  ctx.putImageData(image, 0, 0);
-  return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob ?? file), 'image/png', 1));
-}
-
 async function lookupPincode(pincode: string): Promise<Partial<FormValues>> {
   if (!/^\d{6}$/.test(pincode)) return {};
   try {
@@ -157,21 +137,19 @@ export function CustomerForm({ customer }: { customer?: Partial<Customer> }) {
 
   async function readAadhaar() {
     if (!front && !back) { setError('Pehle Aadhaar front ya back image upload karo.'); return; }
-    setReading(true); setError(''); setSuccess(''); setProgress(0);
-    const worker = await createWorker('eng', 1, { logger: (message) => {
-      if (message.status === 'recognizing text' && typeof message.progress === 'number') setProgress(Math.round(message.progress * 100));
-    }});
+    setReading(true); setError(''); setSuccess(''); setProgress(20);
     try {
-      let frontText = ''; let backText = '';
-      if (front) frontText = (await worker.recognize(await preprocessImage(front))).data.text;
-      if (back) backText = (await worker.recognize(await preprocessImage(back))).data.text;
+      const files = [front, back].filter(Boolean) as File[];
+      const { texts } = await scanDocument('aadhaar', files);
+      setProgress(100);
+      const [frontText = '', backText = ''] = texts;
       const extracted = parseAadhaarText(frontText, backText);
       const location = extracted.pincode ? await lookupPincode(extracted.pincode) : {};
       setValues((old) => ({ ...old, ...extracted, ...location }));
       setSuccess('Details fill ho gayi. Name, DOB aur pincode save se pehle check kar lena.');
     } catch (err) {
       console.error(err); setError('Aadhaar clear read nahi hua. Manual Entry se details bhar sakte ho.');
-    } finally { await worker.terminate(); setReading(false); }
+    } finally { setReading(false); }
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
