@@ -1,265 +1,213 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createWorker } from 'tesseract.js';
 import { Customer, customerApi } from '@/lib/customers';
 
 type FormValues = {
-  first_name: string;
-  middle_name: string;
-  last_name: string;
-  mobile: string;
-  alternate_mobile: string;
-  whatsapp: string;
-  email: string;
-  date_of_birth: string;
-  gender: string;
-  aadhaar_number: string;
-  pan_number: string;
-  driving_licence_number: string;
-  passport_number: string;
-  voter_id: string;
-  current_address: string;
-  permanent_address: string;
-  city: string;
-  district: string;
-  state: string;
-  pincode: string;
-  occupation: string;
-  company_name: string;
-  gst_number: string;
-  remarks: string;
-  priority: string;
-  status: string;
+  first_name: string; middle_name: string; last_name: string;
+  mobile: string; alternate_mobile: string; whatsapp: string; email: string;
+  date_of_birth: string; gender: string; aadhaar_number: string;
+  pan_number: string; driving_licence_number: string; passport_number: string; voter_id: string;
+  current_address: string; permanent_address: string; city: string; district: string; state: string; pincode: string;
+  occupation: string; company_name: string; gst_number: string; remarks: string;
+  priority: string; status: string;
 };
 
-const emptyValues: FormValues = {
-  first_name: '',
-  middle_name: '',
-  last_name: '',
-  mobile: '',
-  alternate_mobile: '',
-  whatsapp: '',
-  email: '',
-  date_of_birth: '',
-  gender: '',
-  aadhaar_number: '',
-  pan_number: '',
-  driving_licence_number: '',
-  passport_number: '',
-  voter_id: '',
-  current_address: '',
-  permanent_address: '',
-  city: '',
-  district: '',
-  state: '',
-  pincode: '',
-  occupation: '',
-  company_name: '',
-  gst_number: '',
-  remarks: '',
-  priority: 'normal',
-  status: 'active',
+const blank: FormValues = {
+  first_name: '', middle_name: '', last_name: '', mobile: '', alternate_mobile: '', whatsapp: '', email: '',
+  date_of_birth: '', gender: '', aadhaar_number: '', pan_number: '', driving_licence_number: '', passport_number: '', voter_id: '',
+  current_address: '', permanent_address: '', city: '', district: '', state: '', pincode: '', occupation: '', company_name: '',
+  gst_number: '', remarks: '', priority: 'normal', status: 'active',
 };
 
-function customerToValues(customer?: Partial<Customer>): FormValues {
-  if (!customer) return emptyValues;
-
-  return {
-    ...emptyValues,
-    first_name: String(customer.first_name ?? ''),
-    middle_name: String(customer.middle_name ?? ''),
-    last_name: String(customer.last_name ?? ''),
-    mobile: String(customer.mobile ?? ''),
-    alternate_mobile: String(customer.alternate_mobile ?? ''),
-    whatsapp: String(customer.whatsapp ?? ''),
-    email: String(customer.email ?? ''),
-    date_of_birth: String(customer.date_of_birth ?? ''),
-    gender: String(customer.gender ?? ''),
-    aadhaar_number: String(customer.aadhaar_number ?? ''),
-    pan_number: String(customer.pan_number ?? ''),
-    driving_licence_number: String(customer.driving_licence_number ?? ''),
-    passport_number: String(customer.passport_number ?? ''),
-    voter_id: String(customer.voter_id ?? ''),
-    current_address: String(customer.current_address ?? ''),
-    permanent_address: String(customer.permanent_address ?? ''),
-    city: String(customer.city ?? ''),
-    district: String(customer.district ?? ''),
-    state: String(customer.state ?? ''),
-    pincode: String(customer.pincode ?? ''),
-    occupation: String(customer.occupation ?? ''),
-    company_name: String(customer.company_name ?? ''),
-    gst_number: String(customer.gst_number ?? ''),
-    remarks: String(customer.remarks ?? ''),
-    priority: String(customer.priority ?? 'normal'),
-    status: String(customer.status ?? 'active'),
-  };
+function initialValues(customer?: Partial<Customer>): FormValues {
+  if (!customer) return blank;
+  const out = { ...blank } as Record<string, string>;
+  Object.keys(out).forEach((key) => {
+    const value = (customer as Record<string, unknown>)[key];
+    if (value !== undefined && value !== null) out[key] = String(value);
+  });
+  return out as FormValues;
 }
 
-function normaliseDate(value: string): string {
-  const clean = value.trim().replace(/[.]/g, '/');
-  const match = clean.match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+function cleanLine(line: string) {
+  return line
+    .replace(/[|_[\]{}<>~`^*=]+/g, ' ')
+    .replace(/[^A-Za-z0-9À-ž\s,./:-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function titleCase(value: string) {
+  return value.toLowerCase().replace(/\b[a-z]/g, (letter) => letter.toUpperCase());
+}
+
+function normaliseDate(value: string) {
+  const match = value.replace(/[.]/g, '/').match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
   if (!match) return '';
   const [, day, month, year] = match;
   return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 }
 
-function splitName(fullName: string) {
-  const words = fullName
+function splitName(value: string): Partial<FormValues> {
+  const words = value
     .replace(/[^A-Za-z\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
     .split(' ')
-    .filter(Boolean);
+    .filter((word) => word.length > 1)
+    .map(titleCase);
 
   if (!words.length) return {};
   if (words.length === 1) return { first_name: words[0] };
-  if (words.length === 2) {
-    return { first_name: words[0], last_name: words[1] };
-  }
-
-  return {
-    first_name: words[0],
-    middle_name: words.slice(1, -1).join(' '),
-    last_name: words.at(-1) ?? '',
-  };
+  if (words.length === 2) return { first_name: words[0], last_name: words[1] };
+  return { first_name: words[0], middle_name: words.slice(1, -1).join(' '), last_name: words.at(-1) ?? '' };
 }
 
-function parseAadhaarText(text: string): Partial<FormValues> {
-  const cleaned = text.replace(/\r/g, '\n');
-  const lines = cleaned
-    .split('\n')
-    .map((line) => line.replace(/\s+/g, ' ').trim())
-    .filter(Boolean);
+function findName(lines: string[]) {
+  const blocked = /government|india|aadhaar|uidai|dob|birth|male|female|address|vid|download|issue|year|father|mother|husband|enrol/i;
+  const markerIndex = lines.findIndex((line) => /dob|date of birth|yob|year of birth|\bmale\b|\bfemale\b/i.test(line));
 
+  const candidates = (markerIndex > 0 ? lines.slice(Math.max(0, markerIndex - 4), markerIndex) : lines)
+    .filter((line) => !blocked.test(line))
+    .filter((line) => !/\d/.test(line))
+    .filter((line) => /^[A-Za-z][A-Za-z .'-]{3,55}$/.test(line))
+    .filter((line) => {
+      const words = line.split(/\s+/);
+      return words.length >= 2 && words.length <= 5 && words.every((word) => word.length >= 2);
+    });
+
+  return candidates.at(-1) ?? '';
+}
+
+function parseAadhaarText(frontText: string, backText: string): Partial<FormValues> {
+  const allText = `${frontText}\n${backText}`;
+  const frontLines = frontText.split(/\r?\n/).map(cleanLine).filter(Boolean);
   const result: Partial<FormValues> = {};
 
-  const aadhaarMatch = cleaned.match(/\b\d{4}\s?\d{4}\s?\d{4}\b/);
-  if (aadhaarMatch) {
-    result.aadhaar_number = aadhaarMatch[0].replace(/\s/g, '');
-  }
+  const aadhaar = allText.match(/\b\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/);
+  if (aadhaar) result.aadhaar_number = aadhaar[0].replace(/\D/g, '');
 
-  const dobLine = lines.find((line) => /dob|date of birth|year of birth|yob/i.test(line));
-  if (dobLine) {
-    const date = normaliseDate(dobLine);
-    if (date) result.date_of_birth = date;
-  }
+  const dobLine = frontLines.find((line) => /dob|date of birth/i.test(line));
+  if (dobLine) result.date_of_birth = normaliseDate(dobLine);
 
-  const genderText = cleaned.toLowerCase();
-  if (/\bfemale\b/.test(genderText)) result.gender = 'female';
-  else if (/\bmale\b/.test(genderText)) result.gender = 'male';
-  else if (/\btransgender\b|\bother\b/.test(genderText)) result.gender = 'other';
+  const lower = frontText.toLowerCase();
+  if (/\bfemale\b/.test(lower)) result.gender = 'female';
+  else if (/\bmale\b/.test(lower)) result.gender = 'male';
+  else if (/\btransgender\b/.test(lower)) result.gender = 'other';
 
-  const probableName = lines.find((line) => {
-    if (/government|india|aadhaar|dob|birth|male|female|address|vid|year/i.test(line)) return false;
-    if (/\d/.test(line)) return false;
-    const words = line.split(' ');
-    return words.length >= 2 && words.length <= 5 && line.length <= 60;
-  });
+  const name = findName(frontLines);
+  if (name) Object.assign(result, splitName(name));
 
-  if (probableName) Object.assign(result, splitName(probableName));
+  const pins = [...allText.matchAll(/\b[1-9][0-9]{5}\b/g)].map((match) => match[0]);
+  if (pins.length) result.pincode = pins.at(-1);
 
-  const pincodeMatch = cleaned.match(/\b[1-9][0-9]{5}\b/);
-  if (pincodeMatch) result.pincode = pincodeMatch[0];
-
-  const addressIndex = lines.findIndex((line) => /address/i.test(line));
-  if (addressIndex >= 0) {
-    const addressLines = lines
-      .slice(addressIndex + 1)
-      .filter((line) => !/\b\d{4}\s?\d{4}\s?\d{4}\b/.test(line))
-      .filter((line) => !/^vid/i.test(line))
-      .slice(0, 5);
-
-    if (addressLines.length) {
-      result.current_address = addressLines.join(', ');
-      result.permanent_address = addressLines.join(', ');
-    }
-  }
-
-  const stateNames = [
-    'Gujarat', 'Rajasthan', 'Maharashtra', 'Madhya Pradesh', 'Uttar Pradesh',
-    'Delhi', 'Punjab', 'Haryana', 'Karnataka', 'Tamil Nadu', 'Telangana',
-    'Andhra Pradesh', 'Kerala', 'Bihar', 'West Bengal', 'Odisha', 'Assam',
-    'Jharkhand', 'Chhattisgarh', 'Goa', 'Uttarakhand', 'Himachal Pradesh',
-    'Jammu and Kashmir', 'Ladakh',
-  ];
-
-  const foundState = stateNames.find((state) =>
-    cleaned.toLowerCase().includes(state.toLowerCase()),
-  );
-  if (foundState) result.state = foundState;
-
-  const districtLine = lines.find((line) => /district|dist\.?/i.test(line));
-  if (districtLine) {
-    result.district = districtLine
-      .replace(/district|dist\.?/gi, '')
-      .replace(/[:,-]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
+  // User requested only City, District, State and Pincode from Aadhaar address.
+  // Full OCR address is intentionally not copied because it often contains garbage text.
+  result.current_address = '';
+  result.permanent_address = '';
 
   return result;
+}
+
+async function preprocessImage(file: File): Promise<Blob> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.max(1, Math.min(2.5, 1800 / bitmap.width));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return file;
+
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = image.data;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    const contrasted = gray > 165 ? 255 : gray < 80 ? 0 : Math.round((gray - 80) * 3);
+    data[i] = contrasted;
+    data[i + 1] = contrasted;
+    data[i + 2] = contrasted;
+  }
+
+  ctx.putImageData(image, 0, 0);
+  return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob ?? file), 'image/png', 1));
+}
+
+async function lookupPincode(pincode: string): Promise<Partial<FormValues>> {
+  if (!/^\d{6}$/.test(pincode)) return {};
+  try {
+    const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+    if (!response.ok) return {};
+    const json = await response.json();
+    const offices = json?.[0]?.PostOffice;
+    if (!Array.isArray(offices) || !offices.length) return {};
+    const office = offices[0];
+    return {
+      city: String(office.Block || office.Name || '').trim(),
+      district: String(office.District || '').trim(),
+      state: String(office.State || '').trim(),
+    };
+  } catch {
+    return {};
+  }
 }
 
 export function CustomerForm({ customer }: { customer?: Partial<Customer> }) {
   const router = useRouter();
   const [entryMode, setEntryMode] = useState<'aadhaar' | 'manual'>('manual');
-  const [values, setValues] = useState<FormValues>(() => customerToValues(customer));
+  const [values, setValues] = useState<FormValues>(() => initialValues(customer));
   const [saving, setSaving] = useState(false);
   const [reading, setReading] = useState(false);
-  const [ocrProgress, setOcrProgress] = useState(0);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [aadhaarFront, setAadhaarFront] = useState<File | null>(null);
-  const [aadhaarBack, setAadhaarBack] = useState<File | null>(null);
+  const [front, setFront] = useState<File | null>(null);
+  const [back, setBack] = useState<File | null>(null);
 
-  const frontPreview = useMemo(
-    () => (aadhaarFront ? URL.createObjectURL(aadhaarFront) : ''),
-    [aadhaarFront],
-  );
-  const backPreview = useMemo(
-    () => (aadhaarBack ? URL.createObjectURL(aadhaarBack) : ''),
-    [aadhaarBack],
-  );
+  const frontPreview = useMemo(() => (front ? URL.createObjectURL(front) : ''), [front]);
+  const backPreview = useMemo(() => (back ? URL.createObjectURL(back) : ''), [back]);
 
-  function updateField(name: keyof FormValues, value: string) {
-    setValues((current) => ({ ...current, [name]: value }));
+  useEffect(() => () => {
+    if (frontPreview) URL.revokeObjectURL(frontPreview);
+    if (backPreview) URL.revokeObjectURL(backPreview);
+  }, [frontPreview, backPreview]);
+
+  function setField(name: keyof FormValues, value: string) {
+    setValues((old) => ({ ...old, [name]: value }));
   }
 
   async function readAadhaar() {
-    const files = [aadhaarFront, aadhaarBack].filter(Boolean) as File[];
-    if (!files.length) {
+    if (!front && !back) {
       setError('Pehle Aadhaar front ya back image upload karo.');
       return;
     }
 
-    setReading(true);
-    setError('');
-    setSuccess('');
-    setOcrProgress(0);
-
+    setReading(true); setError(''); setSuccess(''); setProgress(0);
     const worker = await createWorker('eng', 1, {
       logger: (message) => {
         if (message.status === 'recognizing text' && typeof message.progress === 'number') {
-          setOcrProgress(Math.round(message.progress * 100));
+          setProgress(Math.round(message.progress * 100));
         }
       },
     });
 
     try {
-      let fullText = '';
-      for (const file of files) {
-        const result = await worker.recognize(file);
-        fullText += `\n${result.data.text}`;
-      }
+      let frontText = '';
+      let backText = '';
+      if (front) frontText = (await worker.recognize(await preprocessImage(front))).data.text;
+      if (back) backText = (await worker.recognize(await preprocessImage(back))).data.text;
 
-      const extracted = parseAadhaarText(fullText);
-      setValues((current) => ({ ...current, ...extracted }));
-      setSuccess('Aadhaar details read ho gayi. Save se pehle sab details check aur edit kar lo.');
-    } catch (readError) {
-      console.error(readError);
-      setError('Aadhaar clear read nahi hua. Manual entry se details bhar sakte ho.');
+      const extracted = parseAadhaarText(frontText, backText);
+      const location = extracted.pincode ? await lookupPincode(extracted.pincode) : {};
+      setValues((old) => ({ ...old, ...extracted, ...location }));
+      setSuccess('Details fill ho gayi. Name, DOB aur pincode save se pehle check kar lena.');
+    } catch (err) {
+      console.error(err);
+      setError('Aadhaar clear read nahi hua. Manual Entry se details bhar sakte ho.');
     } finally {
       await worker.terminate();
       setReading(false);
@@ -267,305 +215,118 @@ export function CustomerForm({ customer }: { customer?: Partial<Customer> }) {
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSaving(true);
-    setError('');
-    setSuccess('');
-
-    const body = {
-      ...values,
-      tags: [],
-      priority: values.priority || 'normal',
-      status: values.status || 'active',
-    };
-
+    event.preventDefault(); setSaving(true); setError('');
     try {
+      const body = { ...values, tags: [], priority: values.priority || 'normal', status: values.status || 'active' };
       if (customer?.id) await customerApi.update(customer.id, body);
       else await customerApi.create(body);
-
       window.location.href = '/customers';
-    } catch (saveError) {
-      const message = saveError instanceof Error ? saveError.message : 'Customer save nahi hua.';
-      setError(message);
-    } finally {
-      setSaving(false);
-    }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Customer save nahi hua.');
+    } finally { setSaving(false); }
   }
 
   return (
     <form onSubmit={submit} className="space-y-6">
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
         <div className="bg-gradient-to-r from-slate-950 via-blue-950 to-blue-800 px-6 py-6 text-white">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-blue-200">Raj ERP</p>
+          <p className="text-xs font-semibold uppercase tracking-[.25em] text-blue-200">Raj ERP</p>
           <h1 className="mt-2 text-2xl font-bold">{customer?.id ? 'Edit Customer' : 'Add New Customer'}</h1>
-          <p className="mt-1 text-sm text-blue-100">Aadhaar se auto-fill karo ya saari details manually enter karo.</p>
+          <p className="mt-1 text-sm text-blue-100">Aadhaar auto-fill ya manual entry—dono available hain.</p>
         </div>
-
         <div className="grid gap-3 p-5 sm:grid-cols-2">
-          <button
-            type="button"
-            onClick={() => setEntryMode('aadhaar')}
-            className={`rounded-xl border p-4 text-left transition ${
-              entryMode === 'aadhaar'
-                ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-100'
-                : 'border-slate-200 hover:border-blue-300'
-            }`}
-          >
-            <span className="block font-semibold text-slate-900">Aadhaar Auto Fill</span>
-            <span className="mt-1 block text-sm text-slate-500">Front/back image upload karke free OCR se details read karein.</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setEntryMode('manual')}
-            className={`rounded-xl border p-4 text-left transition ${
-              entryMode === 'manual'
-                ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-100'
-                : 'border-slate-200 hover:border-blue-300'
-            }`}
-          >
-            <span className="block font-semibold text-slate-900">Manual Entry</span>
-            <span className="mt-1 block text-sm text-slate-500">Aadhaar ke bina bhi poora customer manually add ho sakta hai.</span>
-          </button>
+          <Mode active={entryMode === 'aadhaar'} title="Aadhaar Auto Fill" text="Front/back upload karke free OCR se details bharo." onClick={() => setEntryMode('aadhaar')} />
+          <Mode active={entryMode === 'manual'} title="Manual Entry" text="Aadhaar ke bina saari details manually bharo." onClick={() => setEntryMode('manual')} />
         </div>
       </div>
 
       {entryMode === 'aadhaar' && (
-        <Card title="Aadhaar Upload" subtitle="Clear JPG, PNG ya WEBP image use karein. Mobile aur email Aadhaar se read nahi honge.">
+        <Card title="Aadhaar Upload" subtitle="Address se sirf City, District, State aur Pincode auto-fill hoga.">
           <div className="grid gap-4 md:grid-cols-2">
-            <UploadBox label="Aadhaar Front" preview={frontPreview} onChange={setAadhaarFront} />
-            <UploadBox label="Aadhaar Back" preview={backPreview} onChange={setAadhaarBack} />
+            <Upload label="Aadhaar Front" preview={frontPreview} onChange={setFront} />
+            <Upload label="Aadhaar Back" preview={backPreview} onChange={setBack} />
           </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={readAadhaar}
-              disabled={reading}
-              className="rounded-xl bg-blue-700 px-5 py-3 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {reading ? `Reading Aadhaar... ${ocrProgress}%` : 'Read Aadhaar Details'}
-            </button>
-            <p className="text-sm text-slate-500">OCR ke baad saare auto-filled fields editable rahenge.</p>
-          </div>
+          <button type="button" onClick={readAadhaar} disabled={reading} className="mt-4 rounded-xl bg-blue-700 px-5 py-3 font-semibold text-white disabled:opacity-60">
+            {reading ? `Reading... ${progress}%` : 'Read Aadhaar Details'}
+          </button>
         </Card>
       )}
 
-      {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
-      {success && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</div>}
+      {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>}
+      {success && <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-700">{success}</div>}
 
-      <Card title="Personal Information" subtitle="Required fields: first name, last name and mobile number.">
-        <div className="grid gap-4 md:grid-cols-3">
-          <Input label="First Name" value={values.first_name} required onChange={(value) => updateField('first_name', value)} />
-          <Input label="Middle Name" value={values.middle_name} onChange={(value) => updateField('middle_name', value)} />
-          <Input label="Last Name" value={values.last_name} required onChange={(value) => updateField('last_name', value)} />
-          <Input label="Mobile Number" value={values.mobile} required inputMode="tel" onChange={(value) => updateField('mobile', value)} />
-          <Input label="Alternate Mobile" value={values.alternate_mobile} inputMode="tel" onChange={(value) => updateField('alternate_mobile', value)} />
-          <Input label="WhatsApp Number" value={values.whatsapp} inputMode="tel" onChange={(value) => updateField('whatsapp', value)} />
-          <Input label="Email" value={values.email} type="email" onChange={(value) => updateField('email', value)} />
-          <Input label="Date of Birth" value={values.date_of_birth} type="date" onChange={(value) => updateField('date_of_birth', value)} />
-          <Select
-            label="Gender"
-            value={values.gender}
-            onChange={(value) => updateField('gender', value)}
-            options={[
-              ['', 'Select Gender'],
-              ['male', 'Male'],
-              ['female', 'Female'],
-              ['other', 'Other'],
-              ['prefer_not_to_say', 'Prefer Not To Say'],
-            ]}
-          />
-        </div>
+      <Card title="Personal Information" subtitle="First name, last name aur mobile required hain.">
+        <Grid>
+          <Input label="First Name" value={values.first_name} required onChange={(v) => setField('first_name', v)} />
+          <Input label="Middle Name" value={values.middle_name} onChange={(v) => setField('middle_name', v)} />
+          <Input label="Last Name / Surname" value={values.last_name} required onChange={(v) => setField('last_name', v)} />
+          <Input label="Mobile Number" value={values.mobile} required onChange={(v) => setField('mobile', v)} />
+          <Input label="Alternate Mobile" value={values.alternate_mobile} onChange={(v) => setField('alternate_mobile', v)} />
+          <Input label="WhatsApp" value={values.whatsapp} onChange={(v) => setField('whatsapp', v)} />
+          <Input label="Email" type="email" value={values.email} onChange={(v) => setField('email', v)} />
+          <Input label="Date of Birth" type="date" value={values.date_of_birth} onChange={(v) => setField('date_of_birth', v)} />
+          <Select label="Gender" value={values.gender} onChange={(v) => setField('gender', v)} options={[['','Select Gender'],['male','Male'],['female','Female'],['other','Other'],['prefer_not_to_say','Prefer Not To Say']]} />
+        </Grid>
       </Card>
 
-      <Card title="Identity Details" subtitle="Ye fields optional hain. Aadhaar number auto-fill ho sakta hai.">
-        <div className="grid gap-4 md:grid-cols-3">
-          <Input label="Aadhaar Number" value={values.aadhaar_number} inputMode="numeric" onChange={(value) => updateField('aadhaar_number', value.replace(/\D/g, '').slice(0, 12))} />
-          <Input label="PAN Number" value={values.pan_number} onChange={(value) => updateField('pan_number', value.toUpperCase())} />
-          <Input label="Driving Licence" value={values.driving_licence_number} onChange={(value) => updateField('driving_licence_number', value.toUpperCase())} />
-          <Input label="Passport Number" value={values.passport_number} onChange={(value) => updateField('passport_number', value.toUpperCase())} />
-          <Input label="Voter ID" value={values.voter_id} onChange={(value) => updateField('voter_id', value.toUpperCase())} />
-          <Input label="GST Number" value={values.gst_number} onChange={(value) => updateField('gst_number', value.toUpperCase())} />
-        </div>
+      <Card title="Identity Details" subtitle="Optional identity numbers.">
+        <Grid>
+          <Input label="Aadhaar Number" value={values.aadhaar_number} onChange={(v) => setField('aadhaar_number', v.replace(/\D/g, '').slice(0, 12))} />
+          <Input label="PAN Number" value={values.pan_number} onChange={(v) => setField('pan_number', v.toUpperCase())} />
+          <Input label="Driving Licence" value={values.driving_licence_number} onChange={(v) => setField('driving_licence_number', v.toUpperCase())} />
+          <Input label="Passport Number" value={values.passport_number} onChange={(v) => setField('passport_number', v.toUpperCase())} />
+          <Input label="Voter ID" value={values.voter_id} onChange={(v) => setField('voter_id', v.toUpperCase())} />
+          <Input label="GST Number" value={values.gst_number} onChange={(v) => setField('gst_number', v.toUpperCase())} />
+        </Grid>
       </Card>
 
-      <Card title="Address" subtitle="OCR se address aaye to save se pehle spelling aur pincode verify karein.">
+      <Card title="Address" subtitle="Full address manual rahega; location pincode se auto-fill hogi.">
         <div className="grid gap-4 md:grid-cols-2">
-          <Textarea label="Current Address" value={values.current_address} onChange={(value) => updateField('current_address', value)} />
-          <Textarea label="Permanent Address" value={values.permanent_address} onChange={(value) => updateField('permanent_address', value)} />
+          <Textarea label="Current Address" value={values.current_address} onChange={(v) => setField('current_address', v)} />
+          <Textarea label="Permanent Address" value={values.permanent_address} onChange={(v) => setField('permanent_address', v)} />
         </div>
         <div className="mt-4 grid gap-4 md:grid-cols-4">
-          <Input label="City" value={values.city} onChange={(value) => updateField('city', value)} />
-          <Input label="District" value={values.district} onChange={(value) => updateField('district', value)} />
-          <Input label="State" value={values.state} onChange={(value) => updateField('state', value)} />
-          <Input label="Pincode" value={values.pincode} inputMode="numeric" onChange={(value) => updateField('pincode', value.replace(/\D/g, '').slice(0, 6))} />
+          <Input label="City" value={values.city} onChange={(v) => setField('city', v)} />
+          <Input label="District" value={values.district} onChange={(v) => setField('district', v)} />
+          <Input label="State" value={values.state} onChange={(v) => setField('state', v)} />
+          <Input label="Pincode" value={values.pincode} onChange={async (v) => { const pin = v.replace(/\D/g, '').slice(0, 6); setField('pincode', pin); if (pin.length === 6) setValues((old) => ({ ...old, ...(await lookupPincode(pin)) })); }} />
         </div>
       </Card>
 
-      <Card title="Business & Notes" subtitle="Occupation aur company optional hain.">
-        <div className="grid gap-4 md:grid-cols-2">
-          <Input label="Occupation" value={values.occupation} onChange={(value) => updateField('occupation', value)} />
-          <Input label="Company Name" value={values.company_name} onChange={(value) => updateField('company_name', value)} />
-        </div>
-        <div className="mt-4">
-          <Textarea label="Remarks" value={values.remarks} onChange={(value) => updateField('remarks', value)} />
-        </div>
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <Select
-            label="Priority"
-            value={values.priority}
-            onChange={(value) => updateField('priority', value)}
-            options={[
-              ['low', 'Low'],
-              ['normal', 'Normal'],
-              ['high', 'High'],
-              ['urgent', 'Urgent'],
-            ]}
-          />
-          <Select
-            label="Status"
-            value={values.status}
-            onChange={(value) => updateField('status', value)}
-            options={[
-              ['active', 'Active'],
-              ['inactive', 'Inactive'],
-              ['blocked', 'Blocked'],
-            ]}
-          />
-        </div>
+      <Card title="Business & Notes" subtitle="Optional information.">
+        <Grid>
+          <Input label="Occupation" value={values.occupation} onChange={(v) => setField('occupation', v)} />
+          <Input label="Company Name" value={values.company_name} onChange={(v) => setField('company_name', v)} />
+          <Select label="Priority" value={values.priority} onChange={(v) => setField('priority', v)} options={[['low','Low'],['normal','Normal'],['high','High'],['urgent','Urgent']]} />
+          <Select label="Status" value={values.status} onChange={(v) => setField('status', v)} options={[['active','Active'],['inactive','Inactive'],['blocked','Blocked']]} />
+        </Grid>
+        <div className="mt-4"><Textarea label="Remarks" value={values.remarks} onChange={(v) => setField('remarks', v)} /></div>
       </Card>
 
-      <div className="sticky bottom-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-lg backdrop-blur">
-        <button
-          type="button"
-          onClick={() => router.push('/customers')}
-          className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={saving || reading}
-          className="rounded-xl bg-blue-700 px-7 py-3 font-semibold text-white shadow-sm hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {saving ? 'Saving Customer...' : customer?.id ? 'Update Customer' : 'Save Customer'}
-        </button>
+      <div className="sticky bottom-4 flex justify-between rounded-2xl border bg-white/95 p-4 shadow-lg backdrop-blur">
+        <button type="button" onClick={() => router.push('/customers')} className="rounded-xl border px-5 py-3 font-semibold">Cancel</button>
+        <button disabled={saving || reading} className="rounded-xl bg-blue-700 px-7 py-3 font-semibold text-white disabled:opacity-60">{saving ? 'Saving...' : customer?.id ? 'Update Customer' : 'Save Customer'}</button>
       </div>
     </form>
   );
 }
 
+function Mode({ active, title, text, onClick }: { active: boolean; title: string; text: string; onClick: () => void }) {
+  return <button type="button" onClick={onClick} className={`rounded-xl border p-4 text-left ${active ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-100' : 'border-slate-200'}`}><b>{title}</b><span className="mt-1 block text-sm text-slate-500">{text}</span></button>;
+}
 function Card({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-      <div className="mb-5 border-b border-slate-100 pb-4">
-        <h2 className="text-lg font-bold text-slate-900">{title}</h2>
-        <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
-      </div>
-      {children}
-    </section>
-  );
+  return <section className="rounded-2xl border bg-white p-5 shadow-sm"><div className="mb-5 border-b pb-4"><h2 className="text-lg font-bold">{title}</h2><p className="text-sm text-slate-500">{subtitle}</p></div>{children}</section>;
 }
-
-function Input({
-  label,
-  value,
-  onChange,
-  type = 'text',
-  required = false,
-  inputMode,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  type?: string;
-  required?: boolean;
-  inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'];
-}) {
-  return (
-    <label className="block text-sm font-semibold text-slate-700">
-      {label} {required && <span className="text-red-500">*</span>}
-      <input
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        type={type}
-        required={required}
-        inputMode={inputMode}
-        className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
-      />
-    </label>
-  );
+function Grid({ children }: { children: React.ReactNode }) { return <div className="grid gap-4 md:grid-cols-3">{children}</div>; }
+function Input({ label, value, onChange, type = 'text', required = false }: { label: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean }) {
+  return <label className="text-sm font-semibold text-slate-700">{label}{required && <span className="text-red-500"> *</span>}<input type={type} value={value} required={required} onChange={(e) => onChange(e.target.value)} className="mt-2 w-full rounded-xl border px-4 py-3 font-normal outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100" /></label>;
 }
-
-function Textarea({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return (
-    <label className="block text-sm font-semibold text-slate-700">
-      {label}
-      <textarea
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        rows={4}
-        className="mt-2 w-full resize-y rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-900 outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
-      />
-    </label>
-  );
+function Textarea({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return <label className="text-sm font-semibold text-slate-700">{label}<textarea rows={4} value={value} onChange={(e) => onChange(e.target.value)} className="mt-2 w-full rounded-xl border px-4 py-3 font-normal outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100" /></label>;
 }
-
-function Select({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: [string, string][];
-}) {
-  return (
-    <label className="block text-sm font-semibold text-slate-700">
-      {label}
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-normal text-slate-900 outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
-      >
-        {options.map(([optionValue, optionLabel]) => (
-          <option key={optionValue || 'empty'} value={optionValue}>
-            {optionLabel}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
+function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: [string,string][] }) {
+  return <label className="text-sm font-semibold text-slate-700">{label}<select value={value} onChange={(e) => onChange(e.target.value)} className="mt-2 w-full rounded-xl border bg-white px-4 py-3 font-normal">{options.map(([v,l]) => <option key={v || 'empty'} value={v}>{l}</option>)}</select></label>;
 }
-
-function UploadBox({
-  label,
-  preview,
-  onChange,
-}: {
-  label: string;
-  preview: string;
-  onChange: (file: File | null) => void;
-}) {
-  return (
-    <label className="block cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-4 transition hover:border-blue-400 hover:bg-blue-50">
-      <span className="block font-semibold text-slate-800">{label}</span>
-      <span className="mt-1 block text-sm text-slate-500">Click karke clear Aadhaar image select karein.</span>
-      <input
-        type="file"
-        accept="image/png,image/jpeg,image/webp"
-        className="sr-only"
-        onChange={(event) => onChange(event.target.files?.[0] ?? null)}
-      />
-      {preview ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={preview} alt={`${label} preview`} className="mt-4 h-44 w-full rounded-xl object-contain bg-white" />
-      ) : (
-        <div className="mt-4 flex h-32 items-center justify-center rounded-xl bg-white text-sm text-slate-400">No image selected</div>
-      )}
-    </label>
-  );
+function Upload({ label, preview, onChange }: { label: string; preview: string; onChange: (file: File | null) => void }) {
+  return <label className="block cursor-pointer rounded-2xl border-2 border-dashed bg-slate-50 p-4"><b>{label}</b><span className="block text-sm text-slate-500">Clear image select karein</span><input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => onChange(e.target.files?.[0] ?? null)} />{preview ? <img src={preview} alt={label} className="mt-4 h-44 w-full rounded-xl bg-white object-contain" /> : <div className="mt-4 flex h-32 items-center justify-center rounded-xl bg-white text-slate-400">No image selected</div>}</label>;
 }
