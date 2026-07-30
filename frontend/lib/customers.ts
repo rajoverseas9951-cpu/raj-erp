@@ -61,7 +61,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     payload = await response.json();
   } catch {
-    // Keep the status-based error below when Laravel returns HTML.
+    // Laravel HTML error response ko status error ke through handle karenge.
   }
 
   if (!response.ok) {
@@ -80,8 +80,47 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return payload.data as T;
 }
 
+type CustomerPage = {
+  data: Customer[];
+  links?: unknown;
+  meta?: unknown;
+};
+
+async function listCustomers(q = ''): Promise<CustomerPage> {
+  const result = await request<unknown>(`/customers${q}`);
+
+  if (Array.isArray(result)) {
+    return { data: result as Customer[] };
+  }
+
+  if (result && typeof result === 'object') {
+    const first = result as Record<string, unknown>;
+
+    if (Array.isArray(first.data)) {
+      return {
+        data: first.data as Customer[],
+        links: first.links,
+        meta: first.meta,
+      };
+    }
+
+    if (first.data && typeof first.data === 'object') {
+      const nested = first.data as Record<string, unknown>;
+      if (Array.isArray(nested.data)) {
+        return {
+          data: nested.data as Customer[],
+          links: nested.links,
+          meta: nested.meta,
+        };
+      }
+    }
+  }
+
+  return { data: [] };
+}
+
 export const customerApi = {
-  list: (q = '') => request<{ data: Customer[]; links: unknown; meta: unknown }>(`/customers${q}`),
+  list: listCustomers,
   get: (id: string) => request<Customer>(`/customers/${id}`),
   timeline: (id: string) => request<{ data: TimelineEvent[] }>(`/customers/${id}/timeline`),
   create: (body: unknown) => request<Customer>('/customers', { method: 'POST', body: JSON.stringify(body) }),
