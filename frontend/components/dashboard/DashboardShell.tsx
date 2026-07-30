@@ -10,6 +10,7 @@ const navigation: {label:string;href:string;icon:string;permission?:DashboardPer
   {label:'Dashboard',href:'/dashboard',icon:'dashboard',permission:'dashboard.view'},
   {label:'Customers',href:'/customers',icon:'customers',permission:'customer.view'},
   {label:'Vehicles',href:'/vehicles',icon:'vehicle',permission:'vehicle.view',badge:'12'},
+  {label:'Accounts',href:'/accounts/ledgers',icon:'reports'},
   {label:'Reports',href:'/reports',icon:'reports',permission:'reports.view'},
   {label:'Team & Roles',href:'/users',icon:'users',permission:'users.view'},
   {label:'Settings',href:'/settings',icon:'settings',permission:'settings.manage'},
