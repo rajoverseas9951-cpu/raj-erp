@@ -1,5 +1,6 @@
 <?php
 use App\Features\Accounting\Controllers\AccountingController;
+use App\Features\Accounting\Controllers\InsuranceAccountingController;
 use App\Features\Accounting\Controllers\LedgerController;
 use App\Features\Customers\Controllers\CustomerController;
 use App\Features\Vehicles\Controllers\VehicleController;
@@ -32,6 +33,13 @@ Route::prefix('v1')->middleware(['auth:sanctum','active'])->group(function () {
  Route::get('accounting/trial-balance',[AccountingController::class,'trialBalance']);
  Route::get('accounting/profit-loss',[AccountingController::class,'profitLoss']);
  Route::get('accounting/balance-sheet',[AccountingController::class,'balanceSheet']);
+
+ Route::get('insurance-accounting/companies',[InsuranceAccountingController::class,'companies']);
+ Route::post('insurance-accounting/companies',[InsuranceAccountingController::class,'storeCompany']);
+ Route::get('insurance-accounting/commissions',[InsuranceAccountingController::class,'commissions']);
+ Route::post('insurance-accounting/commissions',[InsuranceAccountingController::class,'storeCommission']);
+ Route::post('insurance-accounting/commissions/{id}/receive',[InsuranceAccountingController::class,'receiveCommission']);
+ Route::get('insurance-accounting/summary',[InsuranceAccountingController::class,'summary']);
 
  Route::get('vehicles/export',[VehicleController::class,'export']);
  Route::post('vehicles/bulk-delete',[VehicleController::class,'bulkDelete']);
