@@ -38,12 +38,15 @@ export default function CustomersPage() {
 
   return (
     <main className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Customer CRM</h1>
           <p className="text-slate-500">Enterprise customer master with insurance, RTO, GST and document context.</p>
         </div>
-        <a href="/customers/new" className="rounded-md bg-blue-700 px-4 py-2 text-white">Add Customer</a>
+        <div className="flex gap-3">
+          <a href="/accounts/ledgers" className="rounded-md border border-blue-700 px-4 py-2 font-semibold text-blue-700">Ledger Master</a>
+          <a href="/customers/new" className="rounded-md bg-blue-700 px-4 py-2 text-white">Add Customer</a>
+        </div>
       </div>
 
       {loading && <div className="rounded-xl border bg-white p-6">Loading customers...</div>}
