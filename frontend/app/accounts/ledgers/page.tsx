@@ -49,10 +49,13 @@ export default function LedgersPage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+
     setSaving(true);
     setError('');
     setSuccess('');
-    const form = new FormData(event.currentTarget);
 
     try {
       await ledgerApi.create({
@@ -65,7 +68,8 @@ export default function LedgersPage() {
         gst_applicable: form.get('gst_applicable') === 'on',
         status: 'active',
       });
-      event.currentTarget.reset();
+
+      formElement.reset();
       setSuccess('Ledger successfully create ho gaya.');
       await load();
     } catch (e) {
