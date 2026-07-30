@@ -1,0 +1,42 @@
+'use client';
+
+export type Ledger = {
+  id: string;
+  ledger_name: string;
+  ledger_group: string;
+  opening_balance: string | number;
+  balance_type: 'debit' | 'credit';
+  credit_limit: string | number;
+  credit_days: number;
+  gst_applicable: boolean;
+  status: 'active' | 'inactive';
+  customer_id?: string | null;
+};
+
+const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = sessionStorage.getItem('raj_erp_token');
+  const response = await fetch(`${API}/api/v1${path}`, {
+    ...init,
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(init?.headers || {}),
+    },
+    cache: 'no-store',
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const firstError = payload.errors ? Object.values(payload.errors as Record<string, string[]>)[0]?.[0] : undefined;
+    throw new Error(firstError ?? payload.message ?? `API request failed: ${response.status}`);
+  }
+  return payload.data as T;
+}
+
+export const ledgerApi = {
+  list: () => request<Ledger[]>('/ledgers'),
+  create: (body: Record<string, unknown>) => request<Ledger>('/ledgers', { method: 'POST', body: JSON.stringify(body) }),
+};
