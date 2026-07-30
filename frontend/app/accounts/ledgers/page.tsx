@@ -49,10 +49,8 @@ export default function LedgersPage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
-
     setSaving(true);
     setError('');
     setSuccess('');
@@ -83,7 +81,12 @@ export default function LedgersPage() {
   return <main className="space-y-6 p-6">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div><h1 className="text-2xl font-bold">Ledger Master</h1><p className="text-slate-500">Customer, supplier, bank, cash, expense aur income ledgers.</p></div>
-      <div className="flex gap-2"><a href="/dashboard" className="rounded-xl border px-4 py-2">Dashboard</a><a href="/customers" className="rounded-xl border px-4 py-2">Customers</a></div>
+      <div className="flex flex-wrap gap-2">
+        <a href="/accounts" className="rounded-xl border px-4 py-2">Accounts</a>
+        <a href="/accounts/insurance" className="rounded-xl bg-blue-700 px-4 py-2 font-semibold text-white">Insurance Accounting</a>
+        <a href="/customers" className="rounded-xl border px-4 py-2">Customers</a>
+        <a href="/dashboard" className="rounded-xl border px-4 py-2">Dashboard</a>
+      </div>
     </div>
 
     {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>}
