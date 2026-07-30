@@ -4,22 +4,14 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Vehicle, vehicleApi } from '@/lib/vehicles';
 import { InsuranceCompany, insuranceAccountingApi } from '@/lib/insurance-accounting';
-
-type Policy = {
-  id:string; company_id:string; company:string; code:string; purchase_form:string; policy_number:string;
-  policy_date:string; issue_date:string; expiry_date:string; status:string; insurance_type:string;
-  od_premium:number; tp_premium:number; addon_premium:number; gross_premium:number;
-  commission_percent:number; commission_amount:number; tds_percent:number; tds_amount:number;
-  gst_amount:number; customer_discount:number; customer_pay_amount:number; agent:string;
-  agent_commission:number; remark:string; created_at:string;
-};
+import { VehicleInsurancePolicy, vehicleInsuranceApi } from '@/lib/vehicle-insurance';
 
 type PurchaseForm = { id:string; name:string; code:string; active:boolean };
 
 const blank = {
   company_id:'', code:'', purchase_form_id:'', policy_number:'', policy_date:'', issue_date:'', expiry_date:'',
   status:'running', insurance_type:'comprehensive', od_premium:'0', tp_premium:'0', addon_premium:'0',
-  commission_percent:'0', tds_percent:'0', gst_amount:'0', customer_discount:'0', agent:'', agent_commission:'0', remark:''
+  commission_percent:'0', gst_other_charges:'0', customer_discount:'0', agent:'', agent_commission:'0', remark:''
 };
 
 const money=(v:number)=>`₹${Number(v||0).toFixed(2)}`;
@@ -30,22 +22,23 @@ export default function VehicleInsurancePage(){
   const [companies,setCompanies]=useState<InsuranceCompany[]>([]);
   const [purchaseForms,setPurchaseForms]=useState<PurchaseForm[]>([]);
   const [form,setForm]=useState<Record<string,string>>(blank);
-  const [policies,setPolicies]=useState<Policy[]>([]);
+  const [policies,setPolicies]=useState<VehicleInsurancePolicy[]>([]);
+  const [editingId,setEditingId]=useState<string|null>(null);
   const [showPurchaseForm,setShowPurchaseForm]=useState(false);
   const [loading,setLoading]=useState(true);
+  const [saving,setSaving]=useState(false);
   const [error,setError]=useState('');
   const [success,setSuccess]=useState('');
 
-  const storageKey=`raj_erp_vehicle_insurance_${vehicleId}`;
   const purchaseKey='raj_erp_purchase_forms';
 
   useEffect(()=>{
     async function load(){
       setLoading(true); setError('');
       try{
-        const [v,c]=await Promise.all([vehicleApi.get(vehicleId),insuranceAccountingApi.companies()]);
+        const [v,c,p]=await Promise.all([vehicleApi.get(vehicleId),insuranceAccountingApi.companies(),vehicleInsuranceApi.list(vehicleId)]);
         setVehicle(v); setCompanies(c.filter(x=>x.status==='active'));
-        const savedPolicies=localStorage.getItem(storageKey); if(savedPolicies) setPolicies(JSON.parse(savedPolicies));
+        setPolicies(p);
         const savedForms=localStorage.getItem(purchaseKey); if(savedForms) setPurchaseForms(JSON.parse(savedForms));
       }catch(e){
         const m=e instanceof Error?e.message:'Data load nahi hua.';
@@ -54,19 +47,18 @@ export default function VehicleInsurancePage(){
       }finally{setLoading(false)}
     }
     void load();
-  },[vehicleId,storageKey]);
+  },[vehicleId]);
 
   const n=(k:string)=>Number(form[k]||0);
-  const gross=useMemo(()=>n('od_premium')+n('tp_premium')+n('addon_premium'),[form]);
+  const gross=useMemo(()=>n('od_premium')+n('tp_premium')+n('addon_premium')+n('gst_other_charges'),[form]);
   const commission=useMemo(()=>gross*n('commission_percent')/100,[gross,form]);
-  const tds=useMemo(()=>commission*n('tds_percent')/100,[commission,form]);
-  const netCommission=useMemo(()=>Math.max(0,commission-tds),[commission,tds]);
-  const customerPay=useMemo(()=>Math.max(0,gross+n('gst_amount')-n('customer_discount')),[gross,form]);
+  const customerPay=useMemo(()=>Math.max(0,gross-n('customer_discount')),[gross,form]);
+  const agentCommission=useMemo(()=>Math.min(n('agent_commission'),commission),[commission,form]);
   const set=(k:string,v:string)=>setForm(o=>({...o,[k]:v}));
 
   function selectCompany(id:string){
     const company=companies.find(c=>c.id===id);
-    setForm(o=>({...o,company_id:id,code:company?.short_code??'',commission_percent:String(company?.default_commission_percent??0),tds_percent:String(company?.tds_percent??0)}));
+    setForm(o=>({...o,company_id:id,code:company?.short_code??'',commission_percent:String(company?.default_commission_percent??0)}));
   }
 
   function addPurchaseForm(e:FormEvent<HTMLFormElement>){
@@ -78,17 +70,30 @@ export default function VehicleInsurancePage(){
     set('purchase_form_id',row.id); setShowPurchaseForm(false); el.reset(); setSuccess('Purchase form add ho gaya.');
   }
 
-  function submit(e:FormEvent){
-    e.preventDefault(); setError(''); setSuccess('');
+  async function submit(e:FormEvent){
+    e.preventDefault(); setError(''); setSuccess(''); setSaving(true);
     const company=companies.find(c=>c.id===form.company_id); const purchase=purchaseForms.find(p=>p.id===form.purchase_form_id);
-    if(!company){setError('Pehle Insurance Company Master me company add karke select karo.');return;}
-    if(!purchase){setError('Purchase Form select ya add karo.');return;}
-    if(!form.policy_number||!form.issue_date||!form.expiry_date){setError('Policy number, issue date aur expiry date required hain.');return;}
-    const policy:Policy={id:crypto.randomUUID(),company_id:company.id,company:company.company_name,code:company.short_code??'',purchase_form:purchase.name,policy_number:form.policy_number.toUpperCase(),policy_date:form.policy_date,issue_date:form.issue_date,expiry_date:form.expiry_date,status:form.status,insurance_type:form.insurance_type,od_premium:n('od_premium'),tp_premium:n('tp_premium'),addon_premium:n('addon_premium'),gross_premium:gross,commission_percent:n('commission_percent'),commission_amount:commission,tds_percent:n('tds_percent'),tds_amount:tds,gst_amount:n('gst_amount'),customer_discount:n('customer_discount'),customer_pay_amount:customerPay,agent:form.agent,agent_commission:n('agent_commission'),remark:form.remark,created_at:new Date().toISOString()};
-    const next=[policy,...policies]; setPolicies(next); localStorage.setItem(storageKey,JSON.stringify(next)); setForm(blank); setSuccess('Insurance policy save ho gayi.');
+    if(!company){setError('Pehle Insurance Company Master me company add karke select karo.');setSaving(false);return;}
+    if(!purchase){setError('Purchase Form select ya add karo.');setSaving(false);return;}
+    if(!form.policy_number||!form.issue_date||!form.expiry_date){setError('Policy number, issue date aur expiry date required hain.');setSaving(false);return;}
+    const payload={insurance_company_id:company.id,company_name:company.company_name,company_code:company.short_code??'',purchase_from:purchase.name,policy_number:form.policy_number.toUpperCase(),policy_date:form.policy_date||null,issue_date:form.issue_date,expiry_date:form.expiry_date,status:form.status,insurance_type:form.insurance_type,remark:form.remark||null,od_premium:n('od_premium'),tp_premium:n('tp_premium'),addon_premium:n('addon_premium'),gst_other_charges:n('gst_other_charges'),commission_percent:n('commission_percent'),customer_discount:n('customer_discount'),agent:form.agent||null,agent_commission:agentCommission,payment_details:{}};
+    try{
+      const saved=editingId?await vehicleInsuranceApi.update(vehicleId,editingId,payload):await vehicleInsuranceApi.create(vehicleId,payload);
+      setPolicies(old=>editingId?old.map(policy=>policy.id===saved.id?saved:policy):[saved,...old]);
+      setForm(blank);setEditingId(null);setSuccess(editingId?'Insurance policy update ho gayi.':'Insurance policy save ho gayi.');
+    }catch(e){setError(e instanceof Error?e.message:'Insurance policy save nahi hui.');}
+    finally{setSaving(false);}
   }
 
-  function remove(id:string){if(!confirm('Policy delete karni hai?'))return;const next=policies.filter(p=>p.id!==id);setPolicies(next);localStorage.setItem(storageKey,JSON.stringify(next));}
+  function edit(policy:VehicleInsurancePolicy){
+    let purchase=purchaseForms.find(row=>row.name===policy.purchase_from);
+    if(!purchase){purchase={id:`policy-${policy.id}`,name:policy.purchase_from,code:'',active:true};setPurchaseForms(old=>[...old,purchase!]);}
+    setEditingId(policy.id);
+    setForm({company_id:policy.insurance_company_id??'',code:policy.company_code??'',purchase_form_id:purchase.id,policy_number:policy.policy_number,policy_date:policy.policy_date??'',issue_date:policy.issue_date,expiry_date:policy.expiry_date,status:policy.status,insurance_type:policy.insurance_type,od_premium:String(policy.od_premium),tp_premium:String(policy.tp_premium),addon_premium:String(policy.addon_premium),commission_percent:String(policy.commission_percent),gst_other_charges:String(policy.gst_other_charges),customer_discount:String(policy.customer_discount),agent:policy.agent??'',agent_commission:String(policy.agent_commission),remark:policy.remark??''});
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  async function remove(id:string){if(!confirm('Policy delete karni hai?'))return;try{await vehicleInsuranceApi.remove(vehicleId,id);setPolicies(old=>old.filter(policy=>policy.id!==id));}catch(e){setError(e instanceof Error?e.message:'Policy delete nahi hui.');}}
 
   if(loading)return <main className="p-6">Loading insurance...</main>;
   if(!vehicle)return <main className="p-6"><div className="rounded-xl bg-red-50 p-4 text-red-700">{error||'Vehicle nahi mila.'}</div></main>;
@@ -102,7 +107,7 @@ export default function VehicleInsurancePage(){
 
     {error&&<div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>}{success&&<div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-700">{success}</div>}
 
-    {companies.length===0&&<div className="rounded-2xl border border-amber-200 bg-amber-50 p-5"><p className="font-bold text-amber-900">Abhi koi Insurance Company add nahi hai.</p><p className="mt-1 text-sm text-amber-800">Pehle Company Master me company, code, commission % aur TDS % add karo.</p><a href="/accounts/insurance" className="mt-3 inline-block rounded-xl bg-amber-700 px-4 py-2 font-bold text-white">Add Insurance Company</a></div>}
+    {companies.length===0&&<div className="rounded-2xl border border-amber-200 bg-amber-50 p-5"><p className="font-bold text-amber-900">Abhi koi Insurance Company add nahi hai.</p><p className="mt-1 text-sm text-amber-800">Pehle Company Master me company, code aur default commission % add karo.</p><a href="/accounts/insurance" className="mt-3 inline-block rounded-xl bg-amber-700 px-4 py-2 font-bold text-white">Add Insurance Company</a></div>}
 
     <form onSubmit={submit} className="grid gap-6 xl:grid-cols-[.9fr_1.45fr_1.05fr]">
       <Card title="Vehicle Snapshot"><Info label="Vehicle No" value={vehicle.vehicle_number}/><Info label="Party" value={`${vehicle.customer?.first_name??''} ${vehicle.customer?.last_name??''}`}/><Info label="Mobile" value={vehicle.customer?.mobile}/><Info label="Vehicle Type" value={vehicle.vehicle_type?.replaceAll('_',' ')}/><Info label="Chassis No" value={vehicle.chassis_number}/><Info label="Engine No" value={vehicle.engine_number}/><Info label="Seating" value={vehicle.seating_capacity}/><Info label="CC / GVW" value={vehicle.cubic_capacity||vehicle.gross_weight}/></Card>
@@ -115,11 +120,11 @@ export default function VehicleInsurancePage(){
       </div></Card>
 
       <Card title="Premium & Earnings"><div className="grid gap-4 md:grid-cols-2">
-        <Input type="number" label="OD Premium" value={form.od_premium} onChange={v=>set('od_premium',v)}/><Input type="number" label="TP Premium" value={form.tp_premium} onChange={v=>set('tp_premium',v)}/><Input type="number" label="Add-on Premium" value={form.addon_premium} onChange={v=>set('addon_premium',v)}/><Read label="Gross Premium" value={gross}/><Input type="number" label="Commission %" value={form.commission_percent} onChange={v=>set('commission_percent',v)}/><Read label="Gross Commission" value={commission}/><ReadText label="TDS %" value={`${form.tds_percent||0}%`}/><Read label="TDS Amount" value={tds}/><Read label="Net Commission" value={netCommission}/><Input type="number" label="GST / Other Charges" value={form.gst_amount} onChange={v=>set('gst_amount',v)}/><Input type="number" label="Customer Discount" value={form.customer_discount} onChange={v=>set('customer_discount',v)}/><Read label="Customer Pay" value={customerPay}/><Input label="Agent" value={form.agent} onChange={v=>set('agent',v)}/><Input type="number" label="Agent Commission" value={form.agent_commission} onChange={v=>set('agent_commission',v)}/>
-      </div><button disabled={companies.length===0} className="mt-5 w-full rounded-xl bg-blue-800 px-5 py-3 font-bold text-white disabled:opacity-40">Save Insurance Policy</button></Card>
+        <Input type="number" label="OD Premium" value={form.od_premium} onChange={v=>set('od_premium',v)}/><Input type="number" label="TP Premium" value={form.tp_premium} onChange={v=>set('tp_premium',v)}/><Input type="number" label="Add-on Premium" value={form.addon_premium} onChange={v=>set('addon_premium',v)}/><Input type="number" label="GST / Other Charges" value={form.gst_other_charges} onChange={v=>set('gst_other_charges',v)}/><Read label="Gross Premium" value={gross}/><Input type="number" label="Commission %" value={form.commission_percent} onChange={v=>set('commission_percent',v)}/><Read label="Gross Commission" value={commission}/><Input type="number" label="Customer Discount" value={form.customer_discount} onChange={v=>set('customer_discount',v)}/><Read label="Customer Pay" value={customerPay}/><Input label="Agent" value={form.agent} onChange={v=>set('agent',v)}/><Input type="number" label="Agent Commission" value={String(agentCommission)} onChange={v=>set('agent_commission',String(Math.min(Number(v||0),commission)))}/>
+      </div><p className="mt-3 text-xs text-slate-500">Agent commission is capped at Gross Commission.</p><button disabled={companies.length===0||saving} className="mt-5 w-full rounded-xl bg-blue-800 px-5 py-3 font-bold text-white disabled:opacity-40">{saving?'Saving Policy...':editingId?'Update Insurance Policy':'Save Insurance Policy'}</button>{editingId&&<button type="button" onClick={()=>{setEditingId(null);setForm(blank)}} className="mt-2 w-full rounded-xl border px-5 py-3 font-bold">Cancel Edit</button>}</Card>
     </form>
 
-    <section className="overflow-hidden rounded-2xl border bg-white shadow-sm"><div className="flex items-center justify-between border-b p-5"><div><h2 className="text-xl font-bold">Policy History</h2><p className="text-sm text-slate-500">Current aur previous policies.</p></div><span className="rounded-full bg-blue-50 px-4 py-2 font-bold text-blue-700">{policies.length} Policies</span></div><div className="overflow-x-auto"><table className="w-full min-w-[1150px] text-left text-sm"><thead className="bg-slate-50"><tr>{['Company','Purchase Form','Type','Policy No','Issue','Expiry','Gross','Commission','TDS','Customer Pay','Status','Action'].map(h=><th key={h} className="p-4">{h}</th>)}</tr></thead><tbody>{policies.length===0?<tr><td colSpan={12} className="p-10 text-center text-slate-500">Abhi koi policy add nahi hai.</td></tr>:policies.map(p=><tr key={p.id} className="border-t"><td className="p-4 font-semibold">{p.company}</td><td className="p-4">{p.purchase_form}</td><td className="p-4 capitalize">{p.insurance_type.replaceAll('_',' ')}</td><td className="p-4">{p.policy_number}</td><td className="p-4">{p.issue_date}</td><td className="p-4">{p.expiry_date}</td><td className="p-4">{money(p.gross_premium)}</td><td className="p-4">{money(p.commission_amount)}</td><td className="p-4">{money(p.tds_amount)}</td><td className="p-4">{money(p.customer_pay_amount)}</td><td className="p-4"><span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold capitalize text-emerald-700">{p.status}</span></td><td className="p-4"><button type="button" onClick={()=>remove(p.id)} className="rounded-lg border border-red-200 px-3 py-2 text-red-600">Delete</button></td></tr>)}</tbody></table></div></section>
+    <section className="overflow-hidden rounded-2xl border bg-white shadow-sm"><div className="flex items-center justify-between border-b p-5"><div><h2 className="text-xl font-bold">Policy History</h2><p className="text-sm text-slate-500">Current aur previous policies.</p></div><span className="rounded-full bg-blue-50 px-4 py-2 font-bold text-blue-700">{policies.length} Policies</span></div><div className="overflow-x-auto"><table className="w-full min-w-[1100px] text-left text-sm"><thead className="bg-slate-50"><tr>{['Company','Purchase From','Type','Policy No','Issue','Expiry','Gross Premium','Gross Commission','Customer Pay','Status','Action'].map(h=><th key={h} className="p-4">{h}</th>)}</tr></thead><tbody>{policies.length===0?<tr><td colSpan={11} className="p-10 text-center text-slate-500">Abhi koi policy add nahi hai.</td></tr>:policies.map(p=><tr key={p.id} className="border-t"><td className="p-4 font-semibold">{p.company_name}</td><td className="p-4">{p.purchase_from}</td><td className="p-4 capitalize">{p.insurance_type.replaceAll('_',' ')}</td><td className="p-4">{p.policy_number}</td><td className="p-4">{p.issue_date}</td><td className="p-4">{p.expiry_date}</td><td className="p-4">{money(p.gross_premium)}</td><td className="p-4">{money(p.gross_commission)}</td><td className="p-4">{money(p.customer_pay)}</td><td className="p-4"><span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold capitalize text-emerald-700">{p.status}</span></td><td className="p-4"><div className="flex gap-2"><button type="button" onClick={()=>edit(p)} className="rounded-lg border border-blue-200 px-3 py-2 text-blue-700">Edit</button><button type="button" onClick={()=>void remove(p.id)} className="rounded-lg border border-red-200 px-3 py-2 text-red-600">Delete</button></div></td></tr>)}</tbody></table></div></section>
 
     {showPurchaseForm&&<div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4"><form onSubmit={addPurchaseForm} className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl"><div className="flex items-center justify-between"><h2 className="text-xl font-bold">Add Purchase Form</h2><button type="button" onClick={()=>setShowPurchaseForm(false)} className="rounded-lg border px-3 py-1">Close</button></div><div className="mt-5 grid gap-4"><label className="text-sm font-semibold">Purchase Form Name<input name="name" required placeholder="Example: RAJ INSURANCE DHANERA" className="mt-2 w-full rounded-xl border px-4 py-3 font-normal"/></label><label className="text-sm font-semibold">Short Code<input name="code" placeholder="Example: RID" className="mt-2 w-full rounded-xl border px-4 py-3 font-normal uppercase"/></label><button className="rounded-xl bg-blue-700 px-5 py-3 font-bold text-white">Save Purchase Form</button></div></form></div>}
   </main>;

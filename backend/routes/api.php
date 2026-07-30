@@ -9,6 +9,7 @@ use App\Features\Identity\Controllers\RoleController;
 use App\Features\Identity\Controllers\UserController;
 use App\Features\Ocr\Controllers\OcrController;
 use App\Features\Vehicles\Controllers\VehicleController;
+use App\Features\Vehicles\Controllers\VehicleInsuranceController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('health', fn () => response()->json(['status' => 'ok']));
@@ -48,6 +49,10 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::post('vehicles/bulk-delete', [VehicleController::class, 'bulkDelete']);
     Route::post('vehicles/bulk-update', [VehicleController::class, 'bulkUpdate']);
     Route::get('vehicles/{vehicle}/timeline', [VehicleController::class, 'timeline']);
+    Route::get('vehicles/{vehicle}/insurances', [VehicleInsuranceController::class, 'index']);
+    Route::post('vehicles/{vehicle}/insurances', [VehicleInsuranceController::class, 'store']);
+    Route::put('vehicles/{vehicle}/insurances/{insurance}', [VehicleInsuranceController::class, 'update']);
+    Route::delete('vehicles/{vehicle}/insurances/{insurance}', [VehicleInsuranceController::class, 'destroy']);
     Route::apiResource('vehicles', VehicleController::class);
 
     Route::get('customers/export', [CustomerController::class, 'export']);
