@@ -41,6 +41,15 @@ class OcrService
 
     private function readImage(UploadedFile $image, string $key): string
     {
+        $extension = strtolower($image->getClientOriginalExtension());
+        $fileType = match ($extension) {
+            'pdf' => 'PDF',
+            'jpg', 'jpeg' => 'JPG',
+            'png' => 'PNG',
+            'webp' => 'WEBP',
+            default => null,
+        };
+
         try {
             $request = Http::timeout(45)
                 ->retry(2, 300, throw: false)
@@ -52,9 +61,15 @@ class OcrService
             }
 
             $response = $request
-                ->attach('file', fopen($image->getRealPath(), 'r'), $image->getClientOriginalName())
+                ->attach(
+                    'file',
+                    fopen($image->getRealPath(), 'r'),
+                    $image->getClientOriginalName(),
+                    ['Content-Type' => $image->getMimeType() ?: 'application/octet-stream']
+                )
                 ->post((string) config('services.ocr_space.url'), [
                     'language' => 'eng',
+                    'filetype' => $fileType,
                     'isOverlayRequired' => 'false',
                     'detectOrientation' => 'true',
                     'scale' => 'true',
@@ -64,21 +79,20 @@ class OcrService
             throw new RuntimeException('OCR.Space could not be reached. Please try again.', previous: $exception);
         }
 
+        $payload = $response->json();
         if (! $response->successful()) {
-            throw new RuntimeException("OCR.Space request failed with status {$response->status()}.");
+            throw new RuntimeException($this->errorMessage(
+                is_array($payload) ? $payload : [],
+                "OCR.Space request failed with status {$response->status()}."
+            ));
         }
 
-        $payload = $response->json();
         if (! is_array($payload)) {
             throw new RuntimeException('OCR.Space returned an invalid response.');
         }
 
         if (($payload['IsErroredOnProcessing'] ?? false) === true) {
-            $message = $payload['ErrorMessage'] ?? $payload['ErrorDetails'] ?? 'OCR.Space could not process the image.';
-            if (is_array($message)) {
-                $message = implode(' ', $message);
-            }
-            throw new RuntimeException((string) $message);
+            throw new RuntimeException($this->errorMessage($payload, 'OCR.Space could not process the document.'));
         }
 
         $results = $payload['ParsedResults'] ?? [];
@@ -92,6 +106,19 @@ class OcrService
         }
 
         return trim($text);
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function errorMessage(array $payload, string $fallback): string
+    {
+        $messages = [];
+        foreach (['ErrorMessage', 'ErrorDetails'] as $key) {
+            $value = $payload[$key] ?? null;
+            if (is_array($value)) $messages = [...$messages, ...array_map('strval', $value)];
+            elseif (is_string($value) && trim($value) !== '') $messages[] = trim($value);
+        }
+
+        return $messages ? implode(' ', array_unique($messages)) : $fallback;
     }
 
     /** @return array<string, string> */
