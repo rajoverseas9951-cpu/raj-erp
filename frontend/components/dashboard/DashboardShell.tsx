@@ -10,18 +10,17 @@ import { Icon } from './Icon';
 const navigation: {label:string;href:string;icon:string;permission?:DashboardPermission;badge?:string;section?:string}[] = [
   {label:'Dashboard',href:'/dashboard',icon:'dashboard',permission:'dashboard.view'},
   {label:'Customers',href:'/customers',icon:'customers',permission:'customer.view'},
-  {label:'Vehicles',href:'/vehicles',icon:'vehicle',permission:'vehicle.view',badge:'12'},
+  {label:'Vehicles',href:'/vehicles',icon:'vehicle',permission:'vehicle.view'},
   {label:'Policies',href:'/policies',icon:'shield'},
   {label:'Claims',href:'/claims',icon:'reports'},
+  {label:'Accounts',href:'/accounts',icon:'book'},
   {label:'Reports',href:'/reports',icon:'reports',permission:'reports.view'},
   {label:'Masters',href:'/masters',icon:'settings'},
+  {label:'Team & Roles',href:'/users',icon:'users',permission:'users.view'},
   {label:'Settings',href:'/settings',icon:'settings',permission:'settings.manage'},
 ];
-const masterGroups=[
-  {label:'Insurance Masters',items:[{label:'Insurance Companies',href:'/insurance-companies'},{label:'Purchase Sources',href:'/purchase-sources'}]},
-  {label:'Vehicle Masters',items:[{label:'Vehicle Manufacturers',href:'/vehicle-manufacturers'},{label:'Vehicle Models',href:'/vehicle-models'},{label:'Vehicle Colours',href:'/vehicle-colours'},{label:'Vehicle Classes',href:'/vehicle-classes'},{label:'Body Types / Categories',href:'/vehicle-body-types'},{label:'Fuel Types',href:'/fuel-types'}]},
-];
-const masterPaths=masterGroups.flatMap(group=>group.items.map(item=>item.href));
+const masterGroups=[{label:'Master Management',items:[{label:'Open Masters Hub',href:'/masters'}]}];
+const masterPaths=['/masters','/insurance-companies','/purchase-sources','/vehicle-manufacturers','/vehicle-models','/vehicle-colours','/vehicle-classes','/vehicle-body-types','/fuel-types'];
 
 export function DashboardShell({session,children}:{session:DashboardSession;children:React.ReactNode}){
   const path=usePathname(); const [collapsed,setCollapsed]=useState(false); const [mobile,setMobile]=useState(false); const [dark,setDark]=useState(false); const [profile,setProfile]=useState(false); const [notices,setNotices]=useState(false); const [mastersOpen,setMastersOpen]=useState(()=>masterPaths.some(x=>path.startsWith(x))); const menuRef=useRef<HTMLDivElement>(null);

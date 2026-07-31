@@ -11,6 +11,7 @@ use App\Features\Ocr\Controllers\OcrController;
 use App\Features\Vehicles\Controllers\VehicleController;
 use App\Features\Vehicles\Controllers\VehicleInsuranceController;
 use App\Features\Vehicles\Controllers\VehicleMasterController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('health', fn () => response()->json(['status' => 'ok']));
@@ -22,6 +23,7 @@ Route::prefix('v1/auth')->group(function () {
 });
 
 Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
+    Route::get('dashboard/summary', [DashboardController::class, 'summary']);
     Route::post('ocr', [OcrController::class, 'scan'])->middleware('throttle:30,1');
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::post('auth/refresh', [AuthController::class, 'refresh'])->middleware('throttle:60,1');

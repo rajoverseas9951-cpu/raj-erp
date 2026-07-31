@@ -11,6 +11,7 @@ export default function InsuranceCompaniesPage(){
  useEffect(()=>{void load()},[]);
  useEffect(()=>{const close=(e:KeyboardEvent)=>{if(e.key==='Escape'&&!saving){setOpen(false);setViewing(undefined)}};addEventListener('keydown',close);return()=>removeEventListener('keydown',close)},[saving]);
  function add(){setEditing(undefined);setForm({...blank});setOpen(true)}
+ useEffect(()=>{if(new URLSearchParams(location.search).get('add')==='1')add()},[]);
  function edit(c:InsuranceCompany){setEditing(c);setForm({company_name:c.company_name,short_code:c.short_code||'',agency_code_name:c.agency_code_name||'',tds_percent:String(c.tds_percent),contact_person:c.contact_person||'',mobile:c.mobile||'',email:c.email||'',notes:c.notes||'',status:c.status});setOpen(true)}
  async function save(e:FormEvent){e.preventDefault();if(saving)return;setSaving(true);setError('');try{const body={...form,tds_percent:Number(form.tds_percent),default_commission_percent:editing?.default_commission_percent||0,settlement_days:editing?.settlement_days||30};if(editing)await insuranceAccountingApi.updateCompany(editing.id,body);else await insuranceAccountingApi.addCompany(body);setOpen(false);await load()}catch(e){setError(e instanceof Error?e.message:'Company save nahi hui.')}finally{setSaving(false)}}
  const filtered=rows.filter(c=>`${c.company_name} ${c.short_code||''} ${c.agency_code_name||''} ${c.mobile||''}`.toLowerCase().includes(search.toLowerCase()));
