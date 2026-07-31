@@ -10,6 +10,7 @@ use App\Features\Identity\Controllers\UserController;
 use App\Features\Ocr\Controllers\OcrController;
 use App\Features\Vehicles\Controllers\VehicleController;
 use App\Features\Vehicles\Controllers\VehicleInsuranceController;
+use App\Features\Vehicles\Controllers\VehicleMasterController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('health', fn () => response()->json(['status' => 'ok']));
@@ -50,10 +51,14 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('insurance-accounting/summary', [InsuranceAccountingController::class, 'summary']);
 
     Route::get('vehicles/export', [VehicleController::class, 'export']);
+    Route::get('vehicle-masters/{type}', [VehicleMasterController::class, 'index']);
+    Route::post('vehicle-masters/{type}', [VehicleMasterController::class, 'store']);
+    Route::put('vehicle-masters/{type}/{id}', [VehicleMasterController::class, 'update']);
     Route::post('vehicles/bulk-delete', [VehicleController::class, 'bulkDelete']);
     Route::post('vehicles/bulk-update', [VehicleController::class, 'bulkUpdate']);
     Route::get('vehicles/{vehicle}/timeline', [VehicleController::class, 'timeline']);
     Route::get('vehicles/{vehicle}/insurances', [VehicleInsuranceController::class, 'index']);
+    Route::post('vehicles/{vehicle}/insurance-calculation', [VehicleInsuranceController::class, 'calculate']);
     Route::post('vehicles/{vehicle}/insurances', [VehicleInsuranceController::class, 'store']);
     Route::put('vehicles/{vehicle}/insurances/{insurance}', [VehicleInsuranceController::class, 'update']);
     Route::delete('vehicles/{vehicle}/insurances/{insurance}', [VehicleInsuranceController::class, 'destroy']);

@@ -16,7 +16,6 @@ export type VehicleInsurancePolicy = {
   tp_premium: number;
   addon_premium: number;
   net_premium: number;
-  tp_net_premium: number;
   has_od_cover: boolean;
   has_tp_cover: boolean;
   commission_on_od: boolean;
@@ -34,7 +33,7 @@ export type VehicleInsurancePolicy = {
   purchase_source_id?: string;
   commission_receivable_from_type?: string;
   commission_receivable_from_id?: string;
-  commission_basis?: 'od_premium'|'net_premium'|'manual';
+  commission_basis?: 'OD_PREMIUM'|'NET_PREMIUM'|'MANUAL';
   gst_other_charges: number;
   gst_percent: number;
   gst_amount: number;
@@ -48,6 +47,25 @@ export type VehicleInsurancePolicy = {
   agent_commission: number;
   payment_details?: Record<string, unknown>;
   created_at: string;
+};
+
+export type InsuranceCalculation = {
+  has_od_cover: boolean;
+  has_tp_cover: boolean;
+  od_premium: number;
+  tp_premium: number;
+  addon_premium: number;
+  net_premium: number;
+  gst_percent: number;
+  gst_amount: number;
+  other_charges: number;
+  gross_premium: number;
+  customer_discount: number;
+  customer_pay: number;
+  commission_basis: 'OD_PREMIUM'|'NET_PREMIUM'|'MANUAL';
+  commission_base: number;
+  commission_percent: number;
+  gross_commission: number;
 };
 
 async function multipart<T>(path: string, body: FormData): Promise<T> {
@@ -91,6 +109,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const vehicleInsuranceApi = {
   list: (vehicleId: string) => request<VehicleInsurancePolicy[]>(`/vehicles/${vehicleId}/insurances`),
+  calculate: (vehicleId: string, body: unknown) => request<InsuranceCalculation>(`/vehicles/${vehicleId}/insurance-calculation`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }),
   create: (vehicleId: string, body: unknown) => request<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances`, {
     method: 'POST',
     body: JSON.stringify(body),

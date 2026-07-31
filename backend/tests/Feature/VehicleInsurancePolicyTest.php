@@ -23,9 +23,12 @@ class VehicleInsurancePolicyTest extends TestCase
         $created = $this->actingAs($user)->postJson("/api/v1/vehicles/{$vehicle->id}/insurances", $payload);
 
         $created->assertCreated()
-            ->assertJsonPath('data.gross_premium', '650.00')
-            ->assertJsonPath('data.gross_commission', '65.00')
-            ->assertJsonPath('data.customer_pay', '625.00')
+            ->assertJsonPath('data.net_premium', '600.00')
+            ->assertJsonPath('data.gst_amount', '108.00')
+            ->assertJsonPath('data.gross_premium', '708.00')
+            ->assertJsonPath('data.gross_commission', '60.00')
+            ->assertJsonPath('data.customer_pay', '683.00')
+            ->assertJsonMissingPath('data.tp_net_premium')
             ->assertJsonMissingPath('data.tds_percent')
             ->assertJsonMissingPath('data.tds_amount')
             ->assertJsonMissingPath('data.net_commission');
@@ -41,9 +44,9 @@ class VehicleInsurancePolicyTest extends TestCase
         );
 
         $updated->assertOk()
-            ->assertJsonPath('data.gross_premium', '750.00')
-            ->assertJsonPath('data.gross_commission', '112.50')
-            ->assertJsonPath('data.customer_pay', '725.00')
+            ->assertJsonPath('data.gross_premium', '826.00')
+            ->assertJsonPath('data.gross_commission', '105.00')
+            ->assertJsonPath('data.customer_pay', '801.00')
             ->assertJsonPath('data.agent_commission', '80.00');
 
         $this->actingAs($user)
@@ -71,6 +74,31 @@ class VehicleInsurancePolicyTest extends TestCase
             ]))
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['agent_commission']);
+    }
+
+    public function test_policy_save_recalculates_untrusted_client_totals(): void
+    {
+        [$user, $vehicle] = $this->userAndVehicle('private_car');
+
+        $this->actingAs($user)->postJson(
+            "/api/v1/vehicles/{$vehicle->id}/insurances",
+            array_merge($this->payload(), [
+                'od_premium' => 10000,
+                'tp_premium' => 3000,
+                'addon_premium' => 2000,
+                'other_charges' => 100,
+                'customer_discount' => 700,
+                'agent_commission' => 0,
+                'net_premium' => 1,
+                'gst_amount' => 1,
+                'gross_premium' => 1,
+                'customer_pay' => 1,
+            ])
+        )->assertCreated()
+            ->assertJsonPath('data.net_premium', '15000.00')
+            ->assertJsonPath('data.gst_amount', '2700.00')
+            ->assertJsonPath('data.gross_premium', '17800.00')
+            ->assertJsonPath('data.customer_pay', '17100.00');
     }
 
     #[DataProvider('automaticGstCases')]
@@ -153,7 +181,7 @@ class VehicleInsurancePolicyTest extends TestCase
         ]);
         $package = $this->actingAs($user)->postJson("/api/v1/vehicles/{$vehicle->id}/insurances", array_merge($base, [
             'policy_number'=>'PRIVATE-PACKAGE','purchase_from_type'=>'direct_company',
-            'commission_basis'=>'od_premium','od_commission_percent'=>15,
+            'commission_basis'=>'OD_PREMIUM','commission_percent'=>15,
         ]))->assertCreated()
             ->assertJsonPath('data.gross_commission','1500.00')
             ->assertJsonPath('data.commission_receivable_from_type','insurance_company')
@@ -163,7 +191,7 @@ class VehicleInsurancePolicyTest extends TestCase
             "/api/v1/vehicles/{$vehicle->id}/insurances/{$package->json('data.id')}",
             array_merge($base, [
                 'policy_number'=>'PRIVATE-PACKAGE','purchase_from_type'=>'agent','purchase_source_id'=>$sourceId,
-                'commission_basis'=>'manual','gross_commission'=>777,
+                'commission_basis'=>'MANUAL','gross_commission'=>777,
             ])
         )->assertOk()
             ->assertJsonPath('data.gross_commission','777.00')
@@ -172,7 +200,7 @@ class VehicleInsurancePolicyTest extends TestCase
 
         $this->actingAs($user)->postJson("/api/v1/vehicles/{$vehicle->id}/insurances", array_merge($base, [
             'policy_number'=>'PRIVATE-TP','insurance_type'=>'third_party','has_od_cover'=>false,
-            'purchase_from_type'=>'direct_company','commission_basis'=>'net_premium','commission_percent'=>2.5,
+            'purchase_from_type'=>'direct_company','commission_basis'=>'NET_PREMIUM','commission_percent'=>2.5,
         ]))->assertCreated()
             ->assertJsonPath('data.od_premium','0.00')
             ->assertJsonPath('data.gross_commission','75.00');

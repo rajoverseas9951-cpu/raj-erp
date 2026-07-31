@@ -4,6 +4,7 @@ namespace App\Features\Vehicles\Controllers;
 
 use App\Features\Vehicles\Models\Vehicle;
 use App\Features\Vehicles\Requests\VehicleInsuranceRequest;
+use App\Features\Vehicles\Services\InsuranceCalculationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,10 @@ use Illuminate\Validation\ValidationException;
 
 class VehicleInsuranceController
 {
+    public function __construct(private readonly InsuranceCalculationService $calculator)
+    {
+    }
+
     public function index(Request $request, string $vehicle): JsonResponse
     {
         $vehicleModel = $this->vehicle($request, $vehicle);
@@ -37,6 +42,32 @@ class VehicleInsuranceController
         });
 
         return response()->json(['success' => true, 'data' => $policy], 201);
+    }
+
+    public function calculate(Request $request, string $vehicle): JsonResponse
+    {
+        $vehicleModel = $this->vehicle($request, $vehicle);
+        $this->authorize($request, 'vehicle.view');
+        $input = $request->validate([
+            'insurance_type' => ['required', 'string'],
+            'has_od_cover' => ['sometimes', 'boolean'],
+            'has_tp_cover' => ['sometimes', 'boolean'],
+            'od_premium' => ['nullable', 'numeric', 'min:0'],
+            'tp_premium' => ['nullable', 'numeric', 'min:0'],
+            'addon_premium' => ['nullable', 'numeric', 'min:0'],
+            'other_charges' => ['nullable', 'numeric', 'min:0'],
+            'customer_discount' => ['nullable', 'numeric', 'min:0'],
+            'gst_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'commission_basis' => ['nullable', 'string'],
+            'commission_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'od_commission_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'manual_commission_amount' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->calculator->calculate($input, $vehicleModel->vehicle_type),
+        ]);
     }
 
     public function update(VehicleInsuranceRequest $request, string $vehicle, string $insurance): JsonResponse
@@ -69,17 +100,14 @@ class VehicleInsuranceController
 
     private function policyData(array $data, Vehicle $vehicle, ?string $actorId, bool $creating = true): array
     {
-        $modernCommission = array_key_exists('commission_on_od', $data)
-            || array_key_exists('commission_on_tp', $data) || array_key_exists('commission_on_net', $data);
         $type = $data['insurance_type'];
         $data += [
             'has_od_cover' => $type !== 'third_party',
             'has_tp_cover' => $type !== 'standalone_od',
-            'net_premium' => 0, 'tp_net_premium' => 0,
             'commission_on_od' => false, 'commission_on_tp' => false,
             'commission_on_net' => true, 'commission_on_addon' => false,
             'od_commission_percent' => 0, 'tp_commission_percent' => 0,
-            'gst_other_charges' => 0, 'gst_percent' => 0, 'gst_amount' => 0,
+            'gst_other_charges' => 0, 'gst_percent' => 18, 'gst_amount' => 0,
             'other_charges' => 0,
         ];
         $vehicleType = strtolower((string) $vehicle->vehicle_type);
@@ -105,65 +133,11 @@ class VehicleInsuranceController
             $data['commission_receivable_from_type'] = 'insurance_company';
             $data['commission_receivable_from_id'] = $data['insurance_company_id'] ?? null;
         }
-        $automaticGst = in_array($vehicleType, ['private_car', 'two_wheeler'], true);
-        if ($automaticGst) {
-            if (empty($data['has_od_cover'])) $data['od_premium'] = 0;
-            if (empty($data['has_tp_cover'])) $data['tp_premium'] = 0;
-            $data['net_premium'] = round(
-                (float) $data['od_premium'] + (float) $data['tp_premium'] + (float) $data['addon_premium'],
-                2
-            );
-            $data['gst_percent'] = 18;
-            $data['gst_amount'] = round((float) $data['net_premium'] * 18 / 100, 2);
-            $grossPremium = round(
-                (float) $data['net_premium'] + (float) $data['gst_amount'] + (float) $data['other_charges'],
-                2
-            );
-        } else {
-            $grossPremium = round(
-                (float) $data['od_premium'] + (float) $data['tp_premium']
-                + (float) $data['addon_premium'] + (float) $data['gst_other_charges'],
-                2
-            );
-        }
-        $customerPay = round($grossPremium - (float) $data['customer_discount'], 2);
-        if ($customerPay < 0) {
-            throw ValidationException::withMessages([
-                'customer_discount' => ['Customer discount cannot exceed gross premium.'],
-            ]);
-        }
-        $commercial = in_array($vehicleType, ['taxi', 'lgv', 'hgv', 'commercial', 'goods_vehicle', 'passenger_commercial'], true);
-        $addonBase = ! empty($data['commission_on_addon']) ? (float) $data['addon_premium'] : 0;
-
-        if ($vehicleType === 'private_car' && ! empty($data['commission_basis'])) {
-            $basis = $data['commission_basis'];
-            $odCommission = $tpCommission = 0;
-            if ($basis === 'manual') {
-                $grossCommission = round((float) ($data['gross_commission'] ?? 0), 2);
-            } elseif ($basis === 'net_premium') {
-                $grossCommission = round((float) $data['net_premium'] * (float) $data['commission_percent'] / 100, 2);
-            } else {
-                $grossCommission = round((float) $data['od_premium'] * (float) $data['od_commission_percent'] / 100, 2);
-                $odCommission = $grossCommission;
-            }
-        } elseif (! $modernCommission) {
-            $grossCommission = round($grossPremium * (float) $data['commission_percent'] / 100, 2);
-            $odCommission = $tpCommission = 0;
-        } elseif ($commercial || ! empty($data['commission_on_net'])) {
-            $grossCommission = round(
-                ((float) ($data['net_premium'] ?? 0) + ($automaticGst ? 0 : $addonBase))
-                * (float) $data['commission_percent'] / 100,
-                2
-            );
-            $odCommission = $tpCommission = 0;
-        } else {
-            $odCommission = ! empty($data['commission_on_od'])
-                ? round(((float) $data['od_premium'] + $addonBase) * (float) ($data['od_commission_percent'] ?? 0) / 100, 2) : 0;
-            $tpBase = (float) ($data['tp_net_premium'] ?? 0) ?: (float) $data['tp_premium'];
-            $tpCommission = ! empty($data['commission_on_tp'])
-                ? round($tpBase * (float) ($data['tp_commission_percent'] ?? 0) / 100, 2) : 0;
-            $grossCommission = round($odCommission + $tpCommission, 2);
-        }
+        $calculation = $this->calculator->calculate([
+            ...$data,
+            'manual_commission_amount' => $data['gross_commission'] ?? 0,
+        ], $vehicleType);
+        $grossCommission = $calculation['gross_commission'];
 
         if ((float) $data['agent_commission'] > $grossCommission) {
             throw ValidationException::withMessages([
@@ -175,11 +149,16 @@ class VehicleInsuranceController
 
         return array_merge($data, [
             'tenant_id' => $vehicle->tenant_id,
-            'gross_premium' => $grossPremium,
-            'gross_commission' => $grossCommission,
-            'od_commission_amount' => $odCommission,
-            'tp_commission_amount' => $tpCommission,
-            'customer_pay' => $customerPay,
+            ...$calculation,
+            'commission_on_od' => $calculation['commission_basis'] === InsuranceCalculationService::OD_PREMIUM,
+            'commission_on_tp' => false,
+            'commission_on_net' => $calculation['commission_basis'] === InsuranceCalculationService::NET_PREMIUM,
+            'od_commission_percent' => $calculation['commission_basis'] === InsuranceCalculationService::OD_PREMIUM
+                ? $calculation['commission_percent'] : 0,
+            'od_commission_amount' => $calculation['commission_basis'] === InsuranceCalculationService::OD_PREMIUM
+                ? $grossCommission : 0,
+            'tp_commission_percent' => 0,
+            'tp_commission_amount' => 0,
             'updated_by' => $actorId,
         ], $creating ? ['created_by' => $actorId] : []);
     }

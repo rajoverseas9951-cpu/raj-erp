@@ -19,7 +19,7 @@ class VehicleInsurance extends Model
         'gross_premium', 'commission_percent', 'gross_commission',
         'customer_discount', 'customer_pay', 'agent', 'agent_commission', 'payment_details',
         'policy_document_file_id', 'has_od_cover', 'has_tp_cover', 'net_premium',
-        'tp_net_premium', 'commission_on_od', 'commission_on_tp', 'commission_on_net',
+        'commission_on_od', 'commission_on_tp', 'commission_on_net',
         'commission_on_addon', 'od_commission_percent', 'tp_commission_percent',
         'od_commission_amount', 'tp_commission_amount', 'long_term_tp_policy_number',
         'long_term_tp_expiry',
@@ -27,6 +27,8 @@ class VehicleInsurance extends Model
         'commission_receivable_from_id', 'commission_basis',
         'created_by', 'updated_by',
     ];
+
+    protected $hidden = ['tp_net_premium'];
 
     protected function casts(): array
     {
@@ -48,7 +50,6 @@ class VehicleInsurance extends Model
             'customer_pay' => 'decimal:2',
             'agent_commission' => 'decimal:2',
             'net_premium' => 'decimal:2',
-            'tp_net_premium' => 'decimal:2',
             'has_od_cover' => 'boolean',
             'has_tp_cover' => 'boolean',
             'commission_on_od' => 'boolean',
