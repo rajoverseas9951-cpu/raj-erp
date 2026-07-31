@@ -15,9 +15,9 @@ class OcrController
     public function scan(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'document_type' => ['required', Rule::in(['rc', 'aadhaar'])],
+            'document_type' => ['required', Rule::in(['rc', 'aadhaar', 'insurance_policy'])],
             'images' => ['required', 'array', 'between:1,2'],
-            'images.*' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
+            'images.*' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:15360'],
         ]);
 
         try {

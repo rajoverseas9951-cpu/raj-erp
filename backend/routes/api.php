@@ -53,6 +53,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::post('vehicles/{vehicle}/insurances', [VehicleInsuranceController::class, 'store']);
     Route::put('vehicles/{vehicle}/insurances/{insurance}', [VehicleInsuranceController::class, 'update']);
     Route::delete('vehicles/{vehicle}/insurances/{insurance}', [VehicleInsuranceController::class, 'destroy']);
+    Route::get('vehicles/{vehicle}/insurances/{insurance}/document', [VehicleInsuranceController::class, 'document']);
     Route::apiResource('vehicles', VehicleController::class);
 
     Route::get('customers/export', [CustomerController::class, 'export']);

@@ -1,139 +1,41 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { Vehicle, vehicleApi } from '@/lib/vehicles';
-import { InsuranceCompany, insuranceAccountingApi } from '@/lib/insurance-accounting';
-import { VehicleInsurancePolicy, vehicleInsuranceApi } from '@/lib/vehicle-insurance';
+import {FormEvent,useEffect,useMemo,useState} from 'react';
+import {useParams} from 'next/navigation';
+import {Vehicle,vehicleApi} from '@/lib/vehicles';
+import {InsuranceCompany,insuranceAccountingApi} from '@/lib/insurance-accounting';
+import {VehicleInsurancePolicy,vehicleInsuranceApi} from '@/lib/vehicle-insurance';
+import {scanDocument} from '@/lib/ocr';
 
-type PurchaseForm = { id:string; name:string; code:string; active:boolean };
-
-const blank = {
-  company_id:'', code:'', purchase_form_id:'', policy_number:'', policy_date:'', issue_date:'', expiry_date:'',
-  status:'running', insurance_type:'comprehensive', od_premium:'0', tp_premium:'0', addon_premium:'0',
-  commission_percent:'0', gst_other_charges:'0', customer_discount:'0', agent:'', agent_commission:'0', remark:''
-};
-
+type Purchase={id:string;name:string;active:boolean};
+const empty:Record<string,string>={company_id:'',purchase_id:'',policy_number:'',policy_date:'',issue_date:'',expiry_date:'',status:'running',insurance_type:'comprehensive',od_premium:'0',tp_premium:'0',addon_premium:'0',net_premium:'0',tp_net_premium:'0',gst_other_charges:'0',has_od_cover:'1',has_tp_cover:'1',commission_on_od:'1',commission_on_tp:'1',commission_on_net:'0',commission_on_addon:'0',od_commission_percent:'0',tp_commission_percent:'0',commission_percent:'0',customer_discount:'0',agent:'',agent_commission:'0',long_term_tp_policy_number:'',long_term_tp_expiry:'',remark:''};
 const money=(v:number)=>`₹${Number(v||0).toFixed(2)}`;
 
-export default function VehicleInsurancePage(){
-  const {vehicleId}=useParams<{vehicleId:string}>();
-  const [vehicle,setVehicle]=useState<Vehicle|null>(null);
-  const [companies,setCompanies]=useState<InsuranceCompany[]>([]);
-  const [purchaseForms,setPurchaseForms]=useState<PurchaseForm[]>([]);
-  const [form,setForm]=useState<Record<string,string>>(blank);
-  const [policies,setPolicies]=useState<VehicleInsurancePolicy[]>([]);
-  const [editingId,setEditingId]=useState<string|null>(null);
-  const [showPurchaseForm,setShowPurchaseForm]=useState(false);
-  const [loading,setLoading]=useState(true);
-  const [saving,setSaving]=useState(false);
-  const [error,setError]=useState('');
-  const [success,setSuccess]=useState('');
-
-  const purchaseKey='raj_erp_purchase_forms';
-
-  useEffect(()=>{
-    async function load(){
-      setLoading(true); setError('');
-      try{
-        const [v,c,p]=await Promise.all([vehicleApi.get(vehicleId),insuranceAccountingApi.companies(),vehicleInsuranceApi.list(vehicleId)]);
-        setVehicle(v); setCompanies(c.filter(x=>x.status==='active'));
-        setPolicies(p);
-        const savedForms=localStorage.getItem(purchaseKey); if(savedForms) setPurchaseForms(JSON.parse(savedForms));
-      }catch(e){
-        const m=e instanceof Error?e.message:'Data load nahi hua.';
-        if(/unauthenticated|401/i.test(m)){sessionStorage.removeItem('raj_erp_token');location.href='/login';return;}
-        setError(m);
-      }finally{setLoading(false)}
-    }
-    void load();
-  },[vehicleId]);
-
-  const n=(k:string)=>Number(form[k]||0);
-  const gross=useMemo(()=>n('od_premium')+n('tp_premium')+n('addon_premium')+n('gst_other_charges'),[form]);
-  const commission=useMemo(()=>gross*n('commission_percent')/100,[gross,form]);
-  const customerPay=useMemo(()=>Math.max(0,gross-n('customer_discount')),[gross,form]);
-  const agentCommission=useMemo(()=>Math.min(n('agent_commission'),commission),[commission,form]);
-  const set=(k:string,v:string)=>setForm(o=>({...o,[k]:v}));
-
-  function selectCompany(id:string){
-    const company=companies.find(c=>c.id===id);
-    setForm(o=>({...o,company_id:id,code:company?.short_code??'',commission_percent:String(company?.default_commission_percent??0)}));
-  }
-
-  function addPurchaseForm(e:FormEvent<HTMLFormElement>){
-    e.preventDefault(); const el=e.currentTarget; const fd=new FormData(el);
-    const name=String(fd.get('name')??'').trim().toUpperCase(); const code=String(fd.get('code')??'').trim().toUpperCase();
-    if(!name){setError('Purchase form name required hai.');return;}
-    const row:PurchaseForm={id:crypto.randomUUID(),name,code,active:true};
-    const next=[...purchaseForms,row]; setPurchaseForms(next); localStorage.setItem(purchaseKey,JSON.stringify(next));
-    set('purchase_form_id',row.id); setShowPurchaseForm(false); el.reset(); setSuccess('Purchase form add ho gaya.');
-  }
-
-  async function submit(e:FormEvent){
-    e.preventDefault(); setError(''); setSuccess(''); setSaving(true);
-    const company=companies.find(c=>c.id===form.company_id); const purchase=purchaseForms.find(p=>p.id===form.purchase_form_id);
-    if(!company){setError('Pehle Insurance Company Master me company add karke select karo.');setSaving(false);return;}
-    if(!purchase){setError('Purchase Form select ya add karo.');setSaving(false);return;}
-    if(!form.policy_number||!form.issue_date||!form.expiry_date){setError('Policy number, issue date aur expiry date required hain.');setSaving(false);return;}
-    const payload={insurance_company_id:company.id,company_name:company.company_name,company_code:company.short_code??'',purchase_from:purchase.name,policy_number:form.policy_number.toUpperCase(),policy_date:form.policy_date||null,issue_date:form.issue_date,expiry_date:form.expiry_date,status:form.status,insurance_type:form.insurance_type,remark:form.remark||null,od_premium:n('od_premium'),tp_premium:n('tp_premium'),addon_premium:n('addon_premium'),gst_other_charges:n('gst_other_charges'),commission_percent:n('commission_percent'),customer_discount:n('customer_discount'),agent:form.agent||null,agent_commission:agentCommission,payment_details:{}};
-    try{
-      const saved=editingId?await vehicleInsuranceApi.update(vehicleId,editingId,payload):await vehicleInsuranceApi.create(vehicleId,payload);
-      setPolicies(old=>editingId?old.map(policy=>policy.id===saved.id?saved:policy):[saved,...old]);
-      setForm(blank);setEditingId(null);setSuccess(editingId?'Insurance policy update ho gayi.':'Insurance policy save ho gayi.');
-    }catch(e){setError(e instanceof Error?e.message:'Insurance policy save nahi hui.');}
-    finally{setSaving(false);}
-  }
-
-  function edit(policy:VehicleInsurancePolicy){
-    let purchase=purchaseForms.find(row=>row.name===policy.purchase_from);
-    if(!purchase){purchase={id:`policy-${policy.id}`,name:policy.purchase_from,code:'',active:true};setPurchaseForms(old=>[...old,purchase!]);}
-    setEditingId(policy.id);
-    setForm({company_id:policy.insurance_company_id??'',code:policy.company_code??'',purchase_form_id:purchase.id,policy_number:policy.policy_number,policy_date:policy.policy_date??'',issue_date:policy.issue_date,expiry_date:policy.expiry_date,status:policy.status,insurance_type:policy.insurance_type,od_premium:String(policy.od_premium),tp_premium:String(policy.tp_premium),addon_premium:String(policy.addon_premium),commission_percent:String(policy.commission_percent),gst_other_charges:String(policy.gst_other_charges),customer_discount:String(policy.customer_discount),agent:policy.agent??'',agent_commission:String(policy.agent_commission),remark:policy.remark??''});
-    window.scrollTo({top:0,behavior:'smooth'});
-  }
-
-  async function remove(id:string){if(!confirm('Policy delete karni hai?'))return;try{await vehicleInsuranceApi.remove(vehicleId,id);setPolicies(old=>old.filter(policy=>policy.id!==id));}catch(e){setError(e instanceof Error?e.message:'Policy delete nahi hui.');}}
-
-  if(loading)return <main className="p-6">Loading insurance...</main>;
-  if(!vehicle)return <main className="p-6"><div className="rounded-xl bg-red-50 p-4 text-red-700">{error||'Vehicle nahi mila.'}</div></main>;
-
-  return <main className="space-y-6 p-6">
-    <section className="rounded-3xl bg-gradient-to-r from-slate-950 via-blue-950 to-blue-700 p-7 text-white shadow-xl">
-      <div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-xs font-bold tracking-[.24em] text-blue-200">POLICY MANAGEMENT</p><h1 className="mt-2 text-3xl font-black">{vehicle.vehicle_number}</h1><p className="mt-1 text-blue-100">{vehicle.customer?.first_name} {vehicle.customer?.last_name} · {vehicle.customer?.mobile}</p></div><div className="flex gap-2"><a href={`/vehicles/${vehicle.id}`} className="rounded-xl bg-white px-5 py-3 font-bold text-slate-900">Vehicle Profile</a><a href="/accounts/insurance" className="rounded-xl border border-white/30 px-5 py-3 font-bold">Company Master</a></div></div>
-    </section>
-
-    <nav className="flex flex-wrap gap-2 rounded-2xl border bg-white p-3 shadow-sm"><a href={`/vehicles/${vehicle.id}`} className="rounded-xl px-4 py-2 font-semibold hover:bg-slate-100">Overview</a><a href={`/vehicles/${vehicle.id}/insurance`} className="rounded-xl bg-blue-700 px-4 py-2 font-semibold text-white">Insurance</a><a href={`/vehicles/${vehicle.id}/puc`} className="rounded-xl px-4 py-2 font-semibold hover:bg-slate-100">PUC</a><a href={`/vehicles/${vehicle.id}/rto-work`} className="rounded-xl px-4 py-2 font-semibold hover:bg-slate-100">RTO Work</a><a href={`/vehicles/${vehicle.id}/payments`} className="rounded-xl px-4 py-2 font-semibold hover:bg-slate-100">Payments</a></nav>
-
-    {error&&<div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>}{success&&<div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-700">{success}</div>}
-
-    {companies.length===0&&<div className="rounded-2xl border border-amber-200 bg-amber-50 p-5"><p className="font-bold text-amber-900">Abhi koi Insurance Company add nahi hai.</p><p className="mt-1 text-sm text-amber-800">Pehle Company Master me company, code aur default commission % add karo.</p><a href="/accounts/insurance" className="mt-3 inline-block rounded-xl bg-amber-700 px-4 py-2 font-bold text-white">Add Insurance Company</a></div>}
-
-    <form onSubmit={submit} className="grid gap-6 xl:grid-cols-[.9fr_1.45fr_1.05fr]">
-      <Card title="Vehicle Snapshot"><Info label="Vehicle No" value={vehicle.vehicle_number}/><Info label="Party" value={`${vehicle.customer?.first_name??''} ${vehicle.customer?.last_name??''}`}/><Info label="Mobile" value={vehicle.customer?.mobile}/><Info label="Vehicle Type" value={vehicle.vehicle_type?.replaceAll('_',' ')}/><Info label="Chassis No" value={vehicle.chassis_number}/><Info label="Engine No" value={vehicle.engine_number}/><Info label="Seating" value={vehicle.seating_capacity}/><Info label="CC / GVW" value={vehicle.cubic_capacity||vehicle.gross_weight}/></Card>
-
-      <Card title="Policy Details"><div className="grid gap-4 md:grid-cols-2">
-        <SelectObjects label="Insurance Company" value={form.company_id} onChange={selectCompany} options={companies.map(c=>({value:c.id,label:c.company_name}))}/>
-        <ReadText label="Company Code" value={form.code||'Auto from company master'}/>
-        <label className="text-sm font-semibold md:col-span-2">Purchase Form<div className="mt-2 flex gap-2"><select value={form.purchase_form_id} onChange={e=>set('purchase_form_id',e.target.value)} className="w-full rounded-xl border bg-white px-4 py-3 font-normal"><option value="">Select Purchase Form</option>{purchaseForms.filter(p=>p.active).map(p=><option key={p.id} value={p.id}>{p.name}{p.code?` (${p.code})`:''}</option>)}</select><button type="button" onClick={()=>setShowPurchaseForm(true)} className="whitespace-nowrap rounded-xl border border-blue-200 bg-blue-50 px-4 font-bold text-blue-700">+ Add</button></div></label>
-        <Input label="Policy No" value={form.policy_number} onChange={v=>set('policy_number',v.toUpperCase())}/><Input type="date" label="Policy Date" value={form.policy_date} onChange={v=>set('policy_date',v)}/><Input type="date" label="Issue Date" value={form.issue_date} onChange={v=>set('issue_date',v)}/><Input type="date" label="Expiry Date" value={form.expiry_date} onChange={v=>set('expiry_date',v)}/><Select label="Status" value={form.status} onChange={v=>set('status',v)} options={['running','pending','expired','cancelled']}/><Select label="Insurance Type" value={form.insurance_type} onChange={v=>set('insurance_type',v)} options={['comprehensive','third_party','standalone_od','commercial_package']}/><label className="text-sm font-semibold md:col-span-2">Remark<textarea value={form.remark} onChange={e=>set('remark',e.target.value)} className="mt-2 min-h-24 w-full rounded-xl border p-3 font-normal"/></label>
-      </div></Card>
-
-      <Card title="Premium & Earnings"><div className="grid gap-4 md:grid-cols-2">
-        <Input type="number" label="OD Premium" value={form.od_premium} onChange={v=>set('od_premium',v)}/><Input type="number" label="TP Premium" value={form.tp_premium} onChange={v=>set('tp_premium',v)}/><Input type="number" label="Add-on Premium" value={form.addon_premium} onChange={v=>set('addon_premium',v)}/><Input type="number" label="GST / Other Charges" value={form.gst_other_charges} onChange={v=>set('gst_other_charges',v)}/><Read label="Gross Premium" value={gross}/><Input type="number" label="Commission %" value={form.commission_percent} onChange={v=>set('commission_percent',v)}/><Read label="Gross Commission" value={commission}/><Input type="number" label="Customer Discount" value={form.customer_discount} onChange={v=>set('customer_discount',v)}/><Read label="Customer Pay" value={customerPay}/><Input label="Agent" value={form.agent} onChange={v=>set('agent',v)}/><Input type="number" label="Agent Commission" value={String(agentCommission)} onChange={v=>set('agent_commission',String(Math.min(Number(v||0),commission)))}/>
-      </div><p className="mt-3 text-xs text-slate-500">Agent commission is capped at Gross Commission.</p><button disabled={companies.length===0||saving} className="mt-5 w-full rounded-xl bg-blue-800 px-5 py-3 font-bold text-white disabled:opacity-40">{saving?'Saving Policy...':editingId?'Update Insurance Policy':'Save Insurance Policy'}</button>{editingId&&<button type="button" onClick={()=>{setEditingId(null);setForm(blank)}} className="mt-2 w-full rounded-xl border px-5 py-3 font-bold">Cancel Edit</button>}</Card>
-    </form>
-
-    <section className="overflow-hidden rounded-2xl border bg-white shadow-sm"><div className="flex items-center justify-between border-b p-5"><div><h2 className="text-xl font-bold">Policy History</h2><p className="text-sm text-slate-500">Current aur previous policies.</p></div><span className="rounded-full bg-blue-50 px-4 py-2 font-bold text-blue-700">{policies.length} Policies</span></div><div className="overflow-x-auto"><table className="w-full min-w-[1100px] text-left text-sm"><thead className="bg-slate-50"><tr>{['Company','Purchase From','Type','Policy No','Issue','Expiry','Gross Premium','Gross Commission','Customer Pay','Status','Action'].map(h=><th key={h} className="p-4">{h}</th>)}</tr></thead><tbody>{policies.length===0?<tr><td colSpan={11} className="p-10 text-center text-slate-500">Abhi koi policy add nahi hai.</td></tr>:policies.map(p=><tr key={p.id} className="border-t"><td className="p-4 font-semibold">{p.company_name}</td><td className="p-4">{p.purchase_from}</td><td className="p-4 capitalize">{p.insurance_type.replaceAll('_',' ')}</td><td className="p-4">{p.policy_number}</td><td className="p-4">{p.issue_date}</td><td className="p-4">{p.expiry_date}</td><td className="p-4">{money(p.gross_premium)}</td><td className="p-4">{money(p.gross_commission)}</td><td className="p-4">{money(p.customer_pay)}</td><td className="p-4"><span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold capitalize text-emerald-700">{p.status}</span></td><td className="p-4"><div className="flex gap-2"><button type="button" onClick={()=>edit(p)} className="rounded-lg border border-blue-200 px-3 py-2 text-blue-700">Edit</button><button type="button" onClick={()=>void remove(p.id)} className="rounded-lg border border-red-200 px-3 py-2 text-red-600">Delete</button></div></td></tr>)}</tbody></table></div></section>
-
-    {showPurchaseForm&&<div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4"><form onSubmit={addPurchaseForm} className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl"><div className="flex items-center justify-between"><h2 className="text-xl font-bold">Add Purchase Form</h2><button type="button" onClick={()=>setShowPurchaseForm(false)} className="rounded-lg border px-3 py-1">Close</button></div><div className="mt-5 grid gap-4"><label className="text-sm font-semibold">Purchase Form Name<input name="name" required placeholder="Example: RAJ INSURANCE DHANERA" className="mt-2 w-full rounded-xl border px-4 py-3 font-normal"/></label><label className="text-sm font-semibold">Short Code<input name="code" placeholder="Example: RID" className="mt-2 w-full rounded-xl border px-4 py-3 font-normal uppercase"/></label><button className="rounded-xl bg-blue-700 px-5 py-3 font-bold text-white">Save Purchase Form</button></div></form></div>}
-  </main>;
+export default function Page(){
+ const {vehicleId}=useParams<{vehicleId:string}>();const [vehicle,setVehicle]=useState<Vehicle|null>(null),[companies,setCompanies]=useState<InsuranceCompany[]>([]),[policies,setPolicies]=useState<VehicleInsurancePolicy[]>([]),[form,setForm]=useState({...empty}),[file,setFile]=useState<File|null>(null),[editing,setEditing]=useState<string>(),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[reading,setReading]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState('');
+ const [purchases,setPurchases]=useState<Purchase[]>([]);
+ useEffect(()=>{void(async()=>{try{const [v,c,p]=await Promise.all([vehicleApi.get(vehicleId),insuranceAccountingApi.companies(),vehicleInsuranceApi.list(vehicleId)]);setVehicle(v);setCompanies(c.filter(x=>x.status==='active'));setPolicies(p);setPurchases(JSON.parse(localStorage.getItem('raj_erp_purchase_forms')||'[]'))}catch(e){setError(e instanceof Error?e.message:'Unable to load insurance data')}finally{setLoading(false)}})()},[vehicleId]);
+ const n=(k:string)=>Number(form[k]||0),set=(k:string,v:string)=>setForm(x=>({...x,[k]:v})),checked=(k:string)=>form[k]==='1';
+ const gross=useMemo(()=>n('od_premium')+n('tp_premium')+n('addon_premium')+n('gst_other_charges'),[form]);
+ const commercial=['taxi','lgv','hgv','commercial','goods_vehicle','passenger_commercial'].includes(vehicle?.vehicle_type||'');
+ const commission=useMemo(()=>commercial||checked('commission_on_net')?(n('net_premium')+(checked('commission_on_addon')?n('addon_premium'):0))*n('commission_percent')/100:(checked('commission_on_od')?(n('od_premium')+(checked('commission_on_addon')?n('addon_premium'):0))*n('od_commission_percent')/100:0)+(checked('commission_on_tp')?(n('tp_net_premium')||n('tp_premium'))*n('tp_commission_percent')/100:0),[form,commercial]);
+ const years=vehicle?.vehicle_type==='private_car'?3:vehicle?.vehicle_type==='two_wheeler'?5:0;
+ const longTerm=useMemo(()=>{if(!years||!vehicle?.registration_date)return false;const d=new Date(vehicle.registration_date);if(isNaN(d.getTime()))return false;d.setFullYear(d.getFullYear()+years);return new Date()<d||!!form.long_term_tp_policy_number||!!form.long_term_tp_expiry},[years,vehicle,form.long_term_tp_policy_number,form.long_term_tp_expiry]);
+ function defaults(type:string){setForm(x=>({...x,insurance_type:type,has_od_cover:type==='third_party'?'0':'1',has_tp_cover:type==='standalone_od'?'0':'1',commission_on_net:commercial?'1':'0',commission_on_od:commercial?'0':type==='third_party'?'0':'1',commission_on_tp:commercial?'0':type==='standalone_od'?'0':'1'}))}
+ async function ocr(){if(!file)return;setReading(true);setError('');try{const r=await scanDocument('insurance_policy',[file]);let count=0;setForm(old=>{const next={...old};Object.entries(r.fields).forEach(([k,v])=>{if(v&&k in next){next[k]=v;count++}});return next});if(r.fields.insurance_type)defaults(r.fields.insurance_type);const name=r.fields.company_name?.toLowerCase();const c=name&&companies.find(x=>name.includes(x.company_name.toLowerCase())||x.company_name.toLowerCase().includes(name));if(c)set('company_id',c.id);setMessage(`${count} reliable fields extracted. Please verify all values.`)}catch(e){setError(`${e instanceof Error?e.message:'OCR failed'} Manual entry remains available.`)}finally{setReading(false)}}
+ async function submit(e:FormEvent){e.preventDefault();setError('');const company=companies.find(x=>x.id===form.company_id),purchase=purchases.find(x=>x.id===form.purchase_id);if(!company||!purchase)return setError('Insurance company and purchase form are required.');if(!checked('has_od_cover')&&!checked('has_tp_cover'))return setError('Select at least one cover.');if(n('customer_discount')>gross)return setError('Customer discount cannot exceed gross premium.');if(n('agent_commission')>commission)return setError('Agent commission cannot exceed gross commission.');setSaving(true);try{const data:Record<string,unknown>={...form,insurance_company_id:company.id,company_name:company.company_name,company_code:company.short_code||'',purchase_from:purchase.name,payment_details:{}};delete data.company_id;delete data.purchase_id;['od_premium','tp_premium','addon_premium','net_premium','tp_net_premium','gst_other_charges','od_commission_percent','tp_commission_percent','commission_percent','customer_discount','agent_commission'].forEach(k=>data[k]=n(k));['has_od_cover','has_tp_cover','commission_on_od','commission_on_tp','commission_on_net','commission_on_addon'].forEach(k=>data[k]=checked(k));const fd=new FormData();Object.entries(data).forEach(([k,v])=>{if(v!=='')fd.append(k,typeof v==='object'?JSON.stringify(v):typeof v==='boolean'?(v?'1':'0'):String(v))});if(file)fd.append('policy_document',file);const saved=await vehicleInsuranceApi.saveForm(vehicleId,fd,editing);setPolicies(x=>editing?x.map(p=>p.id===saved.id?saved:p):[saved,...x]);setForm({...empty});setFile(null);setEditing(undefined);setMessage('Insurance policy saved successfully.')}catch(e){setError(e instanceof Error?e.message:'Save failed')}finally{setSaving(false)}}
+ function edit(p:VehicleInsurancePolicy){let purchase=purchases.find(x=>x.name===p.purchase_from);if(!purchase){purchase={id:`old-${p.id}`,name:p.purchase_from,active:true};setPurchases(x=>[...x,purchase!])}const v=(k:keyof VehicleInsurancePolicy,fallback:unknown='')=>String(p[k]??fallback);setForm({...empty,company_id:p.insurance_company_id||'',purchase_id:purchase.id,policy_number:p.policy_number,policy_date:p.policy_date||'',issue_date:p.issue_date,expiry_date:p.expiry_date,status:p.status,insurance_type:p.insurance_type,od_premium:v('od_premium',0),tp_premium:v('tp_premium',0),addon_premium:v('addon_premium',0),net_premium:v('net_premium',0),tp_net_premium:v('tp_net_premium',0),gst_other_charges:v('gst_other_charges',0),has_od_cover:p.has_od_cover?'1':'0',has_tp_cover:p.has_tp_cover?'1':'0',commission_on_od:p.commission_on_od?'1':'0',commission_on_tp:p.commission_on_tp?'1':'0',commission_on_net:p.commission_on_net?'1':'0',commission_on_addon:p.commission_on_addon?'1':'0',od_commission_percent:v('od_commission_percent',0),tp_commission_percent:v('tp_commission_percent',0),commission_percent:v('commission_percent',0),customer_discount:v('customer_discount',0),agent:p.agent||'',agent_commission:v('agent_commission',0),long_term_tp_policy_number:p.long_term_tp_policy_number||'',long_term_tp_expiry:p.long_term_tp_expiry||'',remark:p.remark||''});setEditing(p.id);scrollTo({top:0,behavior:'smooth'})}
+ if(loading)return <main className="p-6">Loading insurance…</main>;if(!vehicle)return <main className="p-6 text-red-700">{error||'Vehicle not found'}</main>;
+ return <main className="space-y-6 p-4 md:p-6"><header className="rounded-3xl bg-gradient-to-r from-slate-950 to-blue-700 p-7 text-white"><p className="text-xs font-bold tracking-[.2em] text-blue-200">POLICY MANAGEMENT</p><h1 className="mt-2 text-3xl font-black">{vehicle.vehicle_number}</h1><p>{vehicle.customer?.first_name} {vehicle.customer?.last_name} · {vehicle.customer?.mobile}</p></header>{error&&<Notice red>{error}</Notice>}{message&&<Notice>{message}</Notice>}
+ <section className="rounded-2xl border bg-white p-5 shadow-sm"><h2 className="text-xl font-black">Policy Upload</h2><p className="mt-1 text-sm text-slate-500">PDF, JPG, PNG or WEBP · maximum 15 MB. OCR never blocks manual entry.</p><div className="mt-4 flex flex-wrap items-center gap-3"><input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={e=>setFile(e.target.files?.[0]||null)} className="max-w-full rounded-xl border p-3"/><button type="button" disabled={!file||reading} onClick={()=>void ocr()} className="rounded-xl bg-blue-700 px-5 py-3 font-bold text-white disabled:opacity-40">{reading?'Reading policy…':'Read Policy Details'}</button>{file&&<span className="text-sm font-semibold">{file.name}</span>}</div>{file?.type.startsWith('image/')&&<img src={URL.createObjectURL(file)} alt="Policy preview" className="mt-4 max-h-56 rounded-xl border object-contain"/>}</section>
+ <form onSubmit={submit} className="grid gap-6 xl:grid-cols-[.9fr_1.45fr_1.05fr]"><Card title="Vehicle Snapshot"><Info label="Vehicle" value={vehicle.vehicle_number}/><Info label="Registration" value={vehicle.registration_date}/><Info label="Type" value={vehicle.vehicle_type}/><Info label="Chassis" value={vehicle.chassis_number}/><Info label="Engine" value={vehicle.engine_number}/></Card>
+ <Card title="Policy Details"><div className="grid gap-4 md:grid-cols-2"><Select label="Insurance Company" value={form.company_id} set={v=>set('company_id',v)} options={companies.map(x=>[x.id,x.company_name])}/><Select label="Purchase Form" value={form.purchase_id} set={v=>set('purchase_id',v)} options={purchases.filter(x=>x.active).map(x=>[x.id,x.name])}/><Input label="Policy Number" value={form.policy_number} set={v=>set('policy_number',v.toUpperCase())}/><Select label="Policy Type" value={form.insurance_type} set={defaults} options={['comprehensive','third_party','standalone_od','commercial_package'].map(x=>[x,x.replaceAll('_',' ')])}/><Input label="Policy Start" type="date" value={form.policy_date} set={v=>set('policy_date',v)}/><Input label="Issue Date" type="date" value={form.issue_date} set={v=>set('issue_date',v)}/><Input label="Policy Expiry" type="date" value={form.expiry_date} set={v=>set('expiry_date',v)}/><Select label="Status" value={form.status} set={v=>set('status',v)} options={['running','pending','expired','cancelled'].map(x=>[x,x])}/></div><div className="mt-5 flex gap-5"><Toggle label="OD Cover" on={checked('has_od_cover')} set={v=>set('has_od_cover',v?'1':'0')}/><Toggle label="TP Cover" on={checked('has_tp_cover')} set={v=>set('has_tp_cover',v?'1':'0')}/></div>{longTerm&&<div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-4"><h3 className="font-black">Bundled / Long-Term TP Details</h3><p className="mb-4 text-xs text-blue-700">{years}-year TP eligibility based on the exact registration anniversary.</p><div className="grid gap-4 md:grid-cols-2"><Input label="Long-Term TP Policy No." value={form.long_term_tp_policy_number} set={v=>set('long_term_tp_policy_number',v)}/><Input label="Long-Term TP Expiry" type="date" value={form.long_term_tp_expiry} set={v=>set('long_term_tp_expiry',v)}/></div></div>}</Card>
+ <Card title="Premium & Earnings"><div className="grid gap-4 md:grid-cols-2">{['od_premium','tp_premium','addon_premium','net_premium','tp_net_premium','gst_other_charges'].map(k=><Input key={k} type="number" label={k.replaceAll('_',' ')} value={form[k]} set={v=>set(k,v)}/>)}</div><p className="mt-4 rounded-xl bg-slate-100 p-3 font-black">Gross Premium: {money(gross)} · Customer Pay: {money(gross-n('customer_discount'))}</p><h3 className="mt-5 font-black">Commission Basis</h3><div className="mt-2 grid gap-2 sm:grid-cols-2"><Toggle label="Commission on OD" on={checked('commission_on_od')} set={v=>set('commission_on_od',v?'1':'0')}/><Toggle label="Commission on TP" on={checked('commission_on_tp')} set={v=>set('commission_on_tp',v?'1':'0')}/><Toggle label="Commission on Net" on={checked('commission_on_net')} set={v=>set('commission_on_net',v?'1':'0')}/><Toggle label="Include Add-on" on={checked('commission_on_addon')} set={v=>set('commission_on_addon',v?'1':'0')}/></div><div className="mt-4 grid gap-4 md:grid-cols-2">{!commercial&&!checked('commission_on_net')&&<><Input type="number" label="OD Commission %" value={form.od_commission_percent} set={v=>set('od_commission_percent',v)}/><Input type="number" label="TP Commission %" value={form.tp_commission_percent} set={v=>set('tp_commission_percent',v)}/></>} {(commercial||checked('commission_on_net'))&&<Input type="number" label="Net Commission %" value={form.commission_percent} set={v=>set('commission_percent',v)}/>}<Input type="number" label="Customer Discount" value={form.customer_discount} set={v=>set('customer_discount',v)}/><Input label="Agent" value={form.agent} set={v=>set('agent',v)}/><Input type="number" label="Agent Commission" value={form.agent_commission} set={v=>set('agent_commission',v)}/></div><div className="mt-4 rounded-xl bg-emerald-50 p-4 text-sm font-semibold">{commercial||checked('commission_on_net')?`Net ${money(n('net_premium'))} × ${n('commission_percent')}%`:`OD ${money(n('od_premium'))} × ${n('od_commission_percent')}% + TP Net ${money(n('tp_net_premium')||n('tp_premium'))} × ${n('tp_commission_percent')}%`} = {money(commission)}</div><button disabled={saving} className="mt-5 w-full rounded-xl bg-blue-800 p-3 font-bold text-white">{saving?'Saving…':editing?'Update Policy':'Save Policy'}</button></Card></form>
+ <section className="overflow-x-auto rounded-2xl border bg-white"><table className="w-full min-w-[850px] text-left text-sm"><thead><tr>{['Company','Policy','Type','Expiry','Premium','Commission','Document','Action'].map(x=><th className="p-4" key={x}>{x}</th>)}</tr></thead><tbody>{policies.map(p=><tr className="border-t" key={p.id}><td className="p-4">{p.company_name}</td><td>{p.policy_number}</td><td>{p.insurance_type}</td><td>{p.expiry_date}</td><td>{money(p.gross_premium)}</td><td>{money(p.gross_commission)}</td><td>{p.policy_document_file_id&&<a className="text-blue-700 underline" href={`${process.env.NEXT_PUBLIC_API_URL??'http://127.0.0.1:8000'}/api/v1/vehicles/${vehicleId}/insurances/${p.id}/document`}>Download</a>}</td><td><button type="button" onClick={()=>edit(p)} className="rounded-lg border px-3 py-2">Edit</button></td></tr>)}</tbody></table></section></main>
 }
-
-function Card({title,children}:{title:string;children:React.ReactNode}){return <section className="rounded-2xl border bg-white p-5 shadow-sm"><h2 className="mb-5 text-xl font-black text-slate-900">{title}</h2>{children}</section>}
-function Info({label,value}:{label:string;value?:string|number}){return <div className="border-b py-3"><p className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</p><p className="mt-1 font-semibold capitalize">{value||'—'}</p></div>}
-function Input({label,value,onChange,type='text'}:{label:string;value:string;onChange:(v:string)=>void;type?:string}){return <label className="text-sm font-semibold">{label}<input type={type} value={value} onChange={e=>onChange(e.target.value)} className="mt-2 w-full rounded-xl border px-4 py-3 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"/></label>}
-function Select({label,value,onChange,options}:{label:string;value:string;onChange:(v:string)=>void;options:string[]}){return <label className="text-sm font-semibold">{label}<select value={value} onChange={e=>onChange(e.target.value)} className="mt-2 w-full rounded-xl border bg-white px-4 py-3 font-normal"><option value="">Select</option>{options.map(o=><option key={o} value={o}>{o.replaceAll('_',' ').toUpperCase()}</option>)}</select></label>}
-function SelectObjects({label,value,onChange,options}:{label:string;value:string;onChange:(v:string)=>void;options:{value:string;label:string}[]}){return <label className="text-sm font-semibold">{label}<select value={value} onChange={e=>onChange(e.target.value)} className="mt-2 w-full rounded-xl border bg-white px-4 py-3 font-normal"><option value="">Select Company</option>{options.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select></label>}
-function Read({label,value}:{label:string;value:number}){return <label className="text-sm font-semibold">{label}<div className="mt-2 rounded-xl border bg-slate-100 px-4 py-3 font-black">{money(value)}</div></label>}
-function ReadText({label,value}:{label:string;value:string}){return <label className="text-sm font-semibold">{label}<div className="mt-2 min-h-[50px] rounded-xl border bg-slate-100 px-4 py-3 font-bold text-slate-700">{value}</div></label>}
+function Card({title,children}:{title:string;children:React.ReactNode}){return <section className="rounded-2xl border bg-white p-5 shadow-sm"><h2 className="mb-5 text-xl font-black">{title}</h2>{children}</section>}
+function Input({label,value,set,type='text'}:{label:string;value:string;set:(v:string)=>void;type?:string}){return <label className="text-sm font-semibold capitalize">{label}<input type={type} min={type==='number'?0:undefined} step={type==='number'?'0.01':undefined} value={value} onChange={e=>set(e.target.value)} className="mt-2 w-full rounded-xl border px-4 py-3 font-normal"/></label>}
+function Select({label,value,set,options}:{label:string;value:string;set:(v:string)=>void;options:string[][]}){return <label className="text-sm font-semibold">{label}<select value={value} onChange={e=>set(e.target.value)} className="mt-2 w-full rounded-xl border bg-white px-4 py-3"><option value="">Select</option>{options.map(x=><option key={x[0]} value={x[0]}>{x[1]}</option>)}</select></label>}
+function Toggle({label,on,set}:{label:string;on:boolean;set:(v:boolean)=>void}){return <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={on} onChange={e=>set(e.target.checked)} className="h-5 w-5"/>{label}</label>}
+function Info({label,value}:{label:string;value?:string|number}){return <div className="border-b py-3"><p className="text-xs font-bold uppercase text-slate-400">{label}</p><p className="font-semibold capitalize">{value||'—'}</p></div>}
+function Notice({children,red=false}:{children:React.ReactNode;red?:boolean}){return <div className={`rounded-xl border p-4 ${red?'border-red-200 bg-red-50 text-red-700':'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>{children}</div>}

@@ -7,6 +7,13 @@ use Illuminate\Validation\Rule;
 
 class VehicleInsuranceRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->input('payment_details'))) {
+            $this->merge(['payment_details' => json_decode($this->input('payment_details'), true) ?: []]);
+        }
+    }
+
     public function authorize(): bool
     {
         return $this->user()?->can($this->isMethod('post') ? 'vehicle.create' : 'vehicle.update') ?? false;
@@ -30,14 +37,46 @@ class VehicleInsuranceRequest extends FormRequest
             'tp_premium' => ['required', 'numeric', 'min:0'],
             'addon_premium' => ['required', 'numeric', 'min:0'],
             'gst_other_charges' => ['required', 'numeric', 'min:0'],
+            'net_premium' => ['nullable', 'numeric', 'min:0'],
+            'tp_net_premium' => ['nullable', 'numeric', 'min:0'],
+            'has_od_cover' => ['sometimes', 'boolean'],
+            'has_tp_cover' => ['sometimes', 'boolean'],
+            'commission_on_od' => ['sometimes', 'boolean'],
+            'commission_on_tp' => ['sometimes', 'boolean'],
+            'commission_on_net' => ['sometimes', 'boolean'],
+            'commission_on_addon' => ['sometimes', 'boolean'],
+            'od_commission_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'tp_commission_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'commission_percent' => ['required', 'numeric', 'min:0', 'max:100'],
             'customer_discount' => ['required', 'numeric', 'min:0'],
             'agent' => ['nullable', 'string', 'max:200'],
             'agent_commission' => ['required', 'numeric', 'min:0'],
             'payment_details' => ['sometimes', 'array'],
+            'long_term_tp_policy_number' => ['nullable', 'string', 'max:100'],
+            'long_term_tp_expiry' => ['nullable', 'date', 'after_or_equal:policy_date'],
+            'policy_document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:15360'],
             'tds_percent' => ['prohibited'],
             'tds_amount' => ['prohibited'],
             'net_commission' => ['prohibited'],
         ];
+    }
+
+    public function after(): array
+    {
+        return [function ($validator): void {
+            if (($this->has('has_od_cover') || $this->has('has_tp_cover'))
+                && ! $this->boolean('has_od_cover') && ! $this->boolean('has_tp_cover')) {
+                $validator->errors()->add('has_od_cover', 'At least one of OD Cover or TP Cover must be selected.');
+            }
+            $gross = collect(['od_premium', 'tp_premium', 'addon_premium', 'gst_other_charges'])
+                ->sum(fn ($key) => (float) $this->input($key, 0));
+            if ((float) $this->input('customer_discount', 0) > $gross) {
+                $validator->errors()->add('customer_discount', 'Customer discount cannot exceed gross premium.');
+            }
+            if ($this->filled('long_term_tp_expiry') && $this->filled('policy_date')
+                && $this->date('long_term_tp_expiry')->lt($this->date('policy_date'))) {
+                $validator->errors()->add('long_term_tp_expiry', 'Long-term TP expiry cannot be before policy start date.');
+            }
+        }];
     }
 }

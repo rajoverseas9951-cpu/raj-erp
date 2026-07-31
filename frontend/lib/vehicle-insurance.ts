@@ -15,6 +15,21 @@ export type VehicleInsurancePolicy = {
   od_premium: number;
   tp_premium: number;
   addon_premium: number;
+  net_premium: number;
+  tp_net_premium: number;
+  has_od_cover: boolean;
+  has_tp_cover: boolean;
+  commission_on_od: boolean;
+  commission_on_tp: boolean;
+  commission_on_net: boolean;
+  commission_on_addon: boolean;
+  od_commission_percent: number;
+  tp_commission_percent: number;
+  od_commission_amount: number;
+  tp_commission_amount: number;
+  long_term_tp_policy_number?: string;
+  long_term_tp_expiry?: string;
+  policy_document_file_id?: string;
   gst_other_charges: number;
   gross_premium: number;
   commission_percent: number;
@@ -26,6 +41,18 @@ export type VehicleInsurancePolicy = {
   payment_details?: Record<string, unknown>;
   created_at: string;
 };
+
+async function multipart<T>(path: string, body: FormData): Promise<T> {
+  const token = sessionStorage.getItem('raj_erp_token');
+  const response = await fetch(`${API}/api/v1${path}`, {
+    method: 'POST',
+    headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body,
+  });
+  const payload = await response.json().catch(() => ({})) as { data?: T; message?: string; errors?: Record<string,string[]> };
+  if (!response.ok) throw new Error(payload.errors ? Object.values(payload.errors)[0]?.[0] : payload.message ?? `Policy request failed: ${response.status}`);
+  return payload.data as T;
+}
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
 
@@ -60,6 +87,10 @@ export const vehicleInsuranceApi = {
     method: 'POST',
     body: JSON.stringify(body),
   }),
+  saveForm: (vehicleId: string, body: FormData, policyId?: string) => {
+    if (policyId) body.append('_method', 'PUT');
+    return multipart<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances${policyId ? `/${policyId}` : ''}`, body);
+  },
   update: (vehicleId: string, policyId: string, body: unknown) => request<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances/${policyId}`, {
     method: 'PUT',
     body: JSON.stringify(body),

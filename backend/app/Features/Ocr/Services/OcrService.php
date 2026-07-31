@@ -31,16 +31,27 @@ class OcrService
         return [
             'text' => $text,
             'texts' => $texts,
-            'fields' => $documentType === 'rc' ? $this->parseRc($text) : [],
+            'fields' => match ($documentType) {
+                'rc' => $this->parseRc($text),
+                'insurance_policy' => $this->parsePolicy($text),
+                default => [],
+            },
         ];
     }
 
     private function readImage(UploadedFile $image, string $key): string
     {
         try {
-            $response = Http::timeout(45)
+            $request = Http::timeout(45)
                 ->retry(2, 300, throw: false)
-                ->withHeaders(['apikey' => $key])
+                ->withHeaders(['apikey' => $key]);
+
+            $caBundle = trim((string) config('services.ocr_space.ca_bundle'));
+            if ($caBundle !== '') {
+                $request = $request->withOptions(['verify' => $caBundle]);
+            }
+
+            $response = $request
                 ->attach('file', fopen($image->getRealPath(), 'r'), $image->getClientOriginalName())
                 ->post((string) config('services.ocr_space.url'), [
                     'language' => 'eng',
@@ -135,6 +146,54 @@ class OcrService
             $fields['vehicle_type'] = 'private_car';
         }
 
+        return $fields;
+    }
+
+    /** @return array<string, string> */
+    public function parsePolicy(string $text): array
+    {
+        $lines = array_values(array_filter(array_map(fn ($line) => $this->clean((string) $line), preg_split('/\R/u', $text) ?: [])));
+        $joined = implode("\n", $lines);
+        $fields = [];
+        $labels = [
+            'company_name' => '/(?:insurance\s*company|insurer|issued\s*by)/i',
+            'policy_number' => '/(?:policy|certificate)\s*(?:no|number)\.?/i',
+            'insured_name' => '/(?:insured(?:\'?s)?\s*name|name\s*of\s*insured)/i',
+            'long_term_tp_policy_number' => '/(?:long[\s-]*term|bundled)\s*(?:tp|third\s*party)\s*(?:policy)?\s*(?:no|number)?/i',
+        ];
+        foreach ($labels as $key => $label) {
+            $value = $this->labelValue($lines, $label, 2);
+            if (strlen($value) >= 3 && strlen($value) <= 200) $fields[$key] = $value;
+        }
+        if (preg_match('/\b[A-Z]{2}[\s-]?\d{1,2}[\s-]?[A-Z]{1,3}[\s-]?\d{3,4}\b/i', $joined, $m)) {
+            $fields['registration_number'] = strtoupper((string) preg_replace('/[^A-Z0-9]/i', '', $m[0]));
+        }
+        foreach ([
+            'issue_date' => '/(?:issue|issuance)\s*date/i',
+            'policy_date' => '/(?:period\s*of\s*insurance\s*from|policy\s*(?:start|from)|effective\s*from)/i',
+            'expiry_date' => '/(?:policy\s*(?:expiry|end|to)|valid\s*(?:upto|until))/i',
+            'long_term_tp_expiry' => '/(?:long[\s-]*term|bundled)\s*(?:tp|third\s*party).*?(?:expiry|valid)/i',
+        ] as $key => $label) {
+            if ($date = $this->normaliseDate($this->labelValue($lines, $label, 2))) $fields[$key] = $date;
+        }
+        foreach ([
+            'od_premium' => '/(?:own\s*damage|od)\s*(?:premium|total)?/i',
+            'tp_premium' => '/(?:third\s*party|tp)\s*(?:premium|liability)?/i',
+            'addon_premium' => '/add[\s-]*on\s*(?:premium|cover)?/i',
+            'net_premium' => '/net\s*premium/i',
+            'gst_other_charges' => '/(?:gst|tax|other\s*charges)/i',
+            'gross_premium' => '/(?:gross|total)\s*premium/i',
+        ] as $key => $label) {
+            $value = $this->labelValue($lines, $label, 1);
+            if (preg_match('/(?:₹|rs\.?)?\s*([\d,]+(?:\.\d{1,2})?)/i', $value, $m)) {
+                $fields[$key] = number_format((float) str_replace(',', '', $m[1]), 2, '.', '');
+            }
+        }
+        $lower = strtolower($joined);
+        if (str_contains($lower, 'standalone own damage')) $fields['insurance_type'] = 'standalone_od';
+        elseif (str_contains($lower, 'standalone third party') || str_contains($lower, 'liability only')) $fields['insurance_type'] = 'third_party';
+        elseif (str_contains($lower, 'commercial package')) $fields['insurance_type'] = 'commercial_package';
+        elseif (str_contains($lower, 'comprehensive') || str_contains($lower, 'package')) $fields['insurance_type'] = 'comprehensive';
         return $fields;
     }
 
