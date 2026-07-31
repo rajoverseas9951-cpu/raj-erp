@@ -118,6 +118,57 @@ export function CustomerTable({ customers, meta, onChanged }: Props) {
       setBusy("");
     }
   }
+  async function importCustomers(file: File) {
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      setMessage(
+        "Please select a CSV file. Excel import is not available yet.",
+      );
+      return;
+    }
+    try {
+      setBusy("import");
+      const lines = (await file.text())
+        .split(/\r?\n/)
+        .filter((line) => line.trim());
+      if (lines.length < 2)
+        throw new Error("The CSV file has no customer rows.");
+      const headers = parseCsvLine(lines[0]).map((header) =>
+        header.trim().toLowerCase().replaceAll(" ", "_"),
+      );
+      if (
+        ["first_name", "last_name", "mobile"].some(
+          (header) => !headers.includes(header),
+        )
+      ) {
+        throw new Error(
+          "CSV requires first_name, last_name and mobile columns.",
+        );
+      }
+      let imported = 0;
+      for (const line of lines.slice(1)) {
+        const values = parseCsvLine(line);
+        const row = Object.fromEntries(
+          headers.map((header, index) => [
+            header,
+            values[index]?.trim() || null,
+          ]),
+        );
+        await customerApi.create({
+          ...row,
+          priority: row.priority || "normal",
+          status: row.status || "active",
+          tags: [],
+        });
+        imported += 1;
+      }
+      setMessage(`${imported} customer${imported === 1 ? "" : "s"} imported.`);
+      onChanged();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Import failed.");
+    } finally {
+      setBusy("");
+    }
+  }
   function copy(value: string) {
     void navigator.clipboard.writeText(value);
     setMessage("Mobile number copied.");
@@ -127,7 +178,7 @@ export function CustomerTable({ customers, meta, onChanged }: Props) {
     customers.length > 0 && customers.every((c) => selected.includes(c.id));
   return (
     <div className="mx-auto max-w-[1700px] space-y-5">
-      <Hero />
+      <Hero importing={busy === "import"} importCustomers={importCustomers} />
       <section
         aria-label="Customer summary"
         className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6"
@@ -351,7 +402,13 @@ export function CustomerTable({ customers, meta, onChanged }: Props) {
   );
 }
 
-function Hero() {
+function Hero({
+  importing,
+  importCustomers,
+}: {
+  importing: boolean;
+  importCustomers: (file: File) => Promise<void>;
+}) {
   return (
     <header className="relative overflow-hidden rounded-[30px] bg-[radial-gradient(circle_at_90%_10%,rgba(34,211,238,.25),transparent_28%),linear-gradient(135deg,#050816,#10245f_58%,#245eea)] p-6 text-white shadow-[0_25px_70px_-35px_rgba(29,78,216,.8)] sm:p-8">
       <div className="relative flex flex-wrap items-end justify-between gap-5">
@@ -375,15 +432,21 @@ function Hero() {
             <Icon name="ledger" className="h-4 w-4" />
             Ledger Master
           </Link>
-          <button
-            type="button"
-            disabled
-            title="Customer import API is not available yet"
-            className="flex cursor-not-allowed items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold text-white/50"
-          >
+          <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-bold backdrop-blur hover:bg-white/15">
             <Icon name="upload" className="h-4 w-4" />
-            Import Customers
-          </button>
+            {importing ? "Importing…" : "Import Customers"}
+            <input
+              type="file"
+              accept=".csv,text/csv"
+              disabled={importing}
+              className="sr-only"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void importCustomers(file);
+                event.target.value = "";
+              }}
+            />
+          </label>
           <Link
             href="/customers/new"
             className="flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-black text-blue-800 shadow-lg"
@@ -395,6 +458,28 @@ function Hero() {
       </div>
     </header>
   );
+}
+
+function parseCsvLine(line: string): string[] {
+  const values: string[] = [];
+  let value = "";
+  let quoted = false;
+  for (let index = 0; index < line.length; index += 1) {
+    const character = line[index];
+    if (character === '"' && line[index + 1] === '"' && quoted) {
+      value += '"';
+      index += 1;
+    } else if (character === '"') {
+      quoted = !quoted;
+    } else if (character === "," && !quoted) {
+      values.push(value);
+      value = "";
+    } else {
+      value += character;
+    }
+  }
+  values.push(value);
+  return values;
 }
 function Stat({
   icon,
