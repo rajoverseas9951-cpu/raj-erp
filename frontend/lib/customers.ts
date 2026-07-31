@@ -33,22 +33,23 @@ export type Customer = {
   rto_files_count: number;
 };
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = typeof window !== 'undefined'
-    ? sessionStorage.getItem('raj_erp_token')
-    : null;
+  const token =
+    typeof window !== "undefined"
+      ? sessionStorage.getItem("raj_erp_token")
+      : null;
 
   const response = await fetch(`${API}/api/v1${path}`, {
     ...init,
     headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
+      Accept: "application/json",
+      "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers || {}),
     },
-    cache: 'no-store',
+    cache: "no-store",
   });
 
   let payload: {
@@ -71,46 +72,63 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
     throw new Error(
       firstValidationError ??
-      payload.message ??
-      payload.error?.message ??
-      `API request failed: ${response.status}`,
+        payload.message ??
+        payload.error?.message ??
+        `API request failed: ${response.status}`,
     );
   }
 
   return payload.data as T;
 }
 
-type CustomerPage = {
-  data: Customer[];
-  links?: unknown;
-  meta?: unknown;
+export type CustomerPagination = {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+  from?: number | null;
+  to?: number | null;
 };
 
-async function listCustomers(q = ''): Promise<CustomerPage> {
+export type CustomerPage = {
+  data: Customer[];
+  links?: unknown;
+  meta?: CustomerPagination;
+};
+
+async function listCustomers(q = ""): Promise<CustomerPage> {
   const result = await request<unknown>(`/customers${q}`);
 
   if (Array.isArray(result)) {
     return { data: result as Customer[] };
   }
 
-  if (result && typeof result === 'object') {
+  if (result && typeof result === "object") {
     const first = result as Record<string, unknown>;
 
     if (Array.isArray(first.data)) {
+      const pagination = [
+        "current_page",
+        "last_page",
+        "per_page",
+        "total",
+      ].every((key) => typeof first[key] === "number");
       return {
         data: first.data as Customer[],
         links: first.links,
-        meta: first.meta,
+        meta: pagination
+          ? (first as unknown as CustomerPagination)
+          : (first.meta as CustomerPagination | undefined),
       };
     }
 
-    if (first.data && typeof first.data === 'object') {
+    if (first.data && typeof first.data === "object") {
       const nested = first.data as Record<string, unknown>;
       if (Array.isArray(nested.data)) {
         return {
           data: nested.data as Customer[],
           links: nested.links,
-          meta: nested.meta,
+          meta: nested.meta as CustomerPagination | undefined,
         };
       }
     }
@@ -122,11 +140,53 @@ async function listCustomers(q = ''): Promise<CustomerPage> {
 export const customerApi = {
   list: listCustomers,
   get: (id: string) => request<Customer>(`/customers/${id}`),
-  timeline: (id: string) => request<{ data: TimelineEvent[] }>(`/customers/${id}/timeline`),
-  create: (body: unknown) => request<Customer>('/customers', { method: 'POST', body: JSON.stringify(body) }),
-  update: (id: string, body: unknown) => request<Customer>(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  bulkDelete: (ids: string[]) => request('/customers/bulk-delete', { method: 'POST', body: JSON.stringify({ ids }) }),
-  bulkAssign: (ids: string[], assigned_to: string) => request('/customers/bulk-assign', { method: 'POST', body: JSON.stringify({ ids, assigned_to }) }),
+  timeline: (id: string) =>
+    request<{ data: TimelineEvent[] }>(`/customers/${id}/timeline`),
+  create: (body: unknown) =>
+    request<Customer>("/customers", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  update: (id: string, body: unknown) =>
+    request<Customer>(`/customers/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+  bulkDelete: (ids: string[]) =>
+    request("/customers/bulk-delete", {
+      method: "POST",
+      body: JSON.stringify({ ids }),
+    }),
+  bulkAssign: (ids: string[], assigned_to: string) =>
+    request("/customers/bulk-assign", {
+      method: "POST",
+      body: JSON.stringify({ ids, assigned_to }),
+    }),
+  export: async (format: "csv" | "pdf", query = "") => {
+    const token = sessionStorage.getItem("raj_erp_token");
+    if (!token) throw new Error("Unauthenticated.");
+    const params = new URLSearchParams(query);
+    if (format === "pdf") params.set("format", "pdf");
+    const response = await fetch(`${API}/api/v1/customers/export?${params}`, {
+      headers: {
+        Accept: format === "pdf" ? "application/pdf" : "text/csv",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok)
+      throw new Error(
+        response.status === 401
+          ? "Unauthenticated."
+          : `Export failed: ${response.status}`,
+      );
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `customers.${format}`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  },
 };
 
 export type TimelineEvent = {
