@@ -36,6 +36,9 @@ class VehicleMasterTest extends TestCase
             ->assertJsonPath('data.0.id', $model->json('data.id'))
             ->assertJsonPath('data.0.parent_name', 'MARUTI SUZUKI');
 
+        $this->actingAs($user)->getJson('/api/v1/vehicle-masters/models?manufacturer_id='.$manufacturerId.'&status=active')
+            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $model->json('data.id'));
+
         $this->actingAs($user)->putJson("/api/v1/vehicle-masters/models/{$model->json('data.id')}", [
             'status' => 'inactive',
         ])->assertOk()->assertJsonPath('data.status', 'inactive');
@@ -70,9 +73,16 @@ class VehicleMasterTest extends TestCase
             ->assertJsonFragment(['name' => 'MOTORCYCLE']);
         $manufacturers=$this->actingAs($user)->getJson('/api/v1/vehicle-masters/manufacturers')
             ->assertOk()->assertJsonCount(28,'data')->assertJsonFragment(['name'=>'MARUTI SUZUKI']);
-        $maruti=collect($manufacturers->json('data'))->firstWhere('name','MARUTI SUZUKI');
-        $this->actingAs($user)->getJson('/api/v1/vehicle-masters/models?parent_id='.$maruti['id'])
+        $manufacturerRows=collect($manufacturers->json('data'));
+        $maruti=$manufacturerRows->firstWhere('name','MARUTI SUZUKI');
+        $this->actingAs($user)->getJson('/api/v1/vehicle-masters/models?manufacturer_id='.$maruti['id'].'&status=active')
             ->assertOk()->assertJsonFragment(['name'=>'SWIFT'])->assertJsonFragment(['name'=>'BREZZA']);
+        $hyundai=$manufacturerRows->firstWhere('name','HYUNDAI');
+        $this->actingAs($user)->getJson('/api/v1/vehicle-masters/models?manufacturer_id='.$hyundai['id'].'&status=active')
+            ->assertOk()->assertJsonFragment(['name'=>'CRETA'])->assertJsonMissing(['name'=>'SWIFT']);
+        $hero=$manufacturerRows->firstWhere('name','HERO MOTOCORP');
+        $this->actingAs($user)->getJson('/api/v1/vehicle-masters/models?manufacturer_id='.$hero['id'].'&status=active')
+            ->assertOk()->assertJsonFragment(['name'=>'SPLENDOR PLUS'])->assertJsonMissing(['name'=>'CRETA']);
         $this->actingAs($user)->getJson('/api/v1/vehicle-masters/colours')
             ->assertOk()->assertJsonCount(17,'data')->assertJsonFragment(['name'=>'PEARL WHITE']);
     }

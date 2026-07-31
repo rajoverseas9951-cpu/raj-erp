@@ -1,5 +1,5 @@
 'use client';
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Customer, customerApi } from '@/lib/customers';
 import { scanDocument } from '@/lib/ocr';
@@ -139,7 +139,7 @@ export function VehicleForm({ vehicle }: {
     const [mode, setMode] = useState<'rc' | 'manual'>('manual');
     const [values, setValues] = useState<Values>(() => {
         const dates=['registration_date','insurance_expiry','puc_expiry','fitness_expiry','permit_expiry','national_permit_expiry','tax_expiry','counter_tax_expiry'];
-        return {...initial,...Object.fromEntries(Object.entries(vehicle??{}).map(([k,v])=>[k,v==null?'':dates.includes(k)?String(v).slice(0,10):String(v)]))};
+        return {...initial,...Object.fromEntries(Object.entries(vehicle??{}).map(([k,v])=>[k,v==null?'':dates.includes(k)?String(v).slice(0,10):String(v)])),manufacturer_id:'',model_id:''};
     });
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [saving, setSaving] = useState(false);
@@ -153,27 +153,68 @@ export function VehicleForm({ vehicle }: {
     const [masterModal, setMasterModal] = useState<VehicleMasterType>();
     const [masterSaving, setMasterSaving] = useState(false);
     const [masterLoading, setMasterLoading] = useState(true);
+    const [modelLoading, setModelLoading] = useState(false);
+    const [modelError, setModelError] = useState('');
+    const savedManufacturerId = useRef(String(vehicle?.manufacturer_id ?? ''));
+    const savedModelId = useRef(String(vehicle?.model_id ?? ''));
+    const savedModelName = useRef(String(vehicle?.model ?? ''));
+    const modelRequest = useRef(0);
     useEffect(() => { customerApi.list('?per_page=500').then(r => setCustomers(r.data ?? [])).catch(e => setError(e instanceof Error ? e.message : 'Customers load nahi hue.')); }, []);
     useEffect(() => { void loadMasters(); }, []);
+    useEffect(() => {
+        if (!values.manufacturer_id) {
+            setMasters(current => ({...current, models: []}));
+            setModelError('');
+            setModelLoading(false);
+            return;
+        }
+        void loadModels(values.manufacturer_id, savedModelId.current, savedModelName.current);
+        savedModelId.current = '';
+        savedModelName.current = '';
+    }, [values.manufacturer_id]);
     useEffect(() => { const close = (e: KeyboardEvent) => { if (e.key === 'Escape' && !masterSaving) setMasterModal(undefined); }; addEventListener('keydown', close); return () => removeEventListener('keydown', close); }, [masterSaving]);
     const set = (n: string, v: string) => setValues(o => ({ ...o, [n]: v }));
     async function loadMasters() {
-        const types: VehicleMasterType[] = ['manufacturers', 'models', 'colours', 'vehicle_classes', 'body_types', 'fuel_types'];
+        type NonModelMaster = Exclude<VehicleMasterType, 'models'>;
+        const types: NonModelMaster[] = ['manufacturers', 'colours', 'vehicle_classes', 'body_types', 'fuel_types'];
         setMasterLoading(true);
         try {
             const lists=await Promise.all(types.map(type=>vehicleMasterApi.list(type)));
-            const loaded=Object.fromEntries(types.map((type,index)=>[type,lists[index]])) as Record<VehicleMasterType,VehicleMaster[]>;
-            setMasters(loaded);
+            const loaded=Object.fromEntries(types.map((type,index)=>[type,lists[index]])) as Record<NonModelMaster,VehicleMaster[]>;
+            setMasters(current=>({...current,...loaded}));
             setValues(current=>{
-                const match=(type:VehicleMasterType,name:string)=>loaded[type].find(x=>x.name.toUpperCase()===name.toUpperCase())?.id??'';
-                const manufacturerId=current.manufacturer_id||match('manufacturers',current.manufacturer);
-                const modelId=current.model_id||loaded.models.find(x=>x.name.toUpperCase()===current.model.toUpperCase()&&(!manufacturerId||x.parent_id===manufacturerId))?.id||'';
-                return {...current,manufacturer_id:manufacturerId,model_id:modelId,colour_id:current.colour_id||match('colours',current.colour),vehicle_class_id:current.vehicle_class_id||match('vehicle_classes',current.vehicle_class),vehicle_category_id:current.vehicle_category_id||match('body_types',current.vehicle_category),fuel_type_id:current.fuel_type_id||match('fuel_types',current.fuel_type)};
+                const match=(type:NonModelMaster,name:string)=>loaded[type].find(x=>x.name.toUpperCase()===name.toUpperCase())?.id??'';
+                const manufacturerId=savedManufacturerId.current||current.manufacturer_id||match('manufacturers',current.manufacturer);
+                savedManufacturerId.current='';
+                return {...current,manufacturer_id:manufacturerId,model_id:'',colour_id:current.colour_id||match('colours',current.colour),vehicle_class_id:current.vehicle_class_id||match('vehicle_classes',current.vehicle_class),vehicle_category_id:current.vehicle_category_id||match('body_types',current.vehicle_category),fuel_type_id:current.fuel_type_id||match('fuel_types',current.fuel_type)};
             });
         } catch(e) {
             console.error('Vehicle master API load failed',e);
             setError(e instanceof Error?`Master dropdowns could not load: ${e.message}`:'Master dropdowns could not load.');
         } finally { setMasterLoading(false); }
+    }
+    async function loadModels(manufacturerId:string, selectId='', selectName='') {
+        const requestId=++modelRequest.current;
+        setModelLoading(true); setModelError('');
+        try {
+            const models=await vehicleMasterApi.models(manufacturerId);
+            if(requestId!==modelRequest.current) return;
+            const sorted=models.filter(model=>model.status==='active'&&model.parent_id===manufacturerId).sort((a,b)=>a.name.localeCompare(b.name));
+            setMasters(current=>({...current,models:sorted}));
+            const selectedId=sorted.some(model=>model.id===selectId)
+                ? selectId
+                : sorted.find(model=>selectName&&model.name.localeCompare(selectName,undefined,{sensitivity:'accent'})===0)?.id??'';
+            const selected=sorted.find(model=>model.id===selectedId);
+            setValues(current=>({...current,model_id:selectedId,model:selected?.name??''}));
+        } catch(e) {
+            if(requestId!==modelRequest.current) return;
+            console.error('Vehicle models API load failed',e);
+            setMasters(current=>({...current,models:[]}));
+            setValues(current=>({...current,model_id:'',model:''}));
+            setModelError(e instanceof Error?e.message:'Models could not load.');
+        } finally {
+            if(requestId===modelRequest.current) setModelLoading(false);
+        }
     }
     async function addMaster(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -182,7 +223,8 @@ export function VehicleForm({ vehicle }: {
         const fd = new FormData(e.currentTarget);
         try {
             const created = await vehicleMasterApi.create(masterModal, { name: fd.get('name'), code: fd.get('code'), parent_id: masterModal === 'models' ? values.manufacturer_id : null, status: 'active' });
-            await loadMasters();
+            if(masterModal==='models') await loadModels(values.manufacturer_id,created.id,created.name);
+            else await loadMasters();
             const fields:Record<VehicleMasterType,[string,string]>={manufacturers:['manufacturer_id','manufacturer'],models:['model_id','model'],colours:['colour_id','colour'],vehicle_classes:['vehicle_class_id','vehicle_class'],body_types:['vehicle_category_id','vehicle_category'],fuel_types:['fuel_type_id','fuel_type']};
             const [idField,nameField]=fields[masterModal];
             setValues(current=>({...current,[idField]:created.id,[nameField]:created.name,...(masterModal==='manufacturers'?{model_id:'',model:''}:{})}));
@@ -247,8 +289,8 @@ export function VehicleForm({ vehicle }: {
 <Card title="Vehicle Details">
 <MasterSelect label="Vehicle Class" value={values.vehicle_class_id} onChange={id=>{const item=masters.vehicle_classes.find(x=>x.id===id);setValues(x=>({...x,vehicle_class_id:id,vehicle_class:item?.name??''}))}} options={masters.vehicle_classes} add={() => setMasterModal('vehicle_classes')} loading={masterLoading}/>
 <MasterSelect label="Vehicle Category / Body Type" value={values.vehicle_category_id} onChange={id=>{const item=masters.body_types.find(x=>x.id===id);setValues(x=>({...x,vehicle_category_id:id,vehicle_category:item?.name??''}))}} options={masters.body_types} add={() => setMasterModal('body_types')} loading={masterLoading}/>
-<MasterSelect label="Manufacturer" value={values.manufacturer_id} onChange={id=>{const item=masters.manufacturers.find(x=>x.id===id);setValues(x=>x.manufacturer_id===id?x:{...x,manufacturer_id:id,manufacturer:item?.name??'',model_id:'',model:''})}} options={masters.manufacturers} add={() => setMasterModal('manufacturers')} loading={masterLoading}/>
-<MasterSelect label="Model" value={values.model_id} onChange={id=>{const item=masters.models.find(x=>x.id===id);setValues(x=>({...x,model_id:id,model:item?.name??''}))}} options={masters.models.filter(x=>x.parent_id===values.manufacturer_id)} add={() => values.manufacturer_id ? setMasterModal('models') : setError('Select a manufacturer before adding a model.')} loading={masterLoading} disabled={!values.manufacturer_id}/>
+<MasterSelect label="Manufacturer" value={values.manufacturer_id} onChange={id=>{const item=masters.manufacturers.find(x=>x.id===id);savedModelId.current='';savedModelName.current='';setValues(x=>x.manufacturer_id===id?x:{...x,manufacturer_id:id,manufacturer:item?.name??'',model_id:'',model:''})}} options={masters.manufacturers} add={() => setMasterModal('manufacturers')} loading={masterLoading}/>
+<MasterSelect label="Model" value={values.model_id} onChange={id=>{const item=masters.models.find(x=>x.id===id);setValues(x=>({...x,model_id:id,model:item?.name??''}))}} options={masters.models} add={() => values.manufacturer_id ? setMasterModal('models') : setError('Select a manufacturer before adding a model.')} loading={modelLoading} disabled={!values.manufacturer_id} error={modelError} placeholder="Select Model" emptyLabel="No models found"/>
 <Input label="Variant" value={values.variant} onChange={v => set('variant', v)}/>
 <Input label="Manufacturing Year" type="number" value={values.manufacturing_year} onChange={v => set('manufacturing_year', v)}/>
 <MasterSelect label="Colour" value={values.colour_id} onChange={id=>{const item=masters.colours.find(x=>x.id===id);setValues(x=>({...x,colour_id:id,colour:item?.name??''}))}} options={masters.colours} add={() => setMasterModal('colours')} loading={masterLoading}/>
@@ -314,9 +356,9 @@ function Select({ label, value, onChange, options, required = false }: {
 }) { return <label className="text-sm font-semibold">{label}{required && <span className="text-red-500"> *</span>}<select value={value} required={required} onChange={e => onChange(e.target.value)} className="mt-2 w-full rounded-xl border bg-white px-4 py-3 font-normal">
 <option value="">Select</option>{options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select>
 </label>; }
-function MasterSelect({label,value,onChange,options,add,loading=false,disabled=false}:{label:string;value:string;onChange:(v:string)=>void;options:VehicleMaster[];add:()=>void;loading?:boolean;disabled?:boolean}) {
+function MasterSelect({label,value,onChange,options,add,loading=false,disabled=false,error='',placeholder='Select',emptyLabel='No active records found'}:{label:string;value:string;onChange:(v:string)=>void;options:VehicleMaster[];add:()=>void;loading?:boolean;disabled?:boolean;error?:string;placeholder?:string;emptyLabel?:string}) {
     const active=options.filter(x=>x.status==='active').sort((a,b)=>a.name.localeCompare(b.name));
-    return <div><label className="text-sm font-semibold">{label}<select value={value} disabled={disabled||loading} onChange={e=>onChange(e.target.value)} className="mt-2 w-full rounded-xl border bg-white px-4 py-3 font-normal disabled:bg-slate-100"><option value="">{loading?'Loading…':disabled?'Select manufacturer first':active.length?'Select':'No active records found'}</option>{active.map(option=><option key={option.id} value={option.id}>{option.name}</option>)}</select></label><button type="button" onClick={add} disabled={loading} className="mt-2 text-sm font-bold text-blue-700 disabled:text-slate-400">+ Add {label}</button></div>;
+    return <div><label className="text-sm font-semibold">{label}<select value={value} disabled={disabled||loading} onChange={e=>onChange(e.target.value)} className="mt-2 w-full rounded-xl border bg-white px-4 py-3 font-normal disabled:bg-slate-100"><option value="">{loading?'Loading...':disabled?'Select manufacturer first':active.length?placeholder:emptyLabel}</option>{active.map(option=><option key={option.id} value={option.id}>{option.name}</option>)}</select></label>{error&&<p className="mt-1 text-xs text-red-600">{error}</p>}<button type="button" onClick={add} disabled={loading} className="mt-2 text-sm font-bold text-blue-700 disabled:text-slate-400">+ Add {label}</button></div>;
 }
 function MasterModal({ type, saving, close, save, manufacturer }: { type: VehicleMasterType; saving: boolean; close: () => void; save: (e: FormEvent<HTMLFormElement>) => void; manufacturer: string }) {
     const labels:Record<VehicleMasterType,string>={manufacturers:'Manufacturer',models:'Vehicle Model',colours:'Vehicle Colour',vehicle_classes:'Vehicle Class',body_types:'Body Type',fuel_types:'Fuel Type'};

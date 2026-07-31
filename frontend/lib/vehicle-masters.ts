@@ -28,6 +28,7 @@ async function request<T>(path:string, init?:RequestInit):Promise<T>{
 
 export const vehicleMasterApi={
   list:(type:VehicleMasterType)=>request<VehicleMaster[]>(`/vehicle-masters/${type}`),
+  models:(manufacturerId:string)=>request<VehicleMaster[]>(`/vehicle-masters/models?manufacturer_id=${encodeURIComponent(manufacturerId)}&status=active`),
   create:(type:VehicleMasterType,body:Record<string,unknown>)=>request<VehicleMaster>(`/vehicle-masters/${type}`,{method:'POST',body:JSON.stringify(body)}),
   update:(type:VehicleMasterType,id:string,body:Record<string,unknown>)=>request<VehicleMaster>(`/vehicle-masters/${type}/${id}`,{method:'PUT',body:JSON.stringify(body)}),
 };

@@ -28,6 +28,10 @@ class VehicleMasterController
         }
         if ($request->filled('status')) $query->where('vehicle_masters.status', $request->query('status'));
         if ($request->filled('parent_id')) $query->where('vehicle_masters.parent_id', $request->query('parent_id'));
+        if ($type === 'models' && $request->filled('manufacturer_id')) {
+            $request->validate(['manufacturer_id' => ['required', 'uuid']]);
+            $query->where('vehicle_masters.parent_id', $request->query('manufacturer_id'));
+        }
 
         return response()->json(['success' => true, 'data' => $query->orderBy('vehicle_masters.name')->get()]);
     }
