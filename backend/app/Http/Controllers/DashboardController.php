@@ -31,7 +31,13 @@ class DashboardController extends Controller
         $raw=DB::table('vehicle_masters')->where('tenant_id',$tenant)->whereNull('deleted_at')->selectRaw("type, COUNT(*) total, SUM(CASE WHEN status='active' THEN 1 ELSE 0 END) active")->groupBy('type')->get()->keyBy('type');
         $masterCounts=collect(['manufacturers','models','colours','vehicle_classes','body_types','fuel_types'])->mapWithKeys(fn($type)=>[$type=>['total'=>(int)($raw->get($type)->total??0),'active'=>(int)($raw->get($type)->active??0)]]);
         foreach(['insurance_companies','insurance_purchase_sources','ledgers'] as $name){$q=$table($name);$active=Schema::hasColumn($name,'status')?(clone $q)->where('status','active')->count():(Schema::hasColumn($name,'is_active')?(clone $q)->where('is_active',true)->count():(clone $q)->count());$masterCounts[$name]=['total'=>(clone $q)->count(),'active'=>$active];}
-        $byVehicle=fn(array $types)=>(clone $policies)->join('vehicles','vehicles.id','=','vehicle_insurances.vehicle_id')->whereIn('vehicles.vehicle_type',$types)->count();
+        $byVehicle=fn(array $types)=>DB::table('vehicle_insurances')
+            ->join('vehicles','vehicles.id','=','vehicle_insurances.vehicle_id')
+            ->where('vehicle_insurances.tenant_id',$tenant)
+            ->whereNull('vehicle_insurances.deleted_at')
+            ->whereNull('vehicles.deleted_at')
+            ->whereIn('vehicles.vehicle_type',$types)
+            ->count();
         return response()->json(['success'=>true,'data'=>[
             'kpis'=>[
                 'customers'=>['value'=>(clone $table('customers'))->count(),'growth'=>$customerGrowth],

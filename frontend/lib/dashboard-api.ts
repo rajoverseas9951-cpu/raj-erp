@@ -14,6 +14,9 @@ export async function getDashboardSummary():Promise<DashboardSummary>{
   const response=await fetch(`${API}/api/v1/dashboard/summary`,{headers:{Accept:'application/json',...(token?{Authorization:`Bearer ${token}`}:{})},cache:'no-store'});
   const payload=await response.json().catch(()=>({})) as {data?:DashboardSummary;message?:string};
   if(response.status===401)throw new Error('AUTH_REQUIRED');
-  if(!response.ok||!payload.data)throw new Error(payload.message??`Dashboard request failed: ${response.status}`);
+  if(!response.ok||!payload.data){
+    console.error('Dashboard summary request failed',response.status);
+    throw new Error(response.status>=500?'Dashboard data is temporarily unavailable. Please refresh once.':payload.message??`Dashboard request failed: ${response.status}`);
+  }
   return payload.data;
 }
