@@ -3,14 +3,17 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { can, DashboardPermission, DashboardSession } from '@/lib/dashboard';
+import { can } from '@/lib/dashboard';
+import type { DashboardPermission, DashboardSession } from '@/lib/dashboard';
 import { Icon } from './Icon';
 
-const navigation: {label:string;href:string;icon:string;permission?:DashboardPermission;badge?:string}[] = [
+const navigation: {label:string;href:string;icon:string;permission?:DashboardPermission;badge?:string;section?:string}[] = [
   {label:'Dashboard',href:'/dashboard',icon:'dashboard',permission:'dashboard.view'},
   {label:'Customers',href:'/customers',icon:'customers',permission:'customer.view'},
   {label:'Vehicles',href:'/vehicles',icon:'vehicle',permission:'vehicle.view',badge:'12'},
   {label:'Accounts',href:'/accounts/ledgers',icon:'reports'},
+  {label:'Insurance Companies',href:'/insurance-companies',icon:'shield',section:'Insurance Setup'},
+  {label:'Purchase Sources',href:'/purchase-sources',icon:'users'},
   {label:'Reports',href:'/reports',icon:'reports',permission:'reports.view'},
   {label:'Team & Roles',href:'/users',icon:'users',permission:'users.view'},
   {label:'Settings',href:'/settings',icon:'settings',permission:'settings.manage'},
@@ -27,7 +30,7 @@ export function DashboardShell({session,children}:{session:DashboardSession;chil
     <aside className={`fixed inset-y-0 left-0 z-40 flex flex-col bg-slate-950 text-slate-300 transition-all duration-300 ${collapsed?'lg:w-[76px]':'lg:w-[260px]'} ${mobile?'translate-x-0 w-[280px]':'-translate-x-full lg:translate-x-0'}`}>
       <div className="flex h-20 items-center gap-3 border-b border-white/10 px-5"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-600 font-black text-white shadow-lg shadow-blue-900/40">R</div>{!collapsed&&<div><strong className="block text-lg tracking-tight text-white">RAJ ERP</strong><span className="text-[10px] font-bold uppercase tracking-[.2em] text-blue-400">Business suite</span></div>}<button onClick={()=>setMobile(false)} className="ml-auto rounded-lg p-2 text-slate-400 hover:bg-white/10 lg:hidden" aria-label="Close menu"><Icon name="close" className="h-5 w-5"/></button></div>
       <div className="mx-3 mt-5 rounded-xl border border-white/10 bg-white/[.06] p-3">{collapsed?<div className="mx-auto grid h-9 w-9 place-items-center rounded-lg bg-blue-600 font-bold text-white">{session.tenant.shortName}</div>:<div className="flex min-w-0 items-center gap-3"><div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-blue-600 font-bold text-white">{session.tenant.shortName}</div><div className="min-w-0"><p className="truncate text-sm font-semibold text-white">{session.tenant.name}</p><p className="text-xs text-slate-400">{session.tenant.plan} workspace</p></div><Icon name="down" className="ml-auto h-4 w-4"/></div>}</div>
-      <nav aria-label="Primary navigation" className="mt-6 flex-1 space-y-1 px-3">{!collapsed&&<p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[.2em] text-slate-500">Workspace</p>}{navigation.filter(n=>can(session,n.permission)).map(n=>{const active=path===n.href||path.startsWith(`${n.href}/`);return <Link onClick={()=>setMobile(false)} title={collapsed?n.label:undefined} key={n.label} href={n.href} className={`group flex h-11 items-center rounded-xl px-3 transition ${active?'bg-blue-600 text-white shadow-lg shadow-blue-950/30':'hover:bg-white/[.07] hover:text-white'} ${collapsed?'justify-center':''}`}><Icon name={n.icon} className="h-5 w-5 shrink-0"/>{!collapsed&&<><span className="ml-3 text-sm font-medium">{n.label}</span>{n.badge&&<span className="ml-auto rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-bold text-amber-300">{n.badge}</span>}</>}</Link>})}</nav>
+      <nav aria-label="Primary navigation" className="mt-6 flex-1 space-y-1 overflow-y-auto px-3">{!collapsed&&<p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[.2em] text-slate-500">Workspace</p>}{navigation.filter(n=>can(session,n.permission)).map(n=>{const active=path===n.href||path.startsWith(`${n.href}/`);return <div key={n.label}>{n.section&&!collapsed&&<p className="mb-2 mt-5 px-3 text-[10px] font-bold uppercase tracking-[.2em] text-slate-500">{n.section}</p>}<Link onClick={()=>setMobile(false)} title={collapsed?n.label:undefined} href={n.href} className={`group flex h-11 items-center rounded-xl px-3 transition ${active?'bg-blue-600 text-white shadow-lg shadow-blue-950/30':'hover:bg-white/[.07] hover:text-white'} ${collapsed?'justify-center':''}`}><Icon name={n.icon} className="h-5 w-5 shrink-0"/>{!collapsed&&<><span className="ml-3 text-sm font-medium">{n.label}</span>{n.badge&&<span className="ml-auto rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-bold text-amber-300">{n.badge}</span>}</>}</Link></div>})}</nav>
       {!collapsed&&<div className="m-3 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 p-4 text-white"><p className="text-xs font-semibold text-blue-100">Need help?</p><p className="mt-1 text-sm font-bold">Visit the support centre</p><button className="mt-3 text-xs font-semibold">Open support <span aria-hidden>→</span></button></div>}
       <button onClick={()=>setCollapsed(!collapsed)} className="hidden h-14 items-center justify-center border-t border-white/10 text-slate-500 transition hover:text-white lg:flex" aria-label={collapsed?'Expand sidebar':'Collapse sidebar'}><Icon name="chevron" className={`h-5 w-5 transition ${collapsed?'':'rotate-180'}`}/>{!collapsed&&<span className="ml-2 text-xs font-semibold">Collapse sidebar</span>}</button>
     </aside>

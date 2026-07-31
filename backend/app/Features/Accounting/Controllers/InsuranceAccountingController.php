@@ -18,8 +18,9 @@ class InsuranceAccountingController
     {
         $query = DB::table('insurance_companies')->where('tenant_id', $this->tenant($request))->whereNull('deleted_at');
         if ($search = trim((string) $request->query('search'))) {
-            $query->where(fn ($q) => $q->where('company_name', 'ilike', "%{$search}%")
-                ->orWhere('short_code', 'ilike', "%{$search}%")->orWhere('agency_code_name', 'ilike', "%{$search}%"));
+            $term = '%'.strtolower($search).'%';
+            $query->where(fn ($q) => $q->whereRaw('LOWER(company_name) LIKE ?', [$term])
+                ->orWhereRaw('LOWER(short_code) LIKE ?', [$term])->orWhereRaw('LOWER(agency_code_name) LIKE ?', [$term]));
         }
         return response()->json(['success' => true, 'data' => $query->orderBy('company_name')->get()]);
     }
@@ -81,7 +82,9 @@ class InsuranceAccountingController
     public function purchaseSources(Request $request)
     {
         $query = DB::table('insurance_purchase_sources')->where('tenant_id',$this->tenant($request))->whereNull('deleted_at');
-        if ($search = trim((string)$request->query('search'))) $query->where('name','ilike',"%{$search}%");
+        if ($search = trim((string)$request->query('search'))) {
+            $query->whereRaw('LOWER(name) LIKE ?', ['%'.strtolower($search).'%']);
+        }
         return response()->json(['success'=>true,'data'=>$query->orderBy('name')->get()]);
     }
 
