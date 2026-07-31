@@ -83,6 +83,28 @@ class VehicleInsuranceController
             'other_charges' => 0,
         ];
         $vehicleType = strtolower((string) $vehicle->vehicle_type);
+        if (! empty($data['insurance_company_id'])) {
+            $companyExists = DB::table('insurance_companies')->where('tenant_id',$vehicle->tenant_id)
+                ->where('id',$data['insurance_company_id'])->whereNull('deleted_at')->exists();
+            if (! $companyExists) throw ValidationException::withMessages(['insurance_company_id'=>['Select a valid insurance company.']]);
+        }
+        $purchaseType = $data['purchase_from_type'] ?? 'direct_company';
+        if ($purchaseType === 'agent') {
+            $source = DB::table('insurance_purchase_sources')
+                ->where('tenant_id', $vehicle->tenant_id)->where('id', $data['purchase_source_id'] ?? null)
+                ->where('is_active', true)->whereNull('deleted_at')->first();
+            if (! $source) {
+                throw ValidationException::withMessages(['purchase_source_id' => ['Select a valid active purchase source.']]);
+            }
+            $data['purchase_from'] = $source->name;
+            $data['commission_receivable_from_type'] = 'purchase_source';
+            $data['commission_receivable_from_id'] = $source->id;
+        } else {
+            $data['purchase_from_type'] = 'direct_company';
+            $data['purchase_source_id'] = null;
+            $data['commission_receivable_from_type'] = 'insurance_company';
+            $data['commission_receivable_from_id'] = $data['insurance_company_id'] ?? null;
+        }
         $automaticGst = in_array($vehicleType, ['private_car', 'two_wheeler'], true);
         if ($automaticGst) {
             if (empty($data['has_od_cover'])) $data['od_premium'] = 0;
@@ -113,7 +135,18 @@ class VehicleInsuranceController
         $commercial = in_array($vehicleType, ['taxi', 'lgv', 'hgv', 'commercial', 'goods_vehicle', 'passenger_commercial'], true);
         $addonBase = ! empty($data['commission_on_addon']) ? (float) $data['addon_premium'] : 0;
 
-        if (! $modernCommission) {
+        if ($vehicleType === 'private_car' && ! empty($data['commission_basis'])) {
+            $basis = $data['commission_basis'];
+            $odCommission = $tpCommission = 0;
+            if ($basis === 'manual') {
+                $grossCommission = round((float) ($data['gross_commission'] ?? 0), 2);
+            } elseif ($basis === 'net_premium') {
+                $grossCommission = round((float) $data['net_premium'] * (float) $data['commission_percent'] / 100, 2);
+            } else {
+                $grossCommission = round((float) $data['od_premium'] * (float) $data['od_commission_percent'] / 100, 2);
+                $odCommission = $grossCommission;
+            }
+        } elseif (! $modernCommission) {
             $grossCommission = round($grossPremium * (float) $data['commission_percent'] / 100, 2);
             $odCommission = $tpCommission = 0;
         } elseif ($commercial || ! empty($data['commission_on_net'])) {

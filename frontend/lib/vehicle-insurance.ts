@@ -30,6 +30,11 @@ export type VehicleInsurancePolicy = {
   long_term_tp_policy_number?: string;
   long_term_tp_expiry?: string;
   policy_document_file_id?: string;
+  purchase_from_type?: 'direct_company'|'agent';
+  purchase_source_id?: string;
+  commission_receivable_from_type?: string;
+  commission_receivable_from_id?: string;
+  commission_basis?: 'od_premium'|'net_premium'|'manual';
   gst_other_charges: number;
   gst_percent: number;
   gst_amount: number;

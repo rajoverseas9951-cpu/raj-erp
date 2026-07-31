@@ -6,6 +6,8 @@ use App\Features\Customers\Models\Customer;
 use App\Features\Vehicles\Models\Vehicle;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -126,6 +128,54 @@ class VehicleInsurancePolicyTest extends TestCase
             'two wheeler package' => ['two_wheeler', true, true, 1000, 300, 0, 0, '1300.00', '234.00', '1534.00', '1534.00'],
             'two wheeler package add-on' => ['two_wheeler', true, true, 1000, 300, 200, 0, '1500.00', '270.00', '1770.00', '1770.00'],
         ];
+    }
+
+    public function test_private_car_commission_basis_and_receivable_sources_are_saved(): void
+    {
+        [$user, $vehicle] = $this->userAndVehicle('private_car');
+        $companyId = (string) Str::uuid();
+        DB::table('insurance_companies')->insert([
+            'id'=>$companyId,'tenant_id'=>$user->tenant_id,'company_name'=>'TATA AIG',
+            'short_code'=>'TATA','agency_code_name'=>'JAKIR A MEMON','default_commission_percent'=>0,
+            'tds_percent'=>5,'settlement_days'=>30,'status'=>'active','created_at'=>now(),'updated_at'=>now(),
+        ]);
+        $sourceId = (string) Str::uuid();
+        DB::table('insurance_purchase_sources')->insert([
+            'id'=>$sourceId,'tenant_id'=>$user->tenant_id,'name'=>'EXTERNAL BROKER',
+            'source_type'=>'insurance_broker','tds_applicable'=>false,'tds_percent'=>0,
+            'is_active'=>true,'created_at'=>now(),'updated_at'=>now(),
+        ]);
+
+        $base = array_merge($this->payload(), [
+            'insurance_company_id'=>$companyId,'has_od_cover'=>true,'has_tp_cover'=>true,
+            'od_premium'=>10000,'tp_premium'=>3000,'addon_premium'=>0,'customer_discount'=>0,
+            'agent_commission'=>0,'commission_on_tp'=>false,
+        ]);
+        $package = $this->actingAs($user)->postJson("/api/v1/vehicles/{$vehicle->id}/insurances", array_merge($base, [
+            'policy_number'=>'PRIVATE-PACKAGE','purchase_from_type'=>'direct_company',
+            'commission_basis'=>'od_premium','od_commission_percent'=>15,
+        ]))->assertCreated()
+            ->assertJsonPath('data.gross_commission','1500.00')
+            ->assertJsonPath('data.commission_receivable_from_type','insurance_company')
+            ->assertJsonPath('data.commission_receivable_from_id',$companyId);
+
+        $this->actingAs($user)->putJson(
+            "/api/v1/vehicles/{$vehicle->id}/insurances/{$package->json('data.id')}",
+            array_merge($base, [
+                'policy_number'=>'PRIVATE-PACKAGE','purchase_from_type'=>'agent','purchase_source_id'=>$sourceId,
+                'commission_basis'=>'manual','gross_commission'=>777,
+            ])
+        )->assertOk()
+            ->assertJsonPath('data.gross_commission','777.00')
+            ->assertJsonPath('data.commission_receivable_from_type','purchase_source')
+            ->assertJsonPath('data.commission_receivable_from_id',$sourceId);
+
+        $this->actingAs($user)->postJson("/api/v1/vehicles/{$vehicle->id}/insurances", array_merge($base, [
+            'policy_number'=>'PRIVATE-TP','insurance_type'=>'third_party','has_od_cover'=>false,
+            'purchase_from_type'=>'direct_company','commission_basis'=>'net_premium','commission_percent'=>2.5,
+        ]))->assertCreated()
+            ->assertJsonPath('data.od_premium','0.00')
+            ->assertJsonPath('data.gross_commission','75.00');
     }
 
     private function payload(): array

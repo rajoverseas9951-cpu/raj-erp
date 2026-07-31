@@ -23,6 +23,8 @@ class VehicleInsurance extends Model
         'commission_on_addon', 'od_commission_percent', 'tp_commission_percent',
         'od_commission_amount', 'tp_commission_amount', 'long_term_tp_policy_number',
         'long_term_tp_expiry',
+        'purchase_from_type', 'purchase_source_id', 'commission_receivable_from_type',
+        'commission_receivable_from_id', 'commission_basis',
         'created_by', 'updated_by',
     ];
 

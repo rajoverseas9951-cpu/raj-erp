@@ -40,6 +40,10 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
 
     Route::get('insurance-accounting/companies', [InsuranceAccountingController::class, 'companies']);
     Route::post('insurance-accounting/companies', [InsuranceAccountingController::class, 'storeCompany']);
+    Route::put('insurance-accounting/companies/{id}', [InsuranceAccountingController::class, 'updateCompany']);
+    Route::get('insurance-accounting/purchase-sources', [InsuranceAccountingController::class, 'purchaseSources']);
+    Route::post('insurance-accounting/purchase-sources', [InsuranceAccountingController::class, 'storePurchaseSource']);
+    Route::put('insurance-accounting/purchase-sources/{id}', [InsuranceAccountingController::class, 'updatePurchaseSource']);
     Route::get('insurance-accounting/commissions', [InsuranceAccountingController::class, 'commissions']);
     Route::post('insurance-accounting/commissions', [InsuranceAccountingController::class, 'storeCommission']);
     Route::post('insurance-accounting/commissions/{id}/receive', [InsuranceAccountingController::class, 'receiveCommission']);

@@ -16,8 +16,12 @@ class InsuranceAccountingController
 
     public function companies(Request $request)
     {
-        return response()->json(['success' => true, 'data' => DB::table('insurance_companies')
-            ->where('tenant_id', $this->tenant($request))->whereNull('deleted_at')->orderBy('company_name')->get()]);
+        $query = DB::table('insurance_companies')->where('tenant_id', $this->tenant($request))->whereNull('deleted_at');
+        if ($search = trim((string) $request->query('search'))) {
+            $query->where(fn ($q) => $q->where('company_name', 'ilike', "%{$search}%")
+                ->orWhere('short_code', 'ilike', "%{$search}%")->orWhere('agency_code_name', 'ilike', "%{$search}%"));
+        }
+        return response()->json(['success' => true, 'data' => $query->orderBy('company_name')->get()]);
     }
 
     public function storeCompany(Request $request)
@@ -25,6 +29,7 @@ class InsuranceAccountingController
         $data = $request->validate([
             'company_name' => ['required','string','max:200'],
             'short_code' => ['nullable','string','max:30'],
+            'agency_code_name' => ['nullable','string','max:200'],
             'default_commission_percent' => ['required','numeric','min:0','max:100'],
             'tds_percent' => ['required','numeric','min:0','max:100'],
             'settlement_days' => ['required','integer','min:0'],
@@ -33,6 +38,7 @@ class InsuranceAccountingController
             'contact_person' => ['nullable','string','max:200'],
             'mobile' => ['nullable','string','max:20'],
             'email' => ['nullable','email','max:255'],
+            'notes' => ['nullable','string','max:2000'],
         ]);
 
         $tenant = $this->tenant($request);
@@ -55,6 +61,62 @@ class InsuranceAccountingController
             return DB::table('insurance_companies')->where('id', $id)->first();
         });
         return response()->json(['success' => true, 'data' => $company], 201);
+    }
+
+    public function updateCompany(Request $request, string $id)
+    {
+        $data = $request->validate([
+            'company_name' => ['sometimes','string','max:200'], 'short_code' => ['nullable','string','max:30'],
+            'agency_code_name' => ['nullable','string','max:200'], 'tds_percent' => ['sometimes','numeric','min:0','max:100'],
+            'default_commission_percent' => ['sometimes','numeric','min:0','max:100'],
+            'contact_person' => ['nullable','string','max:200'], 'mobile' => ['nullable','string','max:20'],
+            'email' => ['nullable','email','max:255'], 'notes' => ['nullable','string','max:2000'],
+            'status' => ['sometimes','in:active,inactive'],
+        ]);
+        DB::table('insurance_companies')->where('tenant_id',$this->tenant($request))->where('id',$id)
+            ->update(array_merge($data,['updated_by'=>$request->user()?->id,'updated_at'=>now()]));
+        return response()->json(['success'=>true,'data'=>DB::table('insurance_companies')->where('id',$id)->first()]);
+    }
+
+    public function purchaseSources(Request $request)
+    {
+        $query = DB::table('insurance_purchase_sources')->where('tenant_id',$this->tenant($request))->whereNull('deleted_at');
+        if ($search = trim((string)$request->query('search'))) $query->where('name','ilike',"%{$search}%");
+        return response()->json(['success'=>true,'data'=>$query->orderBy('name')->get()]);
+    }
+
+    public function storePurchaseSource(Request $request)
+    {
+        $data = $this->purchaseSourceData($request);
+        $id = (string) Str::uuid();
+        DB::table('insurance_purchase_sources')->insert(array_merge($data,[
+            'id'=>$id,'tenant_id'=>$this->tenant($request),'created_by'=>$request->user()?->id,
+            'updated_by'=>$request->user()?->id,'created_at'=>now(),'updated_at'=>now(),
+        ]));
+        return response()->json(['success'=>true,'data'=>DB::table('insurance_purchase_sources')->where('id',$id)->first()],201);
+    }
+
+    public function updatePurchaseSource(Request $request, string $id)
+    {
+        $data = $this->purchaseSourceData($request);
+        DB::table('insurance_purchase_sources')->where('tenant_id',$this->tenant($request))->where('id',$id)
+            ->update(array_merge($data,['updated_by'=>$request->user()?->id,'updated_at'=>now()]));
+        return response()->json(['success'=>true,'data'=>DB::table('insurance_purchase_sources')->where('id',$id)->first()]);
+    }
+
+    private function purchaseSourceData(Request $request): array
+    {
+        $data = $request->validate([
+            'name'=>['required','string','max:200'],'source_type'=>['required','in:individual_agent,insurance_broker,agency,other'],
+            'mobile'=>['nullable','string','max:20'],'email'=>['nullable','email','max:255'],
+            'linked_company_id'=>['nullable','uuid'],'tds_applicable'=>['sometimes','boolean'],
+            'tds_percent'=>['sometimes','numeric','min:0','max:100'],'is_active'=>['sometimes','boolean'],
+            'notes'=>['nullable','string','max:2000'],
+        ]);
+        $data['tds_applicable'] = (bool)($data['tds_applicable'] ?? false);
+        $data['tds_percent'] = $data['tds_applicable'] ? (float)($data['tds_percent'] ?? 0) : 0;
+        $data['is_active'] = (bool)($data['is_active'] ?? true);
+        return $data;
     }
 
     public function commissions(Request $request)
