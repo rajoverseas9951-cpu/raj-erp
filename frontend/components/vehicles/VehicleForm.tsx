@@ -9,6 +9,7 @@ type Values = Record<string, string>;
 const initial: Values = {
     customer_id: '', vehicle_number: '', registration_date: '', registration_authority: '', state: 'Gujarat', district: '', vehicle_type: 'two_wheeler',
     vehicle_class: '', vehicle_category: '', manufacturer: '', model: '', variant: '', manufacturing_year: '', colour: '', fuel_type: '',
+    manufacturer_id: '', model_id: '', colour_id: '', vehicle_class_id: '', vehicle_category_id: '', fuel_type_id: '',
     seating_capacity: '', cubic_capacity: '', gross_weight: '', unladen_weight: '', chassis_number: '', engine_number: '', financier: '',
     insurance_status: 'not_added', fitness_status: 'not_added', permit_status: 'not_added', tax_status: 'not_added', puc_status: 'not_added',
     insurance_expiry: '', puc_expiry: '', fitness_expiry: '', permit_expiry: '', national_permit_expiry: '', tax_expiry: '', counter_tax_expiry: '', payment_due: '0',
@@ -136,7 +137,10 @@ export function VehicleForm({ vehicle }: {
 }) {
     const router = useRouter();
     const [mode, setMode] = useState<'rc' | 'manual'>('manual');
-    const [values, setValues] = useState<Values>(() => ({ ...initial, ...Object.fromEntries(Object.entries(vehicle ?? {}).map(([k, v]) => [k, v == null ? '' : String(v).slice(0, 10)])) }));
+    const [values, setValues] = useState<Values>(() => {
+        const dates=['registration_date','insurance_expiry','puc_expiry','fitness_expiry','permit_expiry','national_permit_expiry','tax_expiry','counter_tax_expiry'];
+        return {...initial,...Object.fromEntries(Object.entries(vehicle??{}).map(([k,v])=>[k,v==null?'':dates.includes(k)?String(v).slice(0,10):String(v)]))};
+    });
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [saving, setSaving] = useState(false);
     const [reading, setReading] = useState(false);
@@ -148,14 +152,28 @@ export function VehicleForm({ vehicle }: {
     const [masters, setMasters] = useState<Record<VehicleMasterType, VehicleMaster[]>>({ manufacturers: [], models: [], colours: [], vehicle_classes: [], body_types: [], fuel_types: [] });
     const [masterModal, setMasterModal] = useState<VehicleMasterType>();
     const [masterSaving, setMasterSaving] = useState(false);
+    const [masterLoading, setMasterLoading] = useState(true);
     useEffect(() => { customerApi.list('?per_page=500').then(r => setCustomers(r.data ?? [])).catch(e => setError(e instanceof Error ? e.message : 'Customers load nahi hue.')); }, []);
     useEffect(() => { void loadMasters(); }, []);
     useEffect(() => { const close = (e: KeyboardEvent) => { if (e.key === 'Escape' && !masterSaving) setMasterModal(undefined); }; addEventListener('keydown', close); return () => removeEventListener('keydown', close); }, [masterSaving]);
     const set = (n: string, v: string) => setValues(o => ({ ...o, [n]: v }));
     async function loadMasters() {
         const types: VehicleMasterType[] = ['manufacturers', 'models', 'colours', 'vehicle_classes', 'body_types', 'fuel_types'];
-        const lists = await Promise.all(types.map(type => vehicleMasterApi.list(type)));
-        setMasters(Object.fromEntries(types.map((type, index) => [type, lists[index]])) as Record<VehicleMasterType, VehicleMaster[]>);
+        setMasterLoading(true);
+        try {
+            const lists=await Promise.all(types.map(type=>vehicleMasterApi.list(type)));
+            const loaded=Object.fromEntries(types.map((type,index)=>[type,lists[index]])) as Record<VehicleMasterType,VehicleMaster[]>;
+            setMasters(loaded);
+            setValues(current=>{
+                const match=(type:VehicleMasterType,name:string)=>loaded[type].find(x=>x.name.toUpperCase()===name.toUpperCase())?.id??'';
+                const manufacturerId=current.manufacturer_id||match('manufacturers',current.manufacturer);
+                const modelId=current.model_id||loaded.models.find(x=>x.name.toUpperCase()===current.model.toUpperCase()&&(!manufacturerId||x.parent_id===manufacturerId))?.id||'';
+                return {...current,manufacturer_id:manufacturerId,model_id:modelId,colour_id:current.colour_id||match('colours',current.colour),vehicle_class_id:current.vehicle_class_id||match('vehicle_classes',current.vehicle_class),vehicle_category_id:current.vehicle_category_id||match('body_types',current.vehicle_category),fuel_type_id:current.fuel_type_id||match('fuel_types',current.fuel_type)};
+            });
+        } catch(e) {
+            console.error('Vehicle master API load failed',e);
+            setError(e instanceof Error?`Master dropdowns could not load: ${e.message}`:'Master dropdowns could not load.');
+        } finally { setMasterLoading(false); }
     }
     async function addMaster(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -163,12 +181,11 @@ export function VehicleForm({ vehicle }: {
         setMasterSaving(true); setError('');
         const fd = new FormData(e.currentTarget);
         try {
-            const parent = masters.manufacturers.find(x => x.name === values.manufacturer);
-            const created = await vehicleMasterApi.create(masterModal, { name: fd.get('name'), code: fd.get('code'), parent_id: masterModal === 'models' ? parent?.id : null, status: 'active' });
+            const created = await vehicleMasterApi.create(masterModal, { name: fd.get('name'), code: fd.get('code'), parent_id: masterModal === 'models' ? values.manufacturer_id : null, status: 'active' });
             await loadMasters();
-            const field:Record<VehicleMasterType,string>={manufacturers:'manufacturer',models:'model',colours:'colour',vehicle_classes:'vehicle_class',body_types:'vehicle_category',fuel_types:'fuel_type'};
-            set(field[masterModal], created.name);
-            if (masterModal === 'manufacturers') set('model', '');
+            const fields:Record<VehicleMasterType,[string,string]>={manufacturers:['manufacturer_id','manufacturer'],models:['model_id','model'],colours:['colour_id','colour'],vehicle_classes:['vehicle_class_id','vehicle_class'],body_types:['vehicle_category_id','vehicle_category'],fuel_types:['fuel_type_id','fuel_type']};
+            const [idField,nameField]=fields[masterModal];
+            setValues(current=>({...current,[idField]:created.id,[nameField]:created.name,...(masterModal==='manufacturers'?{model_id:'',model:''}:{})}));
             setMasterModal(undefined); setSuccess(`${created.name} added and selected.`);
         } catch (e) { setError(e instanceof Error ? e.message : 'Master could not be saved.'); }
         finally { setMasterSaving(false); }
@@ -228,14 +245,14 @@ export function VehicleForm({ vehicle }: {
 <Select label="Vehicle Type" value={values.vehicle_type} onChange={v => set('vehicle_type', v)} options={[{ value: 'two_wheeler', label: 'Motorcycle / Scooter' }, { value: 'private_car', label: 'Private Car' }, { value: 'lgv', label: 'LGV / Pickup' }, { value: 'hgv', label: 'HGV / GT' }, { value: 'taxi', label: 'Taxi' }]}/>
 </Card>
 <Card title="Vehicle Details">
-<MasterSelect label="Vehicle Class" value={values.vehicle_class} onChange={v => set('vehicle_class', v)} options={masters.vehicle_classes.filter(x => x.status === 'active').map(x => x.name)} add={() => setMasterModal('vehicle_classes')}/>
-<MasterSelect label="Vehicle Category / Body Type" value={values.vehicle_category} onChange={v => set('vehicle_category', v)} options={masters.body_types.filter(x => x.status === 'active').map(x => x.name)} add={() => setMasterModal('body_types')}/>
-<MasterSelect label="Manufacturer" value={values.manufacturer} onChange={v => { set('manufacturer', v); set('model', ''); }} options={masters.manufacturers.filter(x => x.status === 'active').map(x => x.name)} add={() => setMasterModal('manufacturers')}/>
-<MasterSelect label="Model" value={values.model} onChange={v => set('model', v)} options={masters.models.filter(x => x.status === 'active' && (!values.manufacturer || x.parent_name === values.manufacturer)).map(x => x.name)} add={() => values.manufacturer ? setMasterModal('models') : setError('Select a manufacturer before adding a model.')}/>
+<MasterSelect label="Vehicle Class" value={values.vehicle_class_id} onChange={id=>{const item=masters.vehicle_classes.find(x=>x.id===id);setValues(x=>({...x,vehicle_class_id:id,vehicle_class:item?.name??''}))}} options={masters.vehicle_classes} add={() => setMasterModal('vehicle_classes')} loading={masterLoading}/>
+<MasterSelect label="Vehicle Category / Body Type" value={values.vehicle_category_id} onChange={id=>{const item=masters.body_types.find(x=>x.id===id);setValues(x=>({...x,vehicle_category_id:id,vehicle_category:item?.name??''}))}} options={masters.body_types} add={() => setMasterModal('body_types')} loading={masterLoading}/>
+<MasterSelect label="Manufacturer" value={values.manufacturer_id} onChange={id=>{const item=masters.manufacturers.find(x=>x.id===id);setValues(x=>x.manufacturer_id===id?x:{...x,manufacturer_id:id,manufacturer:item?.name??'',model_id:'',model:''})}} options={masters.manufacturers} add={() => setMasterModal('manufacturers')} loading={masterLoading}/>
+<MasterSelect label="Model" value={values.model_id} onChange={id=>{const item=masters.models.find(x=>x.id===id);setValues(x=>({...x,model_id:id,model:item?.name??''}))}} options={masters.models.filter(x=>x.parent_id===values.manufacturer_id)} add={() => values.manufacturer_id ? setMasterModal('models') : setError('Select a manufacturer before adding a model.')} loading={masterLoading} disabled={!values.manufacturer_id}/>
 <Input label="Variant" value={values.variant} onChange={v => set('variant', v)}/>
 <Input label="Manufacturing Year" type="number" value={values.manufacturing_year} onChange={v => set('manufacturing_year', v)}/>
-<MasterSelect label="Colour" value={values.colour} onChange={v => set('colour', v)} options={masters.colours.filter(x => x.status === 'active').map(x => x.name)} add={() => setMasterModal('colours')}/>
-<MasterSelect label="Fuel Type" value={values.fuel_type} onChange={v => set('fuel_type', v)} options={masters.fuel_types.filter(x => x.status === 'active').map(x => x.name)} add={() => setMasterModal('fuel_types')}/>
+<MasterSelect label="Colour" value={values.colour_id} onChange={id=>{const item=masters.colours.find(x=>x.id===id);setValues(x=>({...x,colour_id:id,colour:item?.name??''}))}} options={masters.colours} add={() => setMasterModal('colours')} loading={masterLoading}/>
+<MasterSelect label="Fuel Type" value={values.fuel_type_id} onChange={id=>{const item=masters.fuel_types.find(x=>x.id===id);setValues(x=>({...x,fuel_type_id:id,fuel_type:item?.name??''}))}} options={masters.fuel_types} add={() => setMasterModal('fuel_types')} loading={masterLoading}/>
 <Input label="Seating Capacity" type="number" value={values.seating_capacity} onChange={v => set('seating_capacity', v)}/>
 <Input label="Cubic Capacity" type="number" value={values.cubic_capacity} onChange={v => set('cubic_capacity', v)}/>{commercial && <>
 <Input label="Gross Weight" type="number" value={values.gross_weight} onChange={v => set('gross_weight', v)}/>
@@ -297,8 +314,9 @@ function Select({ label, value, onChange, options, required = false }: {
 }) { return <label className="text-sm font-semibold">{label}{required && <span className="text-red-500"> *</span>}<select value={value} required={required} onChange={e => onChange(e.target.value)} className="mt-2 w-full rounded-xl border bg-white px-4 py-3 font-normal">
 <option value="">Select</option>{options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select>
 </label>; }
-function MasterSelect({ label, value, onChange, options, add }: { label: string; value: string; onChange: (v: string) => void; options: string[]; add: () => void }) {
-    return <div><label className="text-sm font-semibold">{label}<select value={value} onChange={e => onChange(e.target.value)} className="mt-2 w-full rounded-xl border bg-white px-4 py-3 font-normal"><option value="">Select</option>{value && !options.includes(value) && <option value={value}>{value} (existing)</option>}{options.map(option => <option key={option} value={option}>{option}</option>)}</select></label><button type="button" onClick={add} className="mt-2 text-sm font-bold text-blue-700">+ Add {label}</button></div>;
+function MasterSelect({label,value,onChange,options,add,loading=false,disabled=false}:{label:string;value:string;onChange:(v:string)=>void;options:VehicleMaster[];add:()=>void;loading?:boolean;disabled?:boolean}) {
+    const active=options.filter(x=>x.status==='active').sort((a,b)=>a.name.localeCompare(b.name));
+    return <div><label className="text-sm font-semibold">{label}<select value={value} disabled={disabled||loading} onChange={e=>onChange(e.target.value)} className="mt-2 w-full rounded-xl border bg-white px-4 py-3 font-normal disabled:bg-slate-100"><option value="">{loading?'Loading…':disabled?'Select manufacturer first':active.length?'Select':'No active records found'}</option>{active.map(option=><option key={option.id} value={option.id}>{option.name}</option>)}</select></label><button type="button" onClick={add} disabled={loading} className="mt-2 text-sm font-bold text-blue-700 disabled:text-slate-400">+ Add {label}</button></div>;
 }
 function MasterModal({ type, saving, close, save, manufacturer }: { type: VehicleMasterType; saving: boolean; close: () => void; save: (e: FormEvent<HTMLFormElement>) => void; manufacturer: string }) {
     const labels:Record<VehicleMasterType,string>={manufacturers:'Manufacturer',models:'Vehicle Model',colours:'Vehicle Colour',vehicle_classes:'Vehicle Class',body_types:'Body Type',fuel_types:'Fuel Type'};

@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Features\Customers\Models\Customer;
 use Database\Seeders\VehicleMasterSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class VehicleMasterTest extends TestCase
@@ -66,5 +68,31 @@ class VehicleMasterTest extends TestCase
         $this->actingAs($user)->getJson('/api/v1/vehicle-masters/body_types')
             ->assertOk()->assertJsonCount(19, 'data')
             ->assertJsonFragment(['name' => 'MOTORCYCLE']);
+        $manufacturers=$this->actingAs($user)->getJson('/api/v1/vehicle-masters/manufacturers')
+            ->assertOk()->assertJsonCount(28,'data')->assertJsonFragment(['name'=>'MARUTI SUZUKI']);
+        $maruti=collect($manufacturers->json('data'))->firstWhere('name','MARUTI SUZUKI');
+        $this->actingAs($user)->getJson('/api/v1/vehicle-masters/models?parent_id='.$maruti['id'])
+            ->assertOk()->assertJsonFragment(['name'=>'SWIFT'])->assertJsonFragment(['name'=>'BREZZA']);
+        $this->actingAs($user)->getJson('/api/v1/vehicle-masters/colours')
+            ->assertOk()->assertJsonCount(17,'data')->assertJsonFragment(['name'=>'PEARL WHITE']);
+    }
+
+    public function test_vehicle_save_uses_master_ids_and_persists_master_names(): void
+    {
+        $user=User::factory()->create(['is_admin'=>true]);
+        $customer=Customer::create(['tenant_id'=>$user->tenant_id,'customer_code'=>'CUS-MASTER','first_name'=>'Master','last_name'=>'Test','mobile'=>'9999999991']);
+        $this->seed(VehicleMasterSeeder::class);
+        $manufacturer=DB::table('vehicle_masters')->where('tenant_id',$user->tenant_id)->where('type','manufacturers')->where('name','MARUTI SUZUKI')->first();
+        $model=DB::table('vehicle_masters')->where('tenant_id',$user->tenant_id)->where('type','models')->where('parent_id',$manufacturer->id)->where('name','SWIFT')->first();
+        $colour=DB::table('vehicle_masters')->where('tenant_id',$user->tenant_id)->where('type','colours')->where('name','PEARL WHITE')->first();
+
+        $this->actingAs($user)->postJson('/api/v1/vehicles',[
+            'customer_id'=>$customer->id,'vehicle_number'=>'GJ01MASTER1','chassis_number'=>'CHASSISMASTER001','engine_number'=>'ENGMASTER001',
+            'manufacturer_id'=>$manufacturer->id,'model_id'=>$model->id,'colour_id'=>$colour->id,
+            'insurance_status'=>'not_added','fitness_status'=>'not_added','permit_status'=>'not_added','tax_status'=>'not_added','puc_status'=>'not_added',
+        ])->assertCreated()
+            ->assertJsonPath('data.manufacturer_id',$manufacturer->id)->assertJsonPath('data.manufacturer','MARUTI SUZUKI')
+            ->assertJsonPath('data.model_id',$model->id)->assertJsonPath('data.model','SWIFT')
+            ->assertJsonPath('data.colour_id',$colour->id)->assertJsonPath('data.colour','PEARL WHITE');
     }
 }
