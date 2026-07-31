@@ -79,16 +79,37 @@ class VehicleInsuranceController
             'commission_on_od' => false, 'commission_on_tp' => false,
             'commission_on_net' => true, 'commission_on_addon' => false,
             'od_commission_percent' => 0, 'tp_commission_percent' => 0,
+            'gst_other_charges' => 0, 'gst_percent' => 0, 'gst_amount' => 0,
+            'other_charges' => 0,
         ];
-        $grossPremium = round(
-            (float) $data['od_premium']
-            + (float) $data['tp_premium']
-            + (float) $data['addon_premium']
-            + (float) $data['gst_other_charges'],
-            2
-        );
-        $customerPay = round($grossPremium - (float) $data['customer_discount'], 2);
         $vehicleType = strtolower((string) $vehicle->vehicle_type);
+        $automaticGst = in_array($vehicleType, ['private_car', 'two_wheeler'], true);
+        if ($automaticGst) {
+            if (empty($data['has_od_cover'])) $data['od_premium'] = 0;
+            if (empty($data['has_tp_cover'])) $data['tp_premium'] = 0;
+            $data['net_premium'] = round(
+                (float) $data['od_premium'] + (float) $data['tp_premium'] + (float) $data['addon_premium'],
+                2
+            );
+            $data['gst_percent'] = 18;
+            $data['gst_amount'] = round((float) $data['net_premium'] * 18 / 100, 2);
+            $grossPremium = round(
+                (float) $data['net_premium'] + (float) $data['gst_amount'] + (float) $data['other_charges'],
+                2
+            );
+        } else {
+            $grossPremium = round(
+                (float) $data['od_premium'] + (float) $data['tp_premium']
+                + (float) $data['addon_premium'] + (float) $data['gst_other_charges'],
+                2
+            );
+        }
+        $customerPay = round($grossPremium - (float) $data['customer_discount'], 2);
+        if ($customerPay < 0) {
+            throw ValidationException::withMessages([
+                'customer_discount' => ['Customer discount cannot exceed gross premium.'],
+            ]);
+        }
         $commercial = in_array($vehicleType, ['taxi', 'lgv', 'hgv', 'commercial', 'goods_vehicle', 'passenger_commercial'], true);
         $addonBase = ! empty($data['commission_on_addon']) ? (float) $data['addon_premium'] : 0;
 
@@ -96,7 +117,11 @@ class VehicleInsuranceController
             $grossCommission = round($grossPremium * (float) $data['commission_percent'] / 100, 2);
             $odCommission = $tpCommission = 0;
         } elseif ($commercial || ! empty($data['commission_on_net'])) {
-            $grossCommission = round(((float) ($data['net_premium'] ?? 0) + $addonBase) * (float) $data['commission_percent'] / 100, 2);
+            $grossCommission = round(
+                ((float) ($data['net_premium'] ?? 0) + ($automaticGst ? 0 : $addonBase))
+                * (float) $data['commission_percent'] / 100,
+                2
+            );
             $odCommission = $tpCommission = 0;
         } else {
             $odCommission = ! empty($data['commission_on_od'])

@@ -31,6 +31,9 @@ export type VehicleInsurancePolicy = {
   long_term_tp_expiry?: string;
   policy_document_file_id?: string;
   gst_other_charges: number;
+  gst_percent: number;
+  gst_amount: number;
+  other_charges: number;
   gross_premium: number;
   commission_percent: number;
   gross_commission: number;
