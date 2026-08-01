@@ -1,11 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { VehicleTable } from '@/components/vehicles/VehicleTable';
 import { Vehicle, vehicleApi } from '@/lib/vehicles';
 
 export default function VehiclesPage(){
+ return <Suspense fallback={<main className="p-6"><div className="rounded-xl border bg-white p-6">Loading vehicles...</div></main>}><VehiclesContent/></Suspense>;
+}
+
+function VehiclesContent(){
  const searchParams=useSearchParams();
  const [vehicles,setVehicles]=useState<Vehicle[]>([]);
  const [loading,setLoading]=useState(true);
