@@ -13,6 +13,26 @@ export type Ledger = {
   customer_id?: string | null;
 };
 
+export type LedgerStatementEntry = {
+  date: string | null;
+  voucher_number: string | null;
+  voucher_type: string | null;
+  narration: string | null;
+  debit: number;
+  credit: number;
+  balance: number;
+  balance_type: 'debit' | 'credit';
+};
+
+export type LedgerStatement = {
+  ledger: Ledger;
+  opening_balance: number;
+  opening_type: 'debit' | 'credit';
+  entries: LedgerStatementEntry[];
+  closing_balance: number;
+  closing_type: 'debit' | 'credit';
+};
+
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -39,4 +59,5 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const ledgerApi = {
   list: () => request<Ledger[]>('/ledgers'),
   create: (body: Record<string, unknown>) => request<Ledger>('/ledgers', { method: 'POST', body: JSON.stringify(body) }),
+  statement: (ledgerId: string) => request<LedgerStatement>(`/accounting/ledger-statement/${ledgerId}`),
 };
