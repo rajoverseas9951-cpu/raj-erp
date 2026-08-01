@@ -36,49 +36,7 @@ export type Customer = {
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const token =
-    typeof window !== "undefined"
-      ? sessionStorage.getItem("raj_erp_token")
-      : null;
-
-  const response = await fetch(`${API}/api/v1${path}`, {
-    ...init,
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(init?.headers || {}),
-    },
-    cache: "no-store",
-  });
-
-  let payload: {
-    data?: T;
-    message?: string;
-    error?: { message?: string };
-    errors?: Record<string, string[]>;
-  } = {};
-
-  try {
-    payload = await response.json();
-  } catch {
-    // Laravel HTML error response ko status error ke through handle karenge.
-  }
-
-  if (!response.ok) {
-    const firstValidationError = payload.errors
-      ? Object.values(payload.errors)[0]?.[0]
-      : undefined;
-
-    throw new Error(
-      firstValidationError ??
-        payload.message ??
-        payload.error?.message ??
-        `API request failed: ${response.status}`,
-    );
-  }
-
-  return payload.data as T;
+  return authenticatedRequest<T>(path, init);
 }
 
 export type CustomerPagination = {
@@ -197,3 +155,4 @@ export type TimelineEvent = {
   created_at: string;
   metadata?: Record<string, unknown>;
 };
+import { authenticatedRequest } from "@/lib/api-client";

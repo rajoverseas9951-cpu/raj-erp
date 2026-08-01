@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { AuthenticationRedirectError } from "@/lib/api-client";
 import { useRouter } from "next/navigation";
 import { Customer, customerApi } from "@/lib/customers";
 import { scanDocument } from "@/lib/ocr";
@@ -271,6 +272,8 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
   });
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerSearch, setCustomerSearch] = useState("");
+  const [customersLoading, setCustomersLoading] = useState(true);
+  const [customerLoadError, setCustomerLoadError] = useState("");
   const [saving, setSaving] = useState(false);
   const [reading, setReading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -291,6 +294,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
   const [masterModal, setMasterModal] = useState<VehicleMasterType>();
   const [masterSaving, setMasterSaving] = useState(false);
   const [masterLoading, setMasterLoading] = useState(true);
+  const [masterLoadError, setMasterLoadError] = useState("");
   const [modelLoading, setModelLoading] = useState(false);
   const [modelError, setModelError] = useState("");
   const savedManufacturerId = useRef(String(vehicle?.manufacturer_id ?? ""));
@@ -298,12 +302,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
   const savedModelName = useRef(String(vehicle?.model ?? ""));
   const modelRequest = useRef(0);
   useEffect(() => {
-    customerApi
-      .list("?per_page=500")
-      .then((r) => setCustomers(r.data ?? []))
-      .catch((e) =>
-        setError(e instanceof Error ? e.message : "Customers load nahi hue."),
-      );
+    void loadCustomers();
   }, []);
   useEffect(() => {
     void loadMasters();
@@ -331,6 +330,21 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
     return () => removeEventListener("keydown", close);
   }, [masterSaving]);
   const set = (n: string, v: string) => setValues((o) => ({ ...o, [n]: v }));
+  async function loadCustomers() {
+    setCustomersLoading(true);
+    setCustomerLoadError("");
+    try {
+      const response = await customerApi.list("?per_page=500");
+      setCustomers(response.data ?? []);
+    } catch (e) {
+      if (e instanceof AuthenticationRedirectError) return;
+      setCustomerLoadError(
+        e instanceof Error ? e.message : "Customers could not load.",
+      );
+    } finally {
+      setCustomersLoading(false);
+    }
+  }
   async function loadMasters() {
     type NonModelMaster = Exclude<VehicleMasterType, "models">;
     const types: NonModelMaster[] = [
@@ -341,6 +355,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
       "fuel_types",
     ];
     setMasterLoading(true);
+    setMasterLoadError("");
     try {
       const lists = await Promise.all(
         types.map((type) => vehicleMasterApi.list(type)),
@@ -374,11 +389,10 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
         };
       });
     } catch (e) {
+      if (e instanceof AuthenticationRedirectError) return;
       console.error("Vehicle master API load failed", e);
-      setError(
-        e instanceof Error
-          ? `Master dropdowns could not load: ${e.message}`
-          : "Master dropdowns could not load.",
+      setMasterLoadError(
+        e instanceof Error ? e.message : "Master dropdowns could not load.",
       );
     } finally {
       setMasterLoading(false);
@@ -572,7 +586,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
   );
   return (
     <>
-      <form onSubmit={submit} className="space-y-6 pb-24">
+      <form onSubmit={submit} className="space-y-6 pb-40 sm:pb-28">
         <section className="overflow-hidden rounded-[20px] border border-white/20 bg-white shadow-[0_20px_55px_rgba(15,23,42,.12)]">
           <div className="relative overflow-hidden bg-gradient-to-br from-[#070b22] via-[#142766] to-[#2563eb] p-6 text-white sm:p-8">
             <div className="absolute -right-12 -top-20 h-64 w-64 rounded-full bg-cyan-300/20 blur-3xl" />
@@ -611,6 +625,28 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
               </div>
             </div>
           </div>
+          <nav
+            aria-label="Vehicle form progress"
+            className="grid grid-cols-2 gap-2 border-t border-slate-100 bg-white p-4 sm:grid-cols-4 sm:p-5"
+          >
+            {[
+              "Owner & Registration",
+              "Vehicle Details",
+              "Technical Details",
+              "Insurance & Compliance",
+            ].map((label, index) => (
+              <a
+                key={label}
+                href={`#vehicle-step-${index + 1}`}
+                className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+              >
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-slate-900 text-[10px] text-white">
+                  {index + 1}
+                </span>
+                {label}
+              </a>
+            ))}
+          </nav>
           <div className="grid gap-3 p-5 md:grid-cols-2">
             <Mode
               active={mode === "rc"}
@@ -661,6 +697,22 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
             </div>
           )}
         </section>
+        {masterLoadError && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
+            <div>
+              <strong>Master dropdowns could not load.</strong>
+              <p className="mt-1 text-sm">{masterLoadError}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void loadMasters()}
+              disabled={masterLoading}
+              className="rounded-xl bg-amber-900 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+            >
+              {masterLoading ? "Retrying…" : "Retry"}
+            </button>
+          </div>
+        )}
         {error && (
           <div className="rounded-2xl border border-red-200 bg-red-50 p-4 font-semibold text-red-700">
             {error}
@@ -671,313 +723,334 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
             {success}
           </div>
         )}
-        <Card title="Owner & Registration">
-          <div className="md:col-span-2 xl:col-span-3">
-            <div className="mb-2 flex justify-between">
-              <span className="text-sm font-bold">Find Customer</span>
-              <Link
-                href="/customers/new"
-                className="text-xs font-bold text-blue-700"
-              >
-                + Create New Customer
-              </Link>
+        <div id="vehicle-step-1" className="scroll-mt-6">
+          <Card title="Owner & Registration">
+            <div className="md:col-span-2 xl:col-span-3">
+              <div className="mb-2 flex justify-between">
+                <span className="text-sm font-bold">Find Customer</span>
+                <Link
+                  href="/customers/new"
+                  className="text-xs font-bold text-blue-700"
+                >
+                  + Create New Customer
+                </Link>
+              </div>
+              <input
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
+                placeholder="Search by name or mobile"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+              />
+              {customerLoadError && (
+                <div className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-amber-50 p-3 text-xs text-amber-900">
+                  <span>{customerLoadError}</span>
+                  <button
+                    type="button"
+                    onClick={() => void loadCustomers()}
+                    className="font-black"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
             </div>
-            <input
-              value={customerSearch}
-              onChange={(e) => setCustomerSearch(e.target.value)}
-              placeholder="Search by name or mobile"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+            <Select
+              label="Customer"
+              value={values.customer_id}
+              onChange={(v) => set("customer_id", v)}
+              required
+              options={customerOptions.map((c) => ({
+                value: c.id,
+                label: `${c.first_name} ${c.middle_name ?? ""} ${c.last_name} — ${c.mobile}${c.city ? ` · ${c.city}` : ""}`,
+              }))}
+              loading={customersLoading}
             />
-          </div>
-          <Select
-            label="Customer"
-            value={values.customer_id}
-            onChange={(v) => set("customer_id", v)}
-            required
-            options={customerOptions.map((c) => ({
-              value: c.id,
-              label: `${c.first_name} ${c.middle_name ?? ""} ${c.last_name} — ${c.mobile}`,
-            }))}
-          />
-          <Input
-            label="Vehicle Number"
-            hint="Example: GJ04CA4751"
-            value={values.vehicle_number}
-            onChange={(v) =>
-              set(
-                "vehicle_number",
-                v.replace(/[^A-Za-z0-9]/g, "").toUpperCase(),
-              )
-            }
-            required
-          />
-          <Input
-            label="Registration Date"
-            type="date"
-            value={values.registration_date}
-            onChange={(v) => set("registration_date", v)}
-          />
-          <Input
-            label="Registration Authority"
-            value={values.registration_authority}
-            onChange={(v) => set("registration_authority", v)}
-          />
-          <Input
-            label="State"
-            value={values.state}
-            onChange={(v) => set("state", v)}
-          />
-          <Input
-            label="District"
-            value={values.district}
-            onChange={(v) => set("district", v)}
-          />
-          <Select
-            label="Vehicle Type"
-            value={values.vehicle_type}
-            onChange={(v) => set("vehicle_type", v)}
-            options={[
-              { value: "two_wheeler", label: "Motorcycle / Scooter" },
-              { value: "private_car", label: "Private Car" },
-              { value: "lgv", label: "LGV / Pickup" },
-              { value: "hgv", label: "HGV / GT" },
-              { value: "taxi", label: "Taxi" },
-            ]}
-          />
-        </Card>
-        <Card title="Vehicle Details">
-          <MasterSelect
-            label="Vehicle Class"
-            value={values.vehicle_class_id}
-            onChange={(id) => {
-              const item = masters.vehicle_classes.find((x) => x.id === id);
-              setValues((x) => ({
-                ...x,
-                vehicle_class_id: id,
-                vehicle_class: item?.name ?? "",
-              }));
-            }}
-            options={masters.vehicle_classes}
-            add={() => setMasterModal("vehicle_classes")}
-            loading={masterLoading}
-          />
-          <MasterSelect
-            label="Vehicle Category / Body Type"
-            value={values.vehicle_category_id}
-            onChange={(id) => {
-              const item = masters.body_types.find((x) => x.id === id);
-              setValues((x) => ({
-                ...x,
-                vehicle_category_id: id,
-                vehicle_category: item?.name ?? "",
-              }));
-            }}
-            options={masters.body_types}
-            add={() => setMasterModal("body_types")}
-            loading={masterLoading}
-          />
-          <MasterSelect
-            label="Manufacturer"
-            value={values.manufacturer_id}
-            onChange={(id) => {
-              const item = masters.manufacturers.find((x) => x.id === id);
-              savedModelId.current = "";
-              savedModelName.current = "";
-              setValues((x) =>
-                x.manufacturer_id === id
-                  ? x
-                  : {
-                      ...x,
-                      manufacturer_id: id,
-                      manufacturer: item?.name ?? "",
-                      model_id: "",
-                      model: "",
-                    },
-              );
-            }}
-            options={masters.manufacturers}
-            add={() => setMasterModal("manufacturers")}
-            loading={masterLoading}
-          />
-          <MasterSelect
-            label="Model"
-            value={values.model_id}
-            onChange={(id) => {
-              const item = masters.models.find((x) => x.id === id);
-              setValues((x) => ({
-                ...x,
-                model_id: id,
-                model: item?.name ?? "",
-              }));
-            }}
-            options={masters.models}
-            add={() =>
-              values.manufacturer_id
-                ? setMasterModal("models")
-                : setError("Select a manufacturer before adding a model.")
-            }
-            loading={modelLoading}
-            disabled={!values.manufacturer_id}
-            error={modelError}
-            placeholder="Select Model"
-            emptyLabel="No models found"
-          />
-          <Input
-            label="Variant"
-            value={values.variant}
-            onChange={(v) => set("variant", v)}
-          />
-          <Input
-            label="Manufacturing Year"
-            type="number"
-            value={values.manufacturing_year}
-            onChange={(v) => set("manufacturing_year", v)}
-          />
-          <MasterSelect
-            label="Colour"
-            value={values.colour_id}
-            onChange={(id) => {
-              const item = masters.colours.find((x) => x.id === id);
-              setValues((x) => ({
-                ...x,
-                colour_id: id,
-                colour: item?.name ?? "",
-              }));
-            }}
-            options={masters.colours}
-            add={() => setMasterModal("colours")}
-            loading={masterLoading}
-          />
-          <MasterSelect
-            label="Fuel Type"
-            value={values.fuel_type_id}
-            onChange={(id) => {
-              const item = masters.fuel_types.find((x) => x.id === id);
-              setValues((x) => ({
-                ...x,
-                fuel_type_id: id,
-                fuel_type: item?.name ?? "",
-              }));
-            }}
-            options={masters.fuel_types}
-            add={() => setMasterModal("fuel_types")}
-            loading={masterLoading}
-          />
-          <Input
-            label="Seating Capacity"
-            type="number"
-            value={values.seating_capacity}
-            onChange={(v) => set("seating_capacity", v)}
-          />
-          <Input
-            label="Cubic Capacity"
-            type="number"
-            value={values.cubic_capacity}
-            onChange={(v) => set("cubic_capacity", v)}
-          />
-          {commercial && (
-            <>
-              <Input
-                label="Gross Weight"
-                type="number"
-                value={values.gross_weight}
-                onChange={(v) => set("gross_weight", v)}
-              />
-              <Input
-                label="Unladen Weight"
-                type="number"
-                value={values.unladen_weight}
-                onChange={(v) => set("unladen_weight", v)}
-              />
-            </>
-          )}
-        </Card>
-        <Card title="Technical Details">
-          <Input
-            label="Chassis Number"
-            value={values.chassis_number}
-            onChange={(v) => set("chassis_number", v.toUpperCase())}
-            required
-          />
-          <Input
-            label="Engine Number"
-            value={values.engine_number}
-            onChange={(v) => set("engine_number", v.toUpperCase())}
-            required
-          />
-          <Input
-            label="Financier / Hypothecation"
-            value={values.financier}
-            onChange={(v) => set("financier", v)}
-          />
-          <Input
-            label="Payment Due"
-            type="number"
-            value={values.payment_due}
-            onChange={(v) => set("payment_due", v)}
-          />
-        </Card>
-        <Card title="Insurance & Compliance">
-          <Expiry
-            label="Insurance"
-            status={values.insurance_status}
-            expiry={values.insurance_expiry}
-            setStatus={(v) => set("insurance_status", v)}
-            setExpiry={(v) => set("insurance_expiry", v)}
-          />
-          <Expiry
-            label="PUC"
-            status={values.puc_status}
-            expiry={values.puc_expiry}
-            setStatus={(v) => set("puc_status", v)}
-            setExpiry={(v) => set("puc_expiry", v)}
-          />
-          {commercial && (
+            <Input
+              label="Vehicle Number"
+              hint="Example: GJ04CA4751"
+              value={values.vehicle_number}
+              onChange={(v) =>
+                set(
+                  "vehicle_number",
+                  v.replace(/[^A-Za-z0-9]/g, "").toUpperCase(),
+                )
+              }
+              required
+            />
+            <Input
+              label="Registration Date"
+              type="date"
+              value={values.registration_date}
+              onChange={(v) => set("registration_date", v)}
+            />
+            <Input
+              label="Registration Authority"
+              value={values.registration_authority}
+              onChange={(v) => set("registration_authority", v)}
+            />
+            <Input
+              label="State"
+              value={values.state}
+              onChange={(v) => set("state", v)}
+            />
+            <Input
+              label="District"
+              value={values.district}
+              onChange={(v) => set("district", v)}
+            />
+            <Select
+              label="Vehicle Type"
+              value={values.vehicle_type}
+              onChange={(v) => set("vehicle_type", v)}
+              options={[
+                { value: "two_wheeler", label: "Motorcycle / Scooter" },
+                { value: "private_car", label: "Private Car" },
+                { value: "lgv", label: "LGV / Pickup" },
+                { value: "hgv", label: "HGV / GT" },
+                { value: "taxi", label: "Taxi" },
+              ]}
+            />
+          </Card>
+        </div>
+        <div id="vehicle-step-2" className="scroll-mt-6">
+          <Card title="Vehicle Details">
+            <MasterSelect
+              label="Vehicle Class"
+              value={values.vehicle_class_id}
+              onChange={(id) => {
+                const item = masters.vehicle_classes.find((x) => x.id === id);
+                setValues((x) => ({
+                  ...x,
+                  vehicle_class_id: id,
+                  vehicle_class: item?.name ?? "",
+                }));
+              }}
+              options={masters.vehicle_classes}
+              add={() => setMasterModal("vehicle_classes")}
+              loading={masterLoading}
+            />
+            <MasterSelect
+              label="Vehicle Category / Body Type"
+              value={values.vehicle_category_id}
+              onChange={(id) => {
+                const item = masters.body_types.find((x) => x.id === id);
+                setValues((x) => ({
+                  ...x,
+                  vehicle_category_id: id,
+                  vehicle_category: item?.name ?? "",
+                }));
+              }}
+              options={masters.body_types}
+              add={() => setMasterModal("body_types")}
+              loading={masterLoading}
+            />
+            <MasterSelect
+              label="Manufacturer"
+              value={values.manufacturer_id}
+              onChange={(id) => {
+                const item = masters.manufacturers.find((x) => x.id === id);
+                savedModelId.current = "";
+                savedModelName.current = "";
+                setValues((x) =>
+                  x.manufacturer_id === id
+                    ? x
+                    : {
+                        ...x,
+                        manufacturer_id: id,
+                        manufacturer: item?.name ?? "",
+                        model_id: "",
+                        model: "",
+                      },
+                );
+              }}
+              options={masters.manufacturers}
+              add={() => setMasterModal("manufacturers")}
+              loading={masterLoading}
+            />
+            <MasterSelect
+              label="Model"
+              value={values.model_id}
+              onChange={(id) => {
+                const item = masters.models.find((x) => x.id === id);
+                setValues((x) => ({
+                  ...x,
+                  model_id: id,
+                  model: item?.name ?? "",
+                }));
+              }}
+              options={masters.models}
+              add={() =>
+                values.manufacturer_id
+                  ? setMasterModal("models")
+                  : setError("Select a manufacturer before adding a model.")
+              }
+              loading={modelLoading}
+              disabled={!values.manufacturer_id}
+              error={modelError}
+              placeholder="Select Model"
+              emptyLabel="No models found"
+            />
+            <Input
+              label="Variant"
+              value={values.variant}
+              onChange={(v) => set("variant", v)}
+            />
+            <Input
+              label="Manufacturing Year"
+              type="number"
+              value={values.manufacturing_year}
+              onChange={(v) => set("manufacturing_year", v)}
+            />
+            <MasterSelect
+              label="Colour"
+              value={values.colour_id}
+              onChange={(id) => {
+                const item = masters.colours.find((x) => x.id === id);
+                setValues((x) => ({
+                  ...x,
+                  colour_id: id,
+                  colour: item?.name ?? "",
+                }));
+              }}
+              options={masters.colours}
+              add={() => setMasterModal("colours")}
+              loading={masterLoading}
+            />
+            <MasterSelect
+              label="Fuel Type"
+              value={values.fuel_type_id}
+              onChange={(id) => {
+                const item = masters.fuel_types.find((x) => x.id === id);
+                setValues((x) => ({
+                  ...x,
+                  fuel_type_id: id,
+                  fuel_type: item?.name ?? "",
+                }));
+              }}
+              options={masters.fuel_types}
+              add={() => setMasterModal("fuel_types")}
+              loading={masterLoading}
+            />
+            <Input
+              label="Seating Capacity"
+              type="number"
+              value={values.seating_capacity}
+              onChange={(v) => set("seating_capacity", v)}
+            />
+            <Input
+              label="Cubic Capacity"
+              type="number"
+              value={values.cubic_capacity}
+              onChange={(v) => set("cubic_capacity", v)}
+            />
+            {commercial && (
+              <>
+                <Input
+                  label="Gross Weight"
+                  type="number"
+                  value={values.gross_weight}
+                  onChange={(v) => set("gross_weight", v)}
+                />
+                <Input
+                  label="Unladen Weight"
+                  type="number"
+                  value={values.unladen_weight}
+                  onChange={(v) => set("unladen_weight", v)}
+                />
+              </>
+            )}
+          </Card>
+        </div>
+        <div id="vehicle-step-3" className="scroll-mt-6">
+          <Card title="Technical Details">
+            <Input
+              label="Chassis Number"
+              value={values.chassis_number}
+              onChange={(v) => set("chassis_number", v.toUpperCase())}
+              required
+            />
+            <Input
+              label="Engine Number"
+              value={values.engine_number}
+              onChange={(v) => set("engine_number", v.toUpperCase())}
+              required
+            />
+            <Input
+              label="Financier / Hypothecation"
+              value={values.financier}
+              onChange={(v) => set("financier", v)}
+            />
+            <Input
+              label="Payment Due"
+              type="number"
+              value={values.payment_due}
+              onChange={(v) => set("payment_due", v)}
+            />
+          </Card>
+        </div>
+        <div id="vehicle-step-4" className="scroll-mt-6">
+          <Card title="Insurance & Compliance">
             <Expiry
-              label="Fitness"
-              status={values.fitness_status}
-              expiry={values.fitness_expiry}
-              setStatus={(v) => set("fitness_status", v)}
-              setExpiry={(v) => set("fitness_expiry", v)}
+              label="Insurance"
+              status={values.insurance_status}
+              expiry={values.insurance_expiry}
+              setStatus={(v) => set("insurance_status", v)}
+              setExpiry={(v) => set("insurance_expiry", v)}
             />
-          )}{" "}
-          {(hgv || taxi) && (
-            <>
+            <Expiry
+              label="PUC"
+              status={values.puc_status}
+              expiry={values.puc_expiry}
+              setStatus={(v) => set("puc_status", v)}
+              setExpiry={(v) => set("puc_expiry", v)}
+            />
+            {commercial && (
               <Expiry
-                label="Permit"
-                status={values.permit_status}
-                expiry={values.permit_expiry}
-                setStatus={(v) => set("permit_status", v)}
-                setExpiry={(v) => set("permit_expiry", v)}
+                label="Fitness"
+                status={values.fitness_status}
+                expiry={values.fitness_expiry}
+                setStatus={(v) => set("fitness_status", v)}
+                setExpiry={(v) => set("fitness_expiry", v)}
               />
-              <Expiry
-                label="National Permit"
-                status={values.permit_status}
-                expiry={values.national_permit_expiry}
-                setStatus={(v) => set("permit_status", v)}
-                setExpiry={(v) => set("national_permit_expiry", v)}
-              />
-            </>
-          )}
-          {hgv && (
-            <>
-              <Expiry
-                label="Tax"
-                status={values.tax_status}
-                expiry={values.tax_expiry}
-                setStatus={(v) => set("tax_status", v)}
-                setExpiry={(v) => set("tax_expiry", v)}
-              />
-              <Expiry
-                label="Counter Tax"
-                status={values.tax_status}
-                expiry={values.counter_tax_expiry}
-                setStatus={(v) => set("tax_status", v)}
-                setExpiry={(v) => set("counter_tax_expiry", v)}
-              />
-            </>
-          )}
-        </Card>
+            )}{" "}
+            {(hgv || taxi) && (
+              <>
+                <Expiry
+                  label="Permit"
+                  status={values.permit_status}
+                  expiry={values.permit_expiry}
+                  setStatus={(v) => set("permit_status", v)}
+                  setExpiry={(v) => set("permit_expiry", v)}
+                />
+                <Expiry
+                  label="National Permit"
+                  status={values.permit_status}
+                  expiry={values.national_permit_expiry}
+                  setStatus={(v) => set("permit_status", v)}
+                  setExpiry={(v) => set("national_permit_expiry", v)}
+                />
+              </>
+            )}
+            {hgv && (
+              <>
+                <Expiry
+                  label="Tax"
+                  status={values.tax_status}
+                  expiry={values.tax_expiry}
+                  setStatus={(v) => set("tax_status", v)}
+                  setExpiry={(v) => set("tax_expiry", v)}
+                />
+                <Expiry
+                  label="Counter Tax"
+                  status={values.tax_status}
+                  expiry={values.counter_tax_expiry}
+                  setStatus={(v) => set("tax_status", v)}
+                  setExpiry={(v) => set("counter_tax_expiry", v)}
+                />
+              </>
+            )}
+          </Card>
+        </div>
         <div className="fixed bottom-0 left-0 right-0 z-20 flex justify-end border-t bg-white/95 p-4 backdrop-blur lg:left-[260px]">
           <div className="flex w-full flex-col-reverse justify-end gap-3 sm:flex-row">
             <Link
@@ -1091,6 +1164,7 @@ function Select({
   onChange,
   options,
   required = false,
+  loading = false,
 }: {
   label: string;
   value: string;
@@ -1100,6 +1174,7 @@ function Select({
     label: string;
   }[];
   required?: boolean;
+  loading?: boolean;
 }) {
   return (
     <label className="text-sm font-semibold">
@@ -1108,10 +1183,17 @@ function Select({
       <select
         value={value}
         required={required}
+        disabled={loading}
         onChange={(e) => onChange(e.target.value)}
         className="mt-2 w-full rounded-xl border bg-white px-4 py-3 font-normal"
       >
-        <option value="">Select</option>
+        <option value="">
+          {loading
+            ? "Loading…"
+            : options.length
+              ? "Select"
+              : "No active records found"}
+        </option>
         {options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}

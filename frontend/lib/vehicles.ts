@@ -1,7 +1,101 @@
-export type VehicleCustomer = { id:string; first_name:string; middle_name?:string; last_name:string; mobile:string };
-export type Vehicle = { id:string; customer_id:string; customer?:VehicleCustomer; vehicle_number:string; manufacturer_id?:string; model_id?:string; colour_id?:string; vehicle_class_id?:string; vehicle_category_id?:string; fuel_type_id?:string; registration_date?:string; registration_authority?:string; state?:string; district?:string; vehicle_class?:string; vehicle_category?:string; vehicle_type?:string; manufacturer?:string; model?:string; variant?:string; manufacturing_year?:number; colour?:string; fuel_type?:string; seating_capacity?:number; cubic_capacity?:number; gross_weight?:number; unladen_weight?:number; chassis_number:string; engine_number:string; hypothecation:boolean; financier?:string; insurance_status:string; fitness_status:string; permit_status:string; tax_status:string; puc_status:string; insurance_expiry?:string; puc_expiry?:string; fitness_expiry?:string; permit_expiry?:string; national_permit_expiry?:string; tax_expiry?:string; counter_tax_expiry?:string; payment_due?:number|string; documents?:VehicleDocument[] };
-export type VehicleDocument={id:string;document_type:string;file_name:string;file_id:string;created_at:string};
-export type VehicleTimelineEvent={id:string;event_type:string;title:string;description?:string;created_at:string;metadata?:Record<string,unknown>};
-const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
-async function request<T>(path:string, init?:RequestInit): Promise<T> { const token=typeof window!=='undefined'?sessionStorage.getItem('raj_erp_token'):null; const res=await fetch(`${API}/api/v1${path}`,{...init,headers:{Accept:'application/json','Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{}) ,...(init?.headers||{})},cache:'no-store'}); const json=await res.json().catch(()=>({})) as {data?:T;message?:string;errors?:Record<string,string[]>}; if(!res.ok) throw new Error(json.message??Object.values(json.errors??{})?.[0]?.[0]??`API request failed: ${res.status}`); return json.data as T; }
-export const vehicleApi={ list:(q='')=>request<{data:Vehicle[];links:unknown;meta:unknown}>(`/vehicles${q}`), get:(id:string)=>request<Vehicle>(`/vehicles/${id}`), timeline:(id:string)=>request<{data:VehicleTimelineEvent[]}>(`/vehicles/${id}/timeline`), create:(body:unknown)=>request<Vehicle>('/vehicles',{method:'POST',body:JSON.stringify(body)}), update:(id:string,body:unknown)=>request<Vehicle>(`/vehicles/${id}`,{method:'PUT',body:JSON.stringify(body)}), bulkDelete:(ids:string[])=>request('/vehicles/bulk-delete',{method:'POST',body:JSON.stringify({ids})}), bulkUpdate:(ids:string[],updates:Record<string,string>)=>request('/vehicles/bulk-update',{method:'POST',body:JSON.stringify({ids,updates})}) };
+export type VehicleCustomer = {
+  id: string;
+  first_name: string;
+  middle_name?: string;
+  last_name: string;
+  mobile: string;
+};
+export type Vehicle = {
+  id: string;
+  customer_id: string;
+  customer?: VehicleCustomer;
+  vehicle_number: string;
+  manufacturer_id?: string;
+  model_id?: string;
+  colour_id?: string;
+  vehicle_class_id?: string;
+  vehicle_category_id?: string;
+  fuel_type_id?: string;
+  registration_date?: string;
+  registration_authority?: string;
+  state?: string;
+  district?: string;
+  vehicle_class?: string;
+  vehicle_category?: string;
+  vehicle_type?: string;
+  manufacturer?: string;
+  model?: string;
+  variant?: string;
+  manufacturing_year?: number;
+  colour?: string;
+  fuel_type?: string;
+  seating_capacity?: number;
+  cubic_capacity?: number;
+  gross_weight?: number;
+  unladen_weight?: number;
+  chassis_number: string;
+  engine_number: string;
+  hypothecation: boolean;
+  financier?: string;
+  insurance_status: string;
+  fitness_status: string;
+  permit_status: string;
+  tax_status: string;
+  puc_status: string;
+  insurance_expiry?: string;
+  puc_expiry?: string;
+  fitness_expiry?: string;
+  permit_expiry?: string;
+  national_permit_expiry?: string;
+  tax_expiry?: string;
+  counter_tax_expiry?: string;
+  payment_due?: number | string;
+  documents?: VehicleDocument[];
+};
+export type VehicleDocument = {
+  id: string;
+  document_type: string;
+  file_name: string;
+  file_id: string;
+  created_at: string;
+};
+export type VehicleTimelineEvent = {
+  id: string;
+  event_type: string;
+  title: string;
+  description?: string;
+  created_at: string;
+  metadata?: Record<string, unknown>;
+};
+export const vehicleApi = {
+  list: (q = "") =>
+    authenticatedRequest<{ data: Vehicle[]; links: unknown; meta: unknown }>(
+      `/vehicles${q}`,
+    ),
+  get: (id: string) => authenticatedRequest<Vehicle>(`/vehicles/${id}`),
+  timeline: (id: string) =>
+    authenticatedRequest<{ data: VehicleTimelineEvent[] }>(
+      `/vehicles/${id}/timeline`,
+    ),
+  create: (body: unknown) =>
+    authenticatedRequest<Vehicle>("/vehicles", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  update: (id: string, body: unknown) =>
+    authenticatedRequest<Vehicle>(`/vehicles/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+  bulkDelete: (ids: string[]) =>
+    authenticatedRequest("/vehicles/bulk-delete", {
+      method: "POST",
+      body: JSON.stringify({ ids }),
+    }),
+  bulkUpdate: (ids: string[], updates: Record<string, string>) =>
+    authenticatedRequest("/vehicles/bulk-update", {
+      method: "POST",
+      body: JSON.stringify({ ids, updates }),
+    }),
+};
+import { authenticatedRequest } from "@/lib/api-client";
