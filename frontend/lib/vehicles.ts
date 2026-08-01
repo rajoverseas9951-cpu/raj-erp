@@ -67,9 +67,11 @@ export type VehicleTimelineEvent = {
   created_at: string;
   metadata?: Record<string, unknown>;
 };
+export type VehiclePagination = { current_page: number; last_page: number; per_page: number; total: number };
+export type VehicleListResponse = { data: Vehicle[]; links?: unknown; meta?: VehiclePagination; current_page?: number; last_page?: number; per_page?: number; total?: number };
 export const vehicleApi = {
   list: (q = "") =>
-    authenticatedRequest<{ data: Vehicle[]; links: unknown; meta: unknown }>(
+    authenticatedRequest<VehicleListResponse>(
       `/vehicles${q}`,
     ),
   get: (id: string) => authenticatedRequest<Vehicle>(`/vehicles/${id}`),

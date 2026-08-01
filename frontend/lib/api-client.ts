@@ -1,4 +1,5 @@
 "use client";
+import { invalidateDashboard } from "@/lib/dashboard-refresh";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "";
 
@@ -82,5 +83,7 @@ async function authenticatedFetch<T>(
         `API request failed: ${response.status}`,
     );
   }
+  const method = (init.method ?? "GET").toUpperCase();
+  if (method !== "GET" && method !== "HEAD") invalidateDashboard();
   return { payload };
 }

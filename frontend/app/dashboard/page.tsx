@@ -1,10 +1,11 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/dashboard/Icon";
 import { DashboardSummary, getDashboardSummary } from "@/lib/dashboard-api";
 import { dashboardSession } from "@/lib/dashboard";
 import { BRAND } from "@/config/brand";
+import { DASHBOARD_REFRESH_EVENT } from "@/lib/dashboard-refresh";
 
 const kpis = [
   [
@@ -97,18 +98,37 @@ const money = (value: number) =>
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardSummary>();
   const [error, setError] = useState("");
-  useEffect(() => {
-    getDashboardSummary()
-      .then(setData)
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date>();
+  const requestRef = useRef<Promise<void> | null>(null);
+  const refresh = useCallback(() => {
+    if (requestRef.current) return requestRef.current;
+    setRefreshing(true);
+    setError("");
+    const request = getDashboardSummary()
+      .then((summary) => { setData(summary); setLastUpdated(new Date()); })
       .catch((e) => {
         if (e instanceof Error && e.message === "AUTH_REQUIRED") {
           sessionStorage.removeItem("raj_erp_token");
           location.replace("/login?next=/dashboard");
           return;
         }
-        setError(e instanceof Error ? e.message : "Dashboard could not load.");
-      });
+        setError(e instanceof Error ? e.message : "Dashboard could not refresh.");
+      })
+      .finally(() => { setRefreshing(false); requestRef.current = null; });
+    requestRef.current = request;
+    return request;
   }, []);
+  useEffect(() => {
+    void refresh();
+    const onFocus = () => void refresh();
+    const onVisible = () => { if (document.visibilityState === "visible") void refresh(); };
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("pageshow", onFocus);
+    window.addEventListener(DASHBOARD_REFRESH_EVENT, onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { window.removeEventListener("focus", onFocus); window.removeEventListener("pageshow", onFocus); window.removeEventListener(DASHBOARD_REFRESH_EVENT, onFocus); document.removeEventListener("visibilitychange", onVisible); };
+  }, [refresh]);
   const date = new Intl.DateTimeFormat("en-IN", {
     weekday: "long",
     day: "numeric",
@@ -135,20 +155,11 @@ export default function DashboardPage() {
               Live policy, revenue, renewal and operations intelligence for {BRAND.productName}.
             </p>
           </div>
-          <select
-            aria-label="Branch"
-            className="rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-bold shadow-inner backdrop-blur-xl"
-          >
-            <option className="text-slate-900">All branches</option>
-          </select>
+          <div className="flex flex-wrap items-center gap-3"><div className="text-right text-xs text-blue-100/70"><span className="block font-bold text-white">{refreshing?"Refreshing…":"Live data"}</span><span>{lastUpdated?`Last updated ${lastUpdated.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}`:"Waiting for first update"}</span></div><button type="button" disabled={refreshing} onClick={()=>void refresh()} className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-bold shadow-inner backdrop-blur-xl transition hover:bg-white/20 disabled:opacity-60">{refreshing?"Refreshing…":"Refresh"}</button></div>
         </div>
       </section>
       <QuickActions />
-      {error && (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-700">
-          {error}
-        </div>
-      )}
+      {error && <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-800"><span>{error} Existing dashboard values are retained.</span><button type="button" onClick={()=>void refresh()} className="rounded-lg bg-amber-700 px-3 py-2 text-xs font-bold text-white">Retry</button></div>}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map(([key, label, icon, isMoney, tone]) => {
           const item = data?.kpis[key];

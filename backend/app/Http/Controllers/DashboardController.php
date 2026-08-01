@@ -76,6 +76,6 @@ class DashboardController extends Controller
             'policies' => ['new' => $newPolicies, 'renewals' => $renewals, 'comprehensive' => (clone $policies)->whereIn('insurance_type', ['comprehensive', 'package'])->count(), 'third_party' => (clone $policies)->whereIn('insurance_type', ['third_party', 'standalone_tp'])->count(), 'two_wheeler' => $byVehicle(['two_wheeler']), 'private_car' => $byVehicle(['private_car']), 'commercial' => $byVehicle(['lgv', 'hgv', 'taxi'])],
             'renewals' => ['7' => (clone $policies)->whereBetween('expiry_date', [$now, $now->copy()->addDays(7)])->count(), '15' => (clone $policies)->whereBetween('expiry_date', [$now, $now->copy()->addDays(15)])->count(), '30' => $expiring, 'expired' => (clone $policies)->whereDate('expiry_date', '<', $now)->count(), 'renewed' => $renewals],
             'work' => ['puc_due' => (clone $vehicles)->whereIn('puc_status', ['not_added', 'due', 'expired'])->count(), 'fitness_due' => (clone $vehicles)->whereIn('fitness_status', ['not_added', 'due', 'expired'])->count(), 'permit_due' => (clone $vehicles)->whereIn('permit_status', ['not_added', 'due', 'expired'])->count(), 'payment_follow_up' => (clone $vehicles)->where('payment_due', '>', 0)->count()],
-        ]]);
+        ]])->header('Cache-Control', 'private, no-store, no-cache, must-revalidate');
     }
 }
