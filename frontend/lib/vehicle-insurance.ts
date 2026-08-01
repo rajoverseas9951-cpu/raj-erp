@@ -80,7 +80,7 @@ async function multipart<T>(path: string, body: FormData): Promise<T> {
   return payload.data as T;
 }
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
+const API = process.env.NEXT_PUBLIC_API_URL ?? '';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = sessionStorage.getItem('raj_erp_token');

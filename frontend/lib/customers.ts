@@ -33,7 +33,7 @@ export type Customer = {
   rto_files_count: number;
 };
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return authenticatedRequest<T>(path, init);

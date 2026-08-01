@@ -7,7 +7,7 @@ export type DashboardSummary={
   policies:Record<string,number>; renewals:Record<string,number>; work:Record<string,number>;
   master_counts:Record<string,{total:number;active:number}>;
 };
-const API=process.env.NEXT_PUBLIC_API_URL??'http://127.0.0.1:8000';
+const API=process.env.NEXT_PUBLIC_API_URL??'';
 export async function getDashboardSummary():Promise<DashboardSummary>{
   const token=sessionStorage.getItem('raj_erp_token');
   if(!token)throw new Error('AUTH_REQUIRED');
