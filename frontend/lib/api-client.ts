@@ -29,6 +29,22 @@ export async function authenticatedRequest<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
+  const { payload } = await authenticatedFetch<T>(path, init);
+  return payload.data as T;
+}
+
+export async function authenticatedAction(
+  path: string,
+  init: RequestInit = {},
+): Promise<{ message: string }> {
+  const { payload } = await authenticatedFetch<null>(path, init);
+  return { message: payload.message ?? "Request completed successfully." };
+}
+
+async function authenticatedFetch<T>(
+  path: string,
+  init: RequestInit,
+): Promise<{ payload: ApiEnvelope<T> }> {
   if (typeof window === "undefined")
     throw new Error("Authenticated API requests must run in the browser.");
   const token = sessionStorage.getItem("raj_erp_token");
@@ -53,6 +69,9 @@ export async function authenticatedRequest<T>(
   )
     redirectToLogin();
   if (!response.ok) {
+    if (response.status >= 500) {
+      throw new Error("The server could not complete the request. Please try again.");
+    }
     const validationError = payload.errors
       ? Object.values(payload.errors)[0]?.[0]
       : undefined;
@@ -63,5 +82,5 @@ export async function authenticatedRequest<T>(
         `API request failed: ${response.status}`,
     );
   }
-  return payload.data as T;
+  return { payload };
 }
