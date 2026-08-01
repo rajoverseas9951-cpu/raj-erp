@@ -1,75 +1,882 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { Ledger, LedgerStatement, ledgerApi } from '@/lib/ledgers';
+import Link from "next/link";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Ledger, LedgerStatement, ledgerApi } from "@/lib/ledgers";
+import { BRAND } from "@/config/brand";
 
-const GROUPS = ['Sundry Debtors','Sundry Creditors','Bank Accounts','Cash-in-Hand','Direct Expenses','Indirect Expenses','Direct Incomes','Indirect Incomes','Loans & Liabilities','Capital Account','Fixed Assets','Current Assets','Other'] as const;
+const GROUPS = [
+  "Sundry Debtors",
+  "Sundry Creditors",
+  "Bank Accounts",
+  "Cash-in-Hand",
+  "Direct Expenses",
+  "Indirect Expenses",
+  "Direct Incomes",
+  "Indirect Incomes",
+  "Loans & Liabilities",
+  "Capital Account",
+  "Fixed Assets",
+  "Current Assets",
+  "Other",
+] as const;
 type LedgerGroup = (typeof GROUPS)[number];
-type FormState = { ledger_name: string; ledger_group: LedgerGroup; opening_balance: string; balance_type: 'debit'|'credit'; credit_limit: string; credit_days: string; gst_applicable: boolean };
-const INITIAL: FormState = { ledger_name: '', ledger_group: 'Sundry Debtors', opening_balance: '0', balance_type: 'debit', credit_limit: '0', credit_days: '0', gst_applicable: false };
-const QUICK: Array<{label:string; group:LedgerGroup; tone:string; icon:string}> = [
-  {label:'Customer',group:'Sundry Debtors',tone:'from-sky-400 to-blue-600',icon:'CU'}, {label:'Supplier',group:'Sundry Creditors',tone:'from-violet-400 to-indigo-600',icon:'SU'},
-  {label:'Bank',group:'Bank Accounts',tone:'from-emerald-400 to-teal-600',icon:'BK'}, {label:'Cash',group:'Cash-in-Hand',tone:'from-amber-400 to-orange-600',icon:'CA'},
-  {label:'Expense',group:'Indirect Expenses',tone:'from-rose-400 to-pink-600',icon:'EX'}, {label:'Income',group:'Indirect Incomes',tone:'from-cyan-400 to-sky-600',icon:'IN'},
+type FormState = {
+  ledger_name: string;
+  ledger_group: LedgerGroup;
+  opening_balance: string;
+  balance_type: "debit" | "credit";
+  credit_limit: string;
+  credit_days: string;
+  gst_applicable: boolean;
+};
+const INITIAL: FormState = {
+  ledger_name: "",
+  ledger_group: "Sundry Debtors",
+  opening_balance: "0",
+  balance_type: "debit",
+  credit_limit: "0",
+  credit_days: "0",
+  gst_applicable: false,
+};
+const QUICK: Array<{
+  label: string;
+  group: LedgerGroup;
+  tone: string;
+  icon: string;
+}> = [
+  {
+    label: "Customer",
+    group: "Sundry Debtors",
+    tone: "from-sky-400 to-blue-600",
+    icon: "CU",
+  },
+  {
+    label: "Supplier",
+    group: "Sundry Creditors",
+    tone: "from-violet-400 to-indigo-600",
+    icon: "SU",
+  },
+  {
+    label: "Bank",
+    group: "Bank Accounts",
+    tone: "from-emerald-400 to-teal-600",
+    icon: "BK",
+  },
+  {
+    label: "Cash",
+    group: "Cash-in-Hand",
+    tone: "from-amber-400 to-orange-600",
+    icon: "CA",
+  },
+  {
+    label: "Expense",
+    group: "Indirect Expenses",
+    tone: "from-rose-400 to-pink-600",
+    icon: "EX",
+  },
+  {
+    label: "Income",
+    group: "Indirect Incomes",
+    tone: "from-cyan-400 to-sky-600",
+    icon: "IN",
+  },
 ];
-const money = new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2});
+const money = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  maximumFractionDigits: 2,
+});
 
 export default function LedgersPage() {
-  const [ledgers,setLedgers]=useState<Ledger[]>([]); const [form,setForm]=useState<FormState>(INITIAL);
-  const [loading,setLoading]=useState(true); const [saving,setSaving]=useState(false); const [error,setError]=useState(''); const [success,setSuccess]=useState('');
-  const [errors,setErrors]=useState<Partial<Record<keyof FormState,string>>>({}); const [search,setSearch]=useState(''); const [group,setGroup]=useState('all');
-  const [status,setStatus]=useState('all'); const [balance,setBalance]=useState('all'); const [sort,setSort]=useState('name');
-  const [statement,setStatement]=useState<LedgerStatement|null>(null); const [statementLoading,setStatementLoading]=useState(false);
+  const [ledgers, setLedgers] = useState<Ledger[]>([]);
+  const [form, setForm] = useState<FormState>(INITIAL);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof FormState, string>>
+  >({});
+  const [search, setSearch] = useState("");
+  const [group, setGroup] = useState("all");
+  const [status, setStatus] = useState("all");
+  const [balance, setBalance] = useState("all");
+  const [sort, setSort] = useState("name");
+  const [statement, setStatement] = useState<LedgerStatement | null>(null);
+  const [statementLoading, setStatementLoading] = useState(false);
 
-  function auth(message:string){ if(/unauthenticated|401/i.test(message)){sessionStorage.removeItem('raj_erp_token'); location.href='/login'; return true} return false }
-  async function load(){ if(!sessionStorage.getItem('raj_erp_token')){location.href='/login';return} setLoading(true);setError('');try{setLedgers(await ledgerApi.list())}catch(e){const m=e instanceof Error?e.message:'Ledgers could not be loaded.';if(!auth(m))setError(m)}finally{setLoading(false)}}
-  useEffect(()=>{void load()},[]);
-  const kpis=useMemo(()=>[
-    ['Total Ledgers',ledgers.length,'TL','from-blue-500 to-indigo-600'],['Customer',ledgers.filter(x=>x.ledger_group==='Sundry Debtors').length,'CU','from-sky-400 to-blue-600'],
-    ['Supplier',ledgers.filter(x=>x.ledger_group==='Sundry Creditors').length,'SU','from-violet-400 to-indigo-600'],['Bank & Cash',ledgers.filter(x=>['Bank Accounts','Cash-in-Hand'].includes(x.ledger_group)).length,'BC','from-emerald-400 to-teal-600'],
-    ['Expense',ledgers.filter(x=>x.ledger_group.includes('Expenses')).length,'EX','from-orange-400 to-rose-500'],['Opening Balance',money.format(ledgers.reduce((n,x)=>n+Number(x.opening_balance||0),0)),'₹','from-fuchsia-400 to-purple-600']
-  ] as const,[ledgers]);
-  const filtered=useMemo(()=>ledgers.filter(x=>(!search||x.ledger_name.toLowerCase().includes(search.toLowerCase()))&&(group==='all'||x.ledger_group===group)&&(status==='all'||x.status===status)&&(balance==='all'||x.balance_type===balance)).sort((a,b)=>sort==='opening'?Number(b.opening_balance)-Number(a.opening_balance):sort==='group'?a.ledger_group.localeCompare(b.ledger_group):a.ledger_name.localeCompare(b.ledger_name)),[ledgers,search,group,status,balance,sort]);
-  function validate(){const next:typeof errors={};if(!form.ledger_name.trim())next.ledger_name='Ledger name is required.';if(Number(form.opening_balance)<0)next.opening_balance='Cannot be negative.';if(Number(form.credit_limit)<0)next.credit_limit='Cannot be negative.';if(!Number.isInteger(Number(form.credit_days))||Number(form.credit_days)<0)next.credit_days='Enter whole days, zero or more.';setErrors(next);return !Object.keys(next).length}
-  async function submit(e:FormEvent){e.preventDefault();if(!validate())return;setSaving(true);setError('');setSuccess('');try{await ledgerApi.create({...form,ledger_name:form.ledger_name.trim().toUpperCase(),opening_balance:Number(form.opening_balance||0),credit_limit:Number(form.credit_limit||0),credit_days:Number(form.credit_days||0),status:'active'});setForm(INITIAL);setErrors({});setSuccess('Ledger created successfully.');await load()}catch(e){const m=e instanceof Error?e.message:'Ledger could not be created.';if(!auth(m))setError(m)}finally{setSaving(false)}}
-  async function openStatement(ledger:Ledger){setStatementLoading(true);setError('');try{setStatement(await ledgerApi.statement(ledger.id))}catch(e){const m=e instanceof Error?e.message:'Statement could not be loaded.';if(!auth(m))setError(m)}finally{setStatementLoading(false)}}
-  const clear=()=>{setSearch('');setGroup('all');setStatus('all');setBalance('all');setSort('name')};
+  function auth(message: string) {
+    if (/unauthenticated|401/i.test(message)) {
+      sessionStorage.removeItem("raj_erp_token");
+      location.href = "/login";
+      return true;
+    }
+    return false;
+  }
+  async function load() {
+    if (!sessionStorage.getItem("raj_erp_token")) {
+      location.href = "/login";
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      setLedgers(await ledgerApi.list());
+    } catch (e) {
+      const m = e instanceof Error ? e.message : "Ledgers could not be loaded.";
+      if (!auth(m)) setError(m);
+    } finally {
+      setLoading(false);
+    }
+  }
+  useEffect(() => {
+    void load();
+  }, []);
+  const kpis = useMemo(
+    () =>
+      [
+        ["Total Ledgers", ledgers.length, "TL", "from-blue-500 to-indigo-600"],
+        [
+          "Customer",
+          ledgers.filter((x) => x.ledger_group === "Sundry Debtors").length,
+          "CU",
+          "from-sky-400 to-blue-600",
+        ],
+        [
+          "Supplier",
+          ledgers.filter((x) => x.ledger_group === "Sundry Creditors").length,
+          "SU",
+          "from-violet-400 to-indigo-600",
+        ],
+        [
+          "Bank & Cash",
+          ledgers.filter((x) =>
+            ["Bank Accounts", "Cash-in-Hand"].includes(x.ledger_group),
+          ).length,
+          "BC",
+          "from-emerald-400 to-teal-600",
+        ],
+        [
+          "Expense",
+          ledgers.filter((x) => x.ledger_group.includes("Expenses")).length,
+          "EX",
+          "from-orange-400 to-rose-500",
+        ],
+        [
+          "Opening Balance",
+          money.format(
+            ledgers.reduce((n, x) => n + Number(x.opening_balance || 0), 0),
+          ),
+          "₹",
+          "from-fuchsia-400 to-purple-600",
+        ],
+      ] as const,
+    [ledgers],
+  );
+  const filtered = useMemo(
+    () =>
+      ledgers
+        .filter(
+          (x) =>
+            (!search ||
+              x.ledger_name.toLowerCase().includes(search.toLowerCase())) &&
+            (group === "all" || x.ledger_group === group) &&
+            (status === "all" || x.status === status) &&
+            (balance === "all" || x.balance_type === balance),
+        )
+        .sort((a, b) =>
+          sort === "opening"
+            ? Number(b.opening_balance) - Number(a.opening_balance)
+            : sort === "group"
+              ? a.ledger_group.localeCompare(b.ledger_group)
+              : a.ledger_name.localeCompare(b.ledger_name),
+        ),
+    [ledgers, search, group, status, balance, sort],
+  );
+  function validate() {
+    const next: typeof errors = {};
+    if (!form.ledger_name.trim()) next.ledger_name = "Ledger name is required.";
+    if (Number(form.opening_balance) < 0)
+      next.opening_balance = "Cannot be negative.";
+    if (Number(form.credit_limit) < 0)
+      next.credit_limit = "Cannot be negative.";
+    if (
+      !Number.isInteger(Number(form.credit_days)) ||
+      Number(form.credit_days) < 0
+    )
+      next.credit_days = "Enter whole days, zero or more.";
+    setErrors(next);
+    return !Object.keys(next).length;
+  }
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (!validate()) return;
+    setSaving(true);
+    setError("");
+    setSuccess("");
+    try {
+      await ledgerApi.create({
+        ...form,
+        ledger_name: form.ledger_name.trim().toUpperCase(),
+        opening_balance: Number(form.opening_balance || 0),
+        credit_limit: Number(form.credit_limit || 0),
+        credit_days: Number(form.credit_days || 0),
+        status: "active",
+      });
+      setForm(INITIAL);
+      setErrors({});
+      setSuccess("Ledger created successfully.");
+      await load();
+    } catch (e) {
+      const m = e instanceof Error ? e.message : "Ledger could not be created.";
+      if (!auth(m)) setError(m);
+    } finally {
+      setSaving(false);
+    }
+  }
+  async function openStatement(ledger: Ledger) {
+    setStatementLoading(true);
+    setError("");
+    try {
+      setStatement(await ledgerApi.statement(ledger.id));
+    } catch (e) {
+      const m =
+        e instanceof Error ? e.message : "Statement could not be loaded.";
+      if (!auth(m)) setError(m);
+    } finally {
+      setStatementLoading(false);
+    }
+  }
+  const clear = () => {
+    setSearch("");
+    setGroup("all");
+    setStatus("all");
+    setBalance("all");
+    setSort("name");
+  };
 
-  return <main className="min-h-screen bg-[#f4f7fb] pb-14 text-slate-950">
-    <section className="relative overflow-hidden bg-gradient-to-br from-[#070b22] via-[#122059] to-[#1f5fea] px-5 py-9 text-white sm:px-8 lg:px-10">
-      <div className="absolute -right-16 -top-24 h-72 w-72 rounded-full bg-cyan-300/20 blur-3xl"/><div className="relative mx-auto max-w-[1500px]">
-        <div className="flex flex-wrap items-end justify-between gap-6"><div><p className="text-xs font-bold uppercase tracking-[.28em] text-cyan-200">Raj ERP · Accounts</p><h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Ledger Master</h1><p className="mt-2 max-w-2xl text-sm text-blue-100 sm:text-base">Create, organise and review every accounting ledger from one dependable workspace.</p></div>
-        <div className="flex flex-wrap gap-2">{[['Accounts','/accounts'],['Insurance Accounting','/accounts/insurance'],['Customers','/customers'],['Dashboard','/dashboard']].map(x=><Link key={x[0]} href={x[1]} className="rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold backdrop-blur transition hover:bg-white/20">{x[0]}</Link>)}</div></div>
+  return (
+    <main className="min-h-screen bg-[#f4f7fb] pb-14 text-slate-950">
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#070b22] via-[#122059] to-[#1f5fea] px-5 py-9 text-white sm:px-8 lg:px-10">
+        <div className="absolute -right-16 -top-24 h-72 w-72 rounded-full bg-cyan-300/20 blur-3xl" />
+        <div className="relative mx-auto max-w-[1500px]">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[.28em] text-cyan-200">
+                {BRAND.brandName} · Accounts
+              </p>
+              <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
+                Ledger Master
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm text-blue-100 sm:text-base">
+                Create, organise and review every accounting ledger from one
+                dependable workspace.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                ["Accounts", "/accounts"],
+                ["Insurance Accounting", "/accounts/insurance"],
+                ["Customers", "/customers"],
+                ["Dashboard", "/dashboard"],
+              ].map((x) => (
+                <Link
+                  key={x[0]}
+                  href={x[1]}
+                  className="rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold backdrop-blur transition hover:bg-white/20"
+                >
+                  {x[0]}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+      <div className="mx-auto max-w-[1500px] space-y-6 px-4 py-6 sm:px-8 lg:px-10">
+        {(error || success) && (
+          <div
+            className={`rounded-2xl border p-4 text-sm font-semibold ${error ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}
+          >
+            {error || success}
+          </div>
+        )}
+        <section className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+          {kpis.map(([label, value, icon, tone]) => (
+            <div
+              key={label}
+              className="rounded-3xl border border-white bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,.06)]"
+            >
+              <span
+                className={`grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br ${tone} text-xs font-black text-white shadow-lg`}
+              >
+                {icon}
+              </span>
+              <p className="mt-4 text-xs font-bold uppercase tracking-wider text-slate-400">
+                {label}
+              </p>
+              <p className="mt-1 truncate text-xl font-black">{value}</p>
+            </div>
+          ))}
+        </section>
+        <section className="grid gap-6 xl:grid-cols-[1.5fr_.8fr]">
+          <form
+            onSubmit={submit}
+            className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_16px_45px_rgba(15,23,42,.07)] sm:p-7"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[.2em] text-blue-600">
+                  New account head
+                </p>
+                <h2 className="mt-1 text-2xl font-black">Add New Ledger</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setForm(INITIAL);
+                  setErrors({});
+                }}
+                className="rounded-xl border px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50"
+              >
+                Reset
+              </button>
+            </div>
+            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <Field label="Ledger Name" error={errors.ledger_name}>
+                <input
+                  value={form.ledger_name}
+                  onChange={(e) =>
+                    setForm({ ...form, ledger_name: e.target.value })
+                  }
+                  className="input uppercase"
+                  placeholder="e.g. ACME TRADERS"
+                />
+              </Field>
+              <Field label="Ledger Group">
+                <select
+                  value={form.ledger_group}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      ledger_group: e.target.value as LedgerGroup,
+                    })
+                  }
+                  className="input"
+                >
+                  {GROUPS.map((g) => (
+                    <option key={g}>{g}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Opening Balance" error={errors.opening_balance}>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.opening_balance}
+                  onChange={(e) =>
+                    setForm({ ...form, opening_balance: e.target.value })
+                  }
+                  className="input"
+                />
+              </Field>
+              <Field label="Balance Type">
+                <select
+                  value={form.balance_type}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      balance_type: e.target.value as "debit" | "credit",
+                    })
+                  }
+                  className="input"
+                >
+                  <option value="debit">Debit (Dr)</option>
+                  <option value="credit">Credit (Cr)</option>
+                </select>
+              </Field>
+              <Field label="Credit Limit" error={errors.credit_limit}>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.credit_limit}
+                  onChange={(e) =>
+                    setForm({ ...form, credit_limit: e.target.value })
+                  }
+                  className="input"
+                />
+              </Field>
+              <Field label="Credit Days" error={errors.credit_days}>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={form.credit_days}
+                  onChange={(e) =>
+                    setForm({ ...form, credit_days: e.target.value })
+                  }
+                  className="input"
+                />
+              </Field>
+            </div>
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+              <label className="flex cursor-pointer items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold">
+                <input
+                  type="checkbox"
+                  checked={form.gst_applicable}
+                  onChange={(e) =>
+                    setForm({ ...form, gst_applicable: e.target.checked })
+                  }
+                  className="h-5 w-5 accent-blue-600"
+                />
+                GST applicable
+              </label>
+              <button
+                disabled={saving}
+                className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-7 py-3.5 font-bold text-white shadow-lg shadow-blue-200 transition hover:-translate-y-0.5 disabled:opacity-60"
+              >
+                {saving ? "Creating ledger…" : "Create Ledger"}
+              </button>
+            </div>
+          </form>
+          <aside className="rounded-[28px] bg-[#0b1029] p-5 text-white shadow-xl sm:p-7">
+            <p className="text-xs font-bold uppercase tracking-[.2em] text-cyan-300">
+              Quick setup
+            </p>
+            <h2 className="mt-1 text-2xl font-black">Choose a ledger type</h2>
+            <p className="mt-2 text-sm text-slate-400">
+              Pre-fill the right accounting group instantly.
+            </p>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              {QUICK.map((q) => (
+                <button
+                  type="button"
+                  key={q.label}
+                  onClick={() => setForm({ ...form, ledger_group: q.group })}
+                  className="group rounded-2xl border border-white/10 bg-white/[.06] p-3 text-left transition hover:-translate-y-0.5 hover:bg-white/[.12]"
+                >
+                  <span
+                    className={`grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br ${q.tone} text-[10px] font-black`}
+                  >
+                    {q.icon}
+                  </span>
+                  <strong className="mt-3 block text-sm">{q.label}</strong>
+                  <span className="text-[11px] text-slate-400">{q.group}</span>
+                </button>
+              ))}
+            </div>
+          </aside>
+        </section>
+        <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_16px_45px_rgba(15,23,42,.07)]">
+          <div className="border-b border-slate-100 p-5 sm:p-7">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[.2em] text-blue-600">
+                  Master register
+                </p>
+                <h2 className="mt-1 text-2xl font-black">
+                  All Ledgers{" "}
+                  <span className="text-slate-300">{filtered.length}</span>
+                </h2>
+              </div>
+              {(search ||
+                group !== "all" ||
+                status !== "all" ||
+                balance !== "all" ||
+                sort !== "name") && (
+                <button
+                  onClick={clear}
+                  className="text-sm font-bold text-blue-600"
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="input xl:col-span-2"
+                placeholder="Search ledger name…"
+              />
+              <Filter
+                value={group}
+                onChange={setGroup}
+                options={GROUPS}
+                all="All groups"
+              />
+              <Filter
+                value={status}
+                onChange={setStatus}
+                options={["active", "inactive"]}
+                all="All status"
+              />
+              <select
+                value={balance}
+                onChange={(e) => setBalance(e.target.value)}
+                className="input"
+              >
+                <option value="all">All balances</option>
+                <option value="debit">Debit</option>
+                <option value="credit">Credit</option>
+              </select>
+            </div>
+            <div className="mt-3 flex justify-end">
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold"
+              >
+                <option value="name">Sort: Name A–Z</option>
+                <option value="group">Sort: Group</option>
+                <option value="opening">Sort: Opening high–low</option>
+              </select>
+            </div>
+          </div>
+          {loading ? (
+            <Skeleton />
+          ) : filtered.length === 0 ? (
+            <div className="p-14 text-center">
+              <div className="text-4xl">◎</div>
+              <h3 className="mt-3 text-lg font-black">No ledgers found</h3>
+              <p className="text-sm text-slate-500">
+                Adjust your filters or create a new ledger above.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50/80 text-xs uppercase tracking-wider text-slate-500">
+                    <tr>
+                      {[
+                        "Ledger",
+                        "Group",
+                        "Opening balance",
+                        "Type",
+                        "Linked entity",
+                        "GST",
+                        "Status",
+                        "Action",
+                      ].map((h) => (
+                        <th key={h} className="px-5 py-4">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((l) => (
+                      <LedgerRow
+                        key={l.id}
+                        ledger={l}
+                        open={() => void openStatement(l)}
+                        loading={statementLoading}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="grid gap-3 p-4 md:hidden">
+                {filtered.map((l) => (
+                  <LedgerCard
+                    key={l.id}
+                    ledger={l}
+                    open={() => void openStatement(l)}
+                    loading={statementLoading}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </section>
       </div>
-    </section>
-    <div className="mx-auto max-w-[1500px] space-y-6 px-4 py-6 sm:px-8 lg:px-10">
-      {(error||success)&&<div className={`rounded-2xl border p-4 text-sm font-semibold ${error?'border-red-200 bg-red-50 text-red-700':'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>{error||success}</div>}
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-6">{kpis.map(([label,value,icon,tone])=><div key={label} className="rounded-3xl border border-white bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,.06)]"><span className={`grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br ${tone} text-xs font-black text-white shadow-lg`}>{icon}</span><p className="mt-4 text-xs font-bold uppercase tracking-wider text-slate-400">{label}</p><p className="mt-1 truncate text-xl font-black">{value}</p></div>)}</section>
-      <section className="grid gap-6 xl:grid-cols-[1.5fr_.8fr]">
-        <form onSubmit={submit} className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_16px_45px_rgba(15,23,42,.07)] sm:p-7"><div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.2em] text-blue-600">New account head</p><h2 className="mt-1 text-2xl font-black">Add New Ledger</h2></div><button type="button" onClick={()=>{setForm(INITIAL);setErrors({})}} className="rounded-xl border px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">Reset</button></div>
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3"><Field label="Ledger Name" error={errors.ledger_name}><input value={form.ledger_name} onChange={e=>setForm({...form,ledger_name:e.target.value})} className="input uppercase" placeholder="e.g. ACME TRADERS"/></Field>
-          <Field label="Ledger Group"><select value={form.ledger_group} onChange={e=>setForm({...form,ledger_group:e.target.value as LedgerGroup})} className="input">{GROUPS.map(g=><option key={g}>{g}</option>)}</select></Field>
-          <Field label="Opening Balance" error={errors.opening_balance}><input type="number" min="0" step="0.01" value={form.opening_balance} onChange={e=>setForm({...form,opening_balance:e.target.value})} className="input"/></Field>
-          <Field label="Balance Type"><select value={form.balance_type} onChange={e=>setForm({...form,balance_type:e.target.value as 'debit'|'credit'})} className="input"><option value="debit">Debit (Dr)</option><option value="credit">Credit (Cr)</option></select></Field>
-          <Field label="Credit Limit" error={errors.credit_limit}><input type="number" min="0" step="0.01" value={form.credit_limit} onChange={e=>setForm({...form,credit_limit:e.target.value})} className="input"/></Field>
-          <Field label="Credit Days" error={errors.credit_days}><input type="number" min="0" step="1" value={form.credit_days} onChange={e=>setForm({...form,credit_days:e.target.value})} className="input"/></Field></div>
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-4"><label className="flex cursor-pointer items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold"><input type="checkbox" checked={form.gst_applicable} onChange={e=>setForm({...form,gst_applicable:e.target.checked})} className="h-5 w-5 accent-blue-600"/>GST applicable</label><button disabled={saving} className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-7 py-3.5 font-bold text-white shadow-lg shadow-blue-200 transition hover:-translate-y-0.5 disabled:opacity-60">{saving?'Creating ledger…':'Create Ledger'}</button></div>
-        </form>
-        <aside className="rounded-[28px] bg-[#0b1029] p-5 text-white shadow-xl sm:p-7"><p className="text-xs font-bold uppercase tracking-[.2em] text-cyan-300">Quick setup</p><h2 className="mt-1 text-2xl font-black">Choose a ledger type</h2><p className="mt-2 text-sm text-slate-400">Pre-fill the right accounting group instantly.</p><div className="mt-6 grid grid-cols-2 gap-3">{QUICK.map(q=><button type="button" key={q.label} onClick={()=>setForm({...form,ledger_group:q.group})} className="group rounded-2xl border border-white/10 bg-white/[.06] p-3 text-left transition hover:-translate-y-0.5 hover:bg-white/[.12]"><span className={`grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br ${q.tone} text-[10px] font-black`}>{q.icon}</span><strong className="mt-3 block text-sm">{q.label}</strong><span className="text-[11px] text-slate-400">{q.group}</span></button>)}</div></aside>
-      </section>
-      <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_16px_45px_rgba(15,23,42,.07)]"><div className="border-b border-slate-100 p-5 sm:p-7"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.2em] text-blue-600">Master register</p><h2 className="mt-1 text-2xl font-black">All Ledgers <span className="text-slate-300">{filtered.length}</span></h2></div>{(search||group!=='all'||status!=='all'||balance!=='all'||sort!=='name')&&<button onClick={clear} className="text-sm font-bold text-blue-600">Clear filters</button>}</div>
-        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5"><input value={search} onChange={e=>setSearch(e.target.value)} className="input xl:col-span-2" placeholder="Search ledger name…"/><Filter value={group} onChange={setGroup} options={GROUPS} all="All groups"/><Filter value={status} onChange={setStatus} options={['active','inactive']} all="All status"/><select value={balance} onChange={e=>setBalance(e.target.value)} className="input"><option value="all">All balances</option><option value="debit">Debit</option><option value="credit">Credit</option></select></div><div className="mt-3 flex justify-end"><select value={sort} onChange={e=>setSort(e.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold"><option value="name">Sort: Name A–Z</option><option value="group">Sort: Group</option><option value="opening">Sort: Opening high–low</option></select></div></div>
-        {loading?<Skeleton/>:filtered.length===0?<div className="p-14 text-center"><div className="text-4xl">◎</div><h3 className="mt-3 text-lg font-black">No ledgers found</h3><p className="text-sm text-slate-500">Adjust your filters or create a new ledger above.</p></div>:<><div className="hidden overflow-x-auto md:block"><table className="w-full text-left text-sm"><thead className="bg-slate-50/80 text-xs uppercase tracking-wider text-slate-500"><tr>{['Ledger','Group','Opening balance','Type','Linked entity','GST','Status','Action'].map(h=><th key={h} className="px-5 py-4">{h}</th>)}</tr></thead><tbody>{filtered.map(l=><LedgerRow key={l.id} ledger={l} open={()=>void openStatement(l)} loading={statementLoading}/>)}</tbody></table></div><div className="grid gap-3 p-4 md:hidden">{filtered.map(l=><LedgerCard key={l.id} ledger={l} open={()=>void openStatement(l)} loading={statementLoading}/>)}</div></>}
-      </section>
-    </div>{statement&&<StatementModal statement={statement} close={()=>setStatement(null)}/>}<style jsx global>{`.input{width:100%;border:1px solid #dbe3ef;border-radius:14px;background:#fff;padding:12px 14px;font-size:14px;outline:none;transition:.2s}.input:focus{border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.1)}`}</style>
-  </main>
+      {statement && (
+        <StatementModal
+          statement={statement}
+          close={() => setStatement(null)}
+        />
+      )}
+      <style jsx global>{`
+        .input {
+          width: 100%;
+          border: 1px solid #dbe3ef;
+          border-radius: 14px;
+          background: #fff;
+          padding: 12px 14px;
+          font-size: 14px;
+          outline: none;
+          transition: 0.2s;
+        }
+        .input:focus {
+          border-color: #2563eb;
+          box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+      `}</style>
+    </main>
+  );
 }
 
-function Field({label,error,children}:{label:string;error?:string;children:React.ReactNode}){return <label className="text-sm font-bold text-slate-700">{label}{<div className="mt-2">{children}</div>}{error&&<span className="mt-1 block text-xs text-red-600">{error}</span>}</label>}
-function Filter({value,onChange,options,all}:{value:string;onChange:(v:string)=>void;options:readonly string[];all:string}){return <select value={value} onChange={e=>onChange(e.target.value)} className="input"><option value="all">{all}</option>{options.map(x=><option key={x} value={x}>{x}</option>)}</select>}
-function Badge({children,tone='slate'}:{children:React.ReactNode;tone?:'slate'|'green'|'blue'}){const c=tone==='green'?'bg-emerald-50 text-emerald-700':tone==='blue'?'bg-blue-50 text-blue-700':'bg-slate-100 text-slate-600';return <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold uppercase ${c}`}>{children}</span>}
-function LedgerRow({ledger:l,open,loading}:{ledger:Ledger;open:()=>void;loading:boolean}){return <tr className="border-t border-slate-100 hover:bg-blue-50/30"><td className="px-5 py-4"><strong className="block">{l.ledger_name}</strong><span className="text-xs text-slate-400">{l.id.slice(0,8)}</span></td><td className="px-5 py-4 text-slate-600">{l.ledger_group}</td><td className="px-5 py-4 font-bold">{money.format(Number(l.opening_balance||0))}</td><td className="px-5 py-4"><Badge tone="blue">{l.balance_type}</Badge></td><td className="px-5 py-4">{l.customer_id?<Link href={`/customers/${l.customer_id}`} className="font-bold text-blue-600 hover:underline">Customer ↗</Link>:<span className="text-slate-500">Manual ledger</span>}</td><td className="px-5 py-4">{l.gst_applicable?'Applicable':'No'}</td><td className="px-5 py-4"><Badge tone={l.status==='active'?'green':'slate'}>{l.status}</Badge></td><td className="px-5 py-4"><button disabled={loading} onClick={open} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold hover:border-blue-300 hover:text-blue-600">Statement</button></td></tr>}
-function LedgerCard({ledger:l,open,loading}:{ledger:Ledger;open:()=>void;loading:boolean}){return <article className="rounded-2xl border border-slate-200 p-4"><div className="flex justify-between gap-3"><div><strong>{l.ledger_name}</strong><p className="text-xs text-slate-500">{l.ledger_group}</p></div><Badge tone={l.status==='active'?'green':'slate'}>{l.status}</Badge></div><div className="mt-4 flex items-end justify-between"><div><p className="text-xs text-slate-400">Opening balance</p><p className="font-black">{money.format(Number(l.opening_balance||0))} <span className="text-xs uppercase text-blue-600">{l.balance_type}</span></p></div><button disabled={loading} onClick={open} className="rounded-xl bg-slate-950 px-3 py-2 text-xs font-bold text-white">Statement</button></div></article>}
-function Skeleton(){return <div className="space-y-3 p-6">{[1,2,3,4].map(x=><div key={x} className="h-14 animate-pulse rounded-2xl bg-slate-100"/>)}</div>}
-function StatementModal({statement:s,close}:{statement:LedgerStatement;close:()=>void}){return <div className="fixed inset-0 z-[120] grid place-items-center bg-slate-950/65 p-4 backdrop-blur-sm" onMouseDown={e=>{if(e.target===e.currentTarget)close()}}><section className="max-h-[90vh] w-full max-w-4xl overflow-auto rounded-[28px] bg-white shadow-2xl"><header className="sticky top-0 flex items-start justify-between gap-4 border-b bg-white p-6"><div><p className="text-xs font-bold uppercase tracking-wider text-blue-600">Ledger statement</p><h2 className="text-2xl font-black">{s.ledger.ledger_name}</h2><p className="text-sm text-slate-500">Opening {money.format(s.opening_balance)} {s.opening_type.toUpperCase()}</p></div><button onClick={close} className="rounded-xl bg-slate-100 px-4 py-2 font-bold">Close</button></header><div className="overflow-x-auto p-6"><table className="w-full min-w-[650px] text-left text-sm"><thead><tr className="text-xs uppercase text-slate-400">{['Date','Voucher','Narration','Debit','Credit','Balance'].map(h=><th key={h} className="border-b p-3">{h}</th>)}</tr></thead><tbody>{s.entries.length?s.entries.map((e,i)=><tr key={`${e.voucher_number}-${i}`}><td className="border-b p-3">{e.date||'—'}</td><td className="border-b p-3 font-bold">{e.voucher_number||'—'}</td><td className="border-b p-3 text-slate-500">{e.narration||'—'}</td><td className="border-b p-3">{e.debit?money.format(e.debit):'—'}</td><td className="border-b p-3">{e.credit?money.format(e.credit):'—'}</td><td className="border-b p-3 font-bold">{money.format(e.balance)} {e.balance_type.toUpperCase()}</td></tr>):<tr><td colSpan={6} className="p-10 text-center text-slate-500">No voucher entries for this ledger.</td></tr>}</tbody></table></div><footer className="flex justify-between bg-slate-950 px-6 py-5 text-white"><span className="text-sm text-slate-400">Closing balance</span><strong>{money.format(s.closing_balance)} {s.closing_type.toUpperCase()}</strong></footer></section></div>}
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="text-sm font-bold text-slate-700">
+      {label}
+      {<div className="mt-2">{children}</div>}
+      {error && (
+        <span className="mt-1 block text-xs text-red-600">{error}</span>
+      )}
+    </label>
+  );
+}
+function Filter({
+  value,
+  onChange,
+  options,
+  all,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: readonly string[];
+  all: string;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="input"
+    >
+      <option value="all">{all}</option>
+      {options.map((x) => (
+        <option key={x} value={x}>
+          {x}
+        </option>
+      ))}
+    </select>
+  );
+}
+function Badge({
+  children,
+  tone = "slate",
+}: {
+  children: React.ReactNode;
+  tone?: "slate" | "green" | "blue";
+}) {
+  const c =
+    tone === "green"
+      ? "bg-emerald-50 text-emerald-700"
+      : tone === "blue"
+        ? "bg-blue-50 text-blue-700"
+        : "bg-slate-100 text-slate-600";
+  return (
+    <span
+      className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold uppercase ${c}`}
+    >
+      {children}
+    </span>
+  );
+}
+function LedgerRow({
+  ledger: l,
+  open,
+  loading,
+}: {
+  ledger: Ledger;
+  open: () => void;
+  loading: boolean;
+}) {
+  return (
+    <tr className="border-t border-slate-100 hover:bg-blue-50/30">
+      <td className="px-5 py-4">
+        <strong className="block">{l.ledger_name}</strong>
+        <span className="text-xs text-slate-400">{l.id.slice(0, 8)}</span>
+      </td>
+      <td className="px-5 py-4 text-slate-600">{l.ledger_group}</td>
+      <td className="px-5 py-4 font-bold">
+        {money.format(Number(l.opening_balance || 0))}
+      </td>
+      <td className="px-5 py-4">
+        <Badge tone="blue">{l.balance_type}</Badge>
+      </td>
+      <td className="px-5 py-4">
+        {l.customer_id ? (
+          <Link
+            href={`/customers/${l.customer_id}`}
+            className="font-bold text-blue-600 hover:underline"
+          >
+            Customer ↗
+          </Link>
+        ) : (
+          <span className="text-slate-500">Manual ledger</span>
+        )}
+      </td>
+      <td className="px-5 py-4">{l.gst_applicable ? "Applicable" : "No"}</td>
+      <td className="px-5 py-4">
+        <Badge tone={l.status === "active" ? "green" : "slate"}>
+          {l.status}
+        </Badge>
+      </td>
+      <td className="px-5 py-4">
+        <button
+          disabled={loading}
+          onClick={open}
+          className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold hover:border-blue-300 hover:text-blue-600"
+        >
+          Statement
+        </button>
+      </td>
+    </tr>
+  );
+}
+function LedgerCard({
+  ledger: l,
+  open,
+  loading,
+}: {
+  ledger: Ledger;
+  open: () => void;
+  loading: boolean;
+}) {
+  return (
+    <article className="rounded-2xl border border-slate-200 p-4">
+      <div className="flex justify-between gap-3">
+        <div>
+          <strong>{l.ledger_name}</strong>
+          <p className="text-xs text-slate-500">{l.ledger_group}</p>
+        </div>
+        <Badge tone={l.status === "active" ? "green" : "slate"}>
+          {l.status}
+        </Badge>
+      </div>
+      <div className="mt-4 flex items-end justify-between">
+        <div>
+          <p className="text-xs text-slate-400">Opening balance</p>
+          <p className="font-black">
+            {money.format(Number(l.opening_balance || 0))}{" "}
+            <span className="text-xs uppercase text-blue-600">
+              {l.balance_type}
+            </span>
+          </p>
+        </div>
+        <button
+          disabled={loading}
+          onClick={open}
+          className="rounded-xl bg-slate-950 px-3 py-2 text-xs font-bold text-white"
+        >
+          Statement
+        </button>
+      </div>
+    </article>
+  );
+}
+function Skeleton() {
+  return (
+    <div className="space-y-3 p-6">
+      {[1, 2, 3, 4].map((x) => (
+        <div key={x} className="h-14 animate-pulse rounded-2xl bg-slate-100" />
+      ))}
+    </div>
+  );
+}
+function StatementModal({
+  statement: s,
+  close,
+}: {
+  statement: LedgerStatement;
+  close: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[120] grid place-items-center bg-slate-950/65 p-4 backdrop-blur-sm"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) close();
+      }}
+    >
+      <section className="max-h-[90vh] w-full max-w-4xl overflow-auto rounded-[28px] bg-white shadow-2xl">
+        <header className="sticky top-0 flex items-start justify-between gap-4 border-b bg-white p-6">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-blue-600">
+              Ledger statement
+            </p>
+            <h2 className="text-2xl font-black">{s.ledger.ledger_name}</h2>
+            <p className="text-sm text-slate-500">
+              Opening {money.format(s.opening_balance)}{" "}
+              {s.opening_type.toUpperCase()}
+            </p>
+          </div>
+          <button
+            onClick={close}
+            className="rounded-xl bg-slate-100 px-4 py-2 font-bold"
+          >
+            Close
+          </button>
+        </header>
+        <div className="overflow-x-auto p-6">
+          <table className="w-full min-w-[650px] text-left text-sm">
+            <thead>
+              <tr className="text-xs uppercase text-slate-400">
+                {[
+                  "Date",
+                  "Voucher",
+                  "Narration",
+                  "Debit",
+                  "Credit",
+                  "Balance",
+                ].map((h) => (
+                  <th key={h} className="border-b p-3">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {s.entries.length ? (
+                s.entries.map((e, i) => (
+                  <tr key={`${e.voucher_number}-${i}`}>
+                    <td className="border-b p-3">{e.date || "—"}</td>
+                    <td className="border-b p-3 font-bold">
+                      {e.voucher_number || "—"}
+                    </td>
+                    <td className="border-b p-3 text-slate-500">
+                      {e.narration || "—"}
+                    </td>
+                    <td className="border-b p-3">
+                      {e.debit ? money.format(e.debit) : "—"}
+                    </td>
+                    <td className="border-b p-3">
+                      {e.credit ? money.format(e.credit) : "—"}
+                    </td>
+                    <td className="border-b p-3 font-bold">
+                      {money.format(e.balance)} {e.balance_type.toUpperCase()}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="p-10 text-center text-slate-500">
+                    No voucher entries for this ledger.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <footer className="flex justify-between bg-slate-950 px-6 py-5 text-white">
+          <span className="text-sm text-slate-400">Closing balance</span>
+          <strong>
+            {money.format(s.closing_balance)} {s.closing_type.toUpperCase()}
+          </strong>
+        </footer>
+      </section>
+    </div>
+  );
+}

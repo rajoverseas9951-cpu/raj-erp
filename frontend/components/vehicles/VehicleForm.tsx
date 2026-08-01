@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { AuthenticationRedirectError } from "@/lib/api-client";
+import { BRAND } from "@/config/brand";
 import { useRouter } from "next/navigation";
 import { Customer, customerApi } from "@/lib/customers";
 import { scanDocument } from "@/lib/ocr";
@@ -593,7 +594,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
             <div className="relative flex flex-wrap items-start justify-between gap-5">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[.25em] text-cyan-200">
-                  Raj ERP · Vehicle onboarding
+                  {BRAND.brandName} · Vehicle onboarding
                 </p>
                 <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
                   {vehicle ? "Edit Vehicle" : "Add Vehicle"}

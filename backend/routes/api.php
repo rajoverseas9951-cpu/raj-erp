@@ -5,6 +5,7 @@ use App\Features\Accounting\Controllers\InsuranceAccountingController;
 use App\Features\Accounting\Controllers\LedgerController;
 use App\Features\Customers\Controllers\CustomerController;
 use App\Features\Identity\Controllers\AuthController;
+use App\Features\Identity\Controllers\OrganizationController;
 use App\Features\Identity\Controllers\RoleController;
 use App\Features\Identity\Controllers\UserController;
 use App\Features\Ocr\Controllers\OcrController;
@@ -23,6 +24,7 @@ Route::prefix('v1/auth')->group(function () {
 });
 
 Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
+    Route::get('organization', [OrganizationController::class, 'show']);
     Route::get('dashboard/summary', [DashboardController::class, 'summary']);
     Route::post('ocr', [OcrController::class, 'scan'])->middleware('throttle:30,1');
     Route::post('auth/logout', [AuthController::class, 'logout']);
