@@ -7,6 +7,7 @@ import { can } from "@/lib/dashboard";
 import type { DashboardPermission, DashboardSession } from "@/lib/dashboard";
 import { BRAND } from "@/config/brand";
 import { organizationApi } from "@/lib/organization";
+import { authenticatedRequest } from "@/lib/api-client";
 import { Icon } from "./Icon";
 
 const navigation: {
@@ -98,13 +99,13 @@ export function DashboardShell({
     const rawUser = sessionStorage.getItem("vimawallah_user");
     if (rawUser) {
       try {
-        const user = JSON.parse(rawUser) as { id?:string; name?:string; email?:string; roles?:Array<{name?:string}> };
-        const name = user.name?.trim() || "Administrator";
-        const initials = name.split(/\s+/).slice(0,2).map(part => part[0]).join("").toUpperCase() || "AD";
-        setActiveSession(current => ({...current,user:{id:user.id ?? current.user.id,name,email:user.email ?? BRAND.officialEmail,role:user.roles?.[0]?.name ?? "Administrator",initials}}));
+        const user = JSON.parse(rawUser) as { id?:string; name?:string; email?:string; role?:string; roles?:Array<{name?:string}> };
+        const name = user.name?.trim() || "Signed-in user";
+        const initials = name.split(/\s+/).slice(0,2).map(part => part[0]).join("").toUpperCase() || "U";
+        setActiveSession(current => ({...current,user:{id:user.id ?? current.user.id,name,email:user.email ?? current.user.email,role:user.role ?? user.roles?.[0]?.name ?? "User",initials}}));
       } catch { sessionStorage.removeItem("vimawallah_user"); }
     }
-    organizationApi.get().then(organization => setActiveSession(current => ({...current,tenant:{...current.tenant,id:organization.id,name:organization.name,shortName:(organization.brand_name ?? BRAND.brandName).split(/\s+/).map(part=>part[0]).join("").slice(0,3).toUpperCase(),plan:organization.brand_name ?? BRAND.brandName}}))).catch(() => undefined);
+    organizationApi.get().then(organization => setActiveSession(current => ({...current,tenant:{...current.tenant,id:organization.id,name:organization.name,shortName:(organization.brand_name ?? organization.name).split(/\s+/).map(part=>part[0]).join("").slice(0,3).toUpperCase(),plan:organization.brand_name ?? organization.name,tagline:organization.tagline??undefined,logoUrl:organization.logo_url}}))).catch(() => undefined);
   }, []);
   useEffect(() => {
     const saved = localStorage.getItem("raj-theme");
@@ -146,16 +147,14 @@ export function DashboardShell({
         className={`fixed inset-y-0 left-0 z-40 flex flex-col bg-slate-950 text-slate-300 transition-all duration-300 ${collapsed ? "lg:w-[76px]" : "lg:w-[260px]"} ${mobile ? "translate-x-0 w-[280px]" : "-translate-x-full lg:translate-x-0"}`}
       >
         <div className="flex h-20 items-center gap-3 border-b border-white/10 px-5">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-600 font-black text-white shadow-lg shadow-blue-900/40">
-            R
-          </div>
+          {activeSession.tenant.logoUrl?<img src={activeSession.tenant.logoUrl} alt="Organization logo" className="h-10 w-10 shrink-0 rounded-xl object-cover"/>:<div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-600 font-black text-white shadow-lg shadow-blue-900/40">{activeSession.tenant.plan.slice(0,1)}</div>}
           {!collapsed && (
             <div>
               <strong className="block text-lg tracking-tight text-white">
-                {BRAND.productName}
+                {activeSession.tenant.plan}
               </strong>
-              <span className="text-[10px] font-bold uppercase tracking-[.2em] text-blue-400">
-                {BRAND.tagline}
+              <span className="block max-w-40 text-[9px] font-bold uppercase leading-snug tracking-[.12em] text-blue-400">
+                {activeSession.tenant.tagline ?? BRAND.tagline}
               </span>
             </div>
           )}
@@ -178,7 +177,7 @@ export function DashboardShell({
                 {activeSession.tenant.shortName}
               </div>
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-white">
+                <p className="line-clamp-2 text-sm font-semibold leading-tight text-white">
                   {activeSession.tenant.name}
                 </p>
                 <p className="text-xs text-slate-400">
@@ -280,15 +279,6 @@ export function DashboardShell({
               );
             })}
         </nav>
-        {!collapsed && (
-          <div className="m-3 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 p-4 text-white">
-            <p className="text-xs font-semibold text-blue-100">Need help?</p>
-            <p className="mt-1 text-sm font-bold">Visit the support centre</p>
-            <button className="mt-3 text-xs font-semibold">
-              Open support <span aria-hidden>→</span>
-            </button>
-          </div>
-        )}
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="hidden h-14 items-center justify-center border-t border-white/10 text-slate-500 transition hover:text-white lg:flex"
@@ -408,38 +398,10 @@ function NotificationMenu() {
       <div className="flex items-center justify-between border-b border-slate-100 p-4 dark:border-slate-800">
         <div>
           <h2 className="font-bold">Notifications</h2>
-          <p className="text-xs text-slate-500">3 unread updates</p>
+          <p className="text-xs text-slate-500">Account activity</p>
         </div>
-        <button className="text-xs font-semibold text-blue-600">
-          Mark all read
-        </button>
       </div>
-      <div className="divide-y divide-slate-100 dark:divide-slate-800">
-        <Notice
-          icon="shield"
-          title="Insurance expiring soon"
-          copy="12 vehicle policies expire this week"
-          time="10 min"
-          color="bg-amber-50 text-amber-600 dark:bg-amber-500/10"
-        />
-        <Notice
-          icon="customers"
-          title="New customer assigned"
-          copy="Priya assigned Amit Verma to you"
-          time="1 hr"
-          color="bg-blue-50 text-blue-600 dark:bg-blue-500/10"
-        />
-        <Notice
-          icon="vehicle"
-          title="Vehicle record updated"
-          copy="MH 12 AB 4587 compliance was updated"
-          time="3 hrs"
-          color="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10"
-        />
-      </div>
-      <button className="w-full border-t border-slate-100 p-3 text-sm font-semibold text-blue-600 dark:border-slate-800">
-        View all notifications
-      </button>
+      <p className="p-6 text-center text-sm text-slate-500">No notifications available.</p>
     </div>
   );
 }
@@ -480,12 +442,13 @@ function ProfileMenu({ session }: { session: DashboardSession }) {
       <div className="border-b border-slate-100 px-3 py-3 dark:border-slate-800">
         <p className="font-semibold">{session.user.name}</p>
         <p className="truncate text-xs text-slate-500">{session.user.email}</p>
+        <p className="mt-1 text-xs text-slate-400">{session.user.role} · {session.tenant.name}</p>
       </div>
-      <MenuButton icon="profile" text="My profile" />
-      <MenuButton icon="settings" text="Account settings" />
-      <MenuButton icon="help" text="Help & support" />
+      <Link href="/settings/profile" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800"><Icon name="profile" className="h-4 w-4"/>My profile</Link>
+      <Link href="/settings/organization" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800"><Icon name="settings" className="h-4 w-4"/>Organization settings</Link>
+      <Link href="/settings/security" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800"><Icon name="shield" className="h-4 w-4"/>Security</Link>
       <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
-      <MenuButton icon="logout" text="Sign out" danger />
+      <button onClick={async()=>{try{await authenticatedRequest("/auth/logout",{method:"POST"});}finally{sessionStorage.removeItem("raj_erp_token");sessionStorage.removeItem("vimawallah_user");location.replace("/login");}}} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10"><Icon name="logout" className="h-4 w-4"/>Sign out</button>
     </div>
   );
 }

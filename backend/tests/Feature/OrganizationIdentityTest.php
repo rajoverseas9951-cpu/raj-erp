@@ -38,4 +38,19 @@ class OrganizationIdentityTest extends TestCase
             'email' => 'vimawallah9951@gmail.com',
         ]);
     }
+
+    public function test_organization_update_is_scoped_to_authenticated_users_tenant(): void
+    {
+        $tenant = Tenant::create(['name' => 'Original']);
+        $other = Tenant::create(['name' => 'Other']);
+        $user = User::factory()->create(['tenant_id' => $tenant->id, 'is_admin' => true]);
+
+        $this->actingAs($user)->postJson('/api/v1/organization', [
+            'name' => 'Raj Insurance Consultancy', 'brand_name' => 'Vimawallah',
+            'tagline' => 'Your Safety, Our Responsibility', 'email' => 'vimawallah9951@gmail.com',
+        ])->assertOk()->assertJsonPath('data.id', $tenant->id);
+
+        $this->assertDatabaseHas('tenants', ['id' => $tenant->id, 'brand_name' => 'Vimawallah']);
+        $this->assertDatabaseHas('tenants', ['id' => $other->id, 'name' => 'Other']);
+    }
 }

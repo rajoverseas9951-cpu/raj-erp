@@ -18,6 +18,8 @@ class DashboardSummaryTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.kpis.customers.value', 0)
             ->assertJsonPath('data.kpis.monthly_revenue.value', 0)
-            ->assertJsonStructure(['data' => ['kpis', 'revenue', 'policies', 'renewals', 'work', 'master_counts']]);
+            ->assertJsonPath('data.kpis.monthly_expenses.value', 0)
+            ->assertJsonPath('data.kpis.net_result.value', 0)
+            ->assertJsonStructure(['data' => ['kpis', 'revenue', 'policies', 'renewals', 'work']]);
     }
 }

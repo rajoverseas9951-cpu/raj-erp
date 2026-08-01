@@ -9,5 +9,5 @@ class Tenant extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['name', 'brand_name', 'tagline', 'email'];
+    protected $fillable = ['name', 'brand_name', 'tagline', 'address', 'city', 'state', 'pin_code', 'phone', 'email', 'gst_number', 'logo_path'];
 }

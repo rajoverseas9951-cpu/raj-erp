@@ -36,11 +36,18 @@ const kpis = [
     "from-amber-300 to-orange-600",
   ],
   [
-    "outstanding_receivable",
-    "Outstanding Receivable",
+    "payments_received",
+    "Payments Received",
     "rupee",
     true,
     "from-rose-400 to-pink-700",
+  ],
+  [
+    "outstanding_amount",
+    "Outstanding Amount",
+    "rupee",
+    true,
+    "from-orange-400 to-rose-600",
   ],
   [
     "monthly_revenue",
@@ -50,18 +57,25 @@ const kpis = [
     "from-blue-400 to-indigo-700",
   ],
   [
-    "gross_commission",
-    "Gross Commission",
+    "monthly_expenses",
+    "Monthly Expenses",
     "wallet",
     true,
     "from-fuchsia-400 to-purple-700",
   ],
   [
-    "pending_rto",
-    "Pending RTO Work",
+    "net_result",
+    "Net Result",
     "building",
     false,
     "from-sky-400 to-cyan-700",
+  ],
+  [
+    "renewal_count",
+    "Renewals This Month",
+    "clock",
+    false,
+    "from-indigo-400 to-violet-700",
   ],
 ] as const;
 const quick = [
@@ -152,7 +166,7 @@ export default function DashboardPage() {
                 >
                   <Icon name={icon} className="h-5 w-5" />
                 </span>
-                {item && (
+                {item?.growth !== null && item?.growth !== undefined && (
                   <span
                     className={`rounded-full px-2.5 py-1 text-[11px] font-black ${item.growth >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}
                   >
@@ -195,7 +209,7 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
-          <Trend rows={data?.revenue.trend ?? []} />
+          {(data?.revenue.trend.length ?? 0) > 0 ? <Trend rows={data?.revenue.trend ?? []} /> : <p className="mt-6 rounded-xl bg-slate-50 p-6 text-center text-sm text-slate-500">No accounting activity is available for this period.</p>}
         </Panel>
         <Panel title="Renewal pipeline" copy="Policies requiring attention">
           <div className="mt-5 space-y-3">

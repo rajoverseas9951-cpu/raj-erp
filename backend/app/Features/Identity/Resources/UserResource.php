@@ -1,4 +1,4 @@
 <?php
 namespace App\Features\Identity\Resources;
-use Illuminate\Http\Request; use Illuminate\Http\Resources\Json\JsonResource;
-class UserResource extends JsonResource { public function toArray(Request $request):array{return ['id'=>$this->id,'tenant_id'=>$this->tenant_id,'name'=>$this->name,'email'=>$this->email,'is_active'=>$this->is_active,'roles'=>$this->whenLoaded('roles',fn()=>RoleResource::collection($this->roles)),'created_at'=>$this->created_at?->toISOString(),'updated_at'=>$this->updated_at?->toISOString()];} }
+use Illuminate\Http\Request; use Illuminate\Http\Resources\Json\JsonResource; use Illuminate\Support\Facades\Storage;
+class UserResource extends JsonResource { public function toArray(Request $request):array{return ['id'=>$this->id,'tenant_id'=>$this->tenant_id,'name'=>$this->name,'email'=>$this->email,'phone'=>$this->phone,'profile_photo_url'=>$this->profile_photo_path?Storage::disk('public')->url($this->profile_photo_path):null,'role'=>$this->roles->first()?->name,'organization'=>$this->whenLoaded('tenant',fn()=>['id'=>$this->tenant->id,'name'=>$this->tenant->name,'brand_name'=>$this->tenant->brand_name]),'is_active'=>$this->is_active,'roles'=>$this->whenLoaded('roles',fn()=>RoleResource::collection($this->roles)),'created_at'=>$this->created_at?->toISOString(),'updated_at'=>$this->updated_at?->toISOString()];} }

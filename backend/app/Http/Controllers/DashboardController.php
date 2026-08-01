@@ -12,48 +12,70 @@ class DashboardController extends Controller
     public function summary(Request $request): JsonResponse
     {
         $tenant = $request->user()->tenant_id;
-        $now = now(); $start = $now->copy()->startOfMonth(); $previous = $start->copy()->subMonth();
-        $table = fn(string $name) => DB::table($name)->where('tenant_id',$tenant)->whereNull('deleted_at');
-        $growth = fn(float $a,float $b) => $b > 0 ? round((($a-$b)/$b)*100,1) : ($a > 0 ? 100.0 : 0.0);
-        $period = function(string $name) use($table,$start,$previous,$growth) {
-            $current=(clone $table($name))->where('created_at','>=',$start)->count();
-            $prior=(clone $table($name))->whereBetween('created_at',[$previous,$start])->count();
-            return [$current,$growth($current,$prior)];
+        $now = now();
+        $monthStart = $now->copy()->startOfMonth();
+        $previousStart = $monthStart->copy()->subMonth();
+        $scoped = fn (string $table) => DB::table($table)->where("{$table}.tenant_id", $tenant)
+            ->when(Schema::hasColumn($table, 'deleted_at'), fn ($query) => $query->whereNull("{$table}.deleted_at"));
+        $comparison = fn (float|int $current, float|int $previous) => $previous > 0
+            ? round((($current - $previous) / $previous) * 100, 1)
+            : null;
+        $periodCount = function (string $table) use ($scoped, $monthStart, $previousStart, $comparison): array {
+            $current = (clone $scoped($table))->where("{$table}.created_at", '>=', $monthStart)->count();
+            $previous = (clone $scoped($table))->whereBetween("{$table}.created_at", [$previousStart, $monthStart])->count();
+            return [$current, $comparison($current, $previous)];
         };
-        $policies=$table('vehicle_insurances'); [$newPolicies,$policyGrowth]=$period('vehicle_insurances');
-        $revenue=(float)(clone $policies)->where('created_at','>=',$start)->sum('customer_pay');
-        $previousRevenue=(float)(clone $policies)->whereBetween('created_at',[$previous,$start])->sum('customer_pay');
-        $outstanding=Schema::hasTable('insurance_commissions')?(float)DB::table('insurance_commissions')->where('tenant_id',$tenant)->whereNull('deleted_at')->selectRaw('COALESCE(SUM(net_receivable-received_amount),0) total')->value('total'):0;
-        [$newCustomers,$customerGrowth]=$period('customers'); [$newVehicles,$vehicleGrowth]=$period('vehicles');
-        $activePolicies=(clone $policies)->whereDate('expiry_date','>=',$now)->count();
-        $expiring=(clone $policies)->whereBetween('expiry_date',[$now->toDateString(),$now->copy()->addDays(30)->toDateString()])->count();
-        $trend=collect(range(5,0))->map(function($ago)use($policies,$now){$from=$now->copy()->subMonths($ago)->startOfMonth();return ['month'=>$from->format('M'),'revenue'=>(float)(clone $policies)->whereBetween('created_at',[$from,$from->copy()->addMonth()])->sum('customer_pay')];});
-        $raw=DB::table('vehicle_masters')->where('tenant_id',$tenant)->whereNull('deleted_at')->selectRaw("type, COUNT(*) total, SUM(CASE WHEN status='active' THEN 1 ELSE 0 END) active")->groupBy('type')->get()->keyBy('type');
-        $masterCounts=collect(['manufacturers','models','colours','vehicle_classes','body_types','fuel_types'])->mapWithKeys(fn($type)=>[$type=>['total'=>(int)($raw->get($type)->total??0),'active'=>(int)($raw->get($type)->active??0)]]);
-        foreach(['insurance_companies','insurance_purchase_sources','ledgers'] as $name){$q=$table($name);$active=Schema::hasColumn($name,'status')?(clone $q)->where('status','active')->count():(Schema::hasColumn($name,'is_active')?(clone $q)->where('is_active',true)->count():(clone $q)->count());$masterCounts[$name]=['total'=>(clone $q)->count(),'active'=>$active];}
-        $byVehicle=fn(array $types)=>DB::table('vehicle_insurances')
-            ->join('vehicles','vehicles.id','=','vehicle_insurances.vehicle_id')
-            ->where('vehicle_insurances.tenant_id',$tenant)
-            ->whereNull('vehicle_insurances.deleted_at')
-            ->whereNull('vehicles.deleted_at')
-            ->whereIn('vehicles.vehicle_type',$types)
-            ->count();
-        return response()->json(['success'=>true,'data'=>[
-            'kpis'=>[
-                'customers'=>['value'=>(clone $table('customers'))->count(),'growth'=>$customerGrowth],
-                'vehicles'=>['value'=>(clone $table('vehicles'))->count(),'growth'=>$vehicleGrowth],
-                'active_policies'=>['value'=>$activePolicies,'growth'=>$policyGrowth],
-                'expiring_policies'=>['value'=>$expiring,'growth'=>0],
-                'outstanding_receivable'=>['value'=>$outstanding,'growth'=>0],
-                'monthly_revenue'=>['value'=>$revenue,'growth'=>$growth($revenue,$previousRevenue)],
-                'gross_commission'=>['value'=>(float)(clone $policies)->where('created_at','>=',$start)->sum('gross_commission'),'growth'=>0],
-                'pending_rto'=>['value'=>(clone $table('vehicles'))->where(fn($q)=>$q->whereIn('fitness_status',['not_added','due','expired'])->orWhereIn('permit_status',['not_added','due','expired']))->count(),'growth'=>0],
+
+        $customers = $scoped('customers');
+        $vehicles = $scoped('vehicles');
+        $policies = $scoped('vehicle_insurances');
+        [$newPolicies, $policyGrowth] = $periodCount('vehicle_insurances');
+        [, $customerGrowth] = $periodCount('customers');
+        [, $vehicleGrowth] = $periodCount('vehicles');
+
+        $vouchers = $scoped('accounting_vouchers')->where('accounting_vouchers.status', 'posted');
+        $received = (float) (clone $vouchers)->where('voucher_type', 'receipt')->whereBetween('voucher_date', [$monthStart, $now])->sum('total_credit');
+        $previousReceived = (float) (clone $vouchers)->where('voucher_type', 'receipt')->whereBetween('voucher_date', [$previousStart, $monthStart])->sum('total_credit');
+        $expenses = (float) (clone $vouchers)->where('voucher_type', 'payment')->whereBetween('voucher_date', [$monthStart, $now])->sum('total_debit');
+        $previousExpenses = (float) (clone $vouchers)->where('voucher_type', 'payment')->whereBetween('voucher_date', [$previousStart, $monthStart])->sum('total_debit');
+        $outstanding = (float) (clone $vehicles)->sum('payment_due');
+        $activePolicies = (clone $policies)->whereDate('expiry_date', '>=', $now->toDateString())->whereNotIn('status', ['cancelled', 'expired'])->count();
+        $expiring = (clone $policies)->whereBetween('expiry_date', [$now->toDateString(), $now->copy()->addDays(30)->toDateString()])->count();
+        $renewals = (clone $policies)->where('created_at', '>=', $monthStart)->where('status', 'renewed')->count();
+
+        $trend = collect(range(5, 0))->map(function ($ago) use ($vouchers, $now) {
+            $from = $now->copy()->subMonths($ago)->startOfMonth();
+            $to = $from->copy()->endOfMonth();
+            return [
+                'month' => $from->format('M'),
+                'revenue' => (float) (clone $vouchers)->where('voucher_type', 'receipt')->whereBetween('voucher_date', [$from, $to])->sum('total_credit'),
+                'expenses' => (float) (clone $vouchers)->where('voucher_type', 'payment')->whereBetween('voucher_date', [$from, $to])->sum('total_debit'),
+            ];
+        })->filter(fn ($row) => $row['revenue'] > 0 || $row['expenses'] > 0)->values();
+
+        $byVehicle = fn (array $types) => DB::table('vehicle_insurances')
+            ->join('vehicles', 'vehicles.id', '=', 'vehicle_insurances.vehicle_id')
+            ->where('vehicle_insurances.tenant_id', $tenant)
+            ->whereNull('vehicle_insurances.deleted_at')->whereNull('vehicles.deleted_at')
+            ->whereIn('vehicles.vehicle_type', $types)->count();
+
+        return response()->json(['success' => true, 'data' => [
+            'kpis' => [
+                'customers' => ['value' => (clone $customers)->count(), 'growth' => $customerGrowth],
+                'vehicles' => ['value' => (clone $vehicles)->count(), 'growth' => $vehicleGrowth],
+                'active_policies' => ['value' => $activePolicies, 'growth' => $policyGrowth],
+                'expiring_policies' => ['value' => $expiring, 'growth' => null],
+                'payments_received' => ['value' => $received, 'growth' => $comparison($received, $previousReceived)],
+                'outstanding_amount' => ['value' => $outstanding, 'growth' => null],
+                'monthly_revenue' => ['value' => $received, 'growth' => $comparison($received, $previousReceived)],
+                'monthly_expenses' => ['value' => $expenses, 'growth' => $comparison($expenses, $previousExpenses)],
+                'net_result' => ['value' => $received - $expenses, 'growth' => null],
+                'renewal_count' => ['value' => $renewals, 'growth' => null],
             ],
-            'revenue'=>['current'=>$revenue,'previous'=>$previousRevenue,'outstanding'=>$outstanding,'trend'=>$trend],
-            'policies'=>['new'=>$newPolicies,'renewals'=>(clone $policies)->where('created_at','>=',$start)->where('status','renewed')->count(),'comprehensive'=>(clone $policies)->whereIn('insurance_type',['comprehensive','package'])->count(),'third_party'=>(clone $policies)->whereIn('insurance_type',['third_party','standalone_tp'])->count(),'two_wheeler'=>$byVehicle(['two_wheeler']),'private_car'=>$byVehicle(['private_car']),'commercial'=>$byVehicle(['lgv','hgv','taxi'])],
-            'renewals'=>['7'=>(clone $policies)->whereBetween('expiry_date',[$now,$now->copy()->addDays(7)])->count(),'15'=>(clone $policies)->whereBetween('expiry_date',[$now,$now->copy()->addDays(15)])->count(),'30'=>$expiring,'expired'=>(clone $policies)->whereDate('expiry_date','<',$now)->count(),'renewed'=>(clone $policies)->where('status','renewed')->count()],
-            'work'=>['puc_due'=>(clone $table('vehicles'))->whereIn('puc_status',['not_added','due','expired'])->count(),'fitness_due'=>(clone $table('vehicles'))->whereIn('fitness_status',['not_added','due','expired'])->count(),'permit_due'=>(clone $table('vehicles'))->whereIn('permit_status',['not_added','due','expired'])->count(),'payment_follow_up'=>(clone $table('vehicles'))->where('payment_due','>',0)->count()],
-            'master_counts'=>$masterCounts,
+            'revenue' => ['current' => $received, 'previous' => $previousReceived, 'expenses' => $expenses, 'net_result' => $received - $expenses, 'outstanding' => $outstanding, 'trend' => $trend],
+            'policies' => ['new' => $newPolicies, 'renewals' => $renewals, 'comprehensive' => (clone $policies)->whereIn('insurance_type', ['comprehensive', 'package'])->count(), 'third_party' => (clone $policies)->whereIn('insurance_type', ['third_party', 'standalone_tp'])->count(), 'two_wheeler' => $byVehicle(['two_wheeler']), 'private_car' => $byVehicle(['private_car']), 'commercial' => $byVehicle(['lgv', 'hgv', 'taxi'])],
+            'renewals' => ['7' => (clone $policies)->whereBetween('expiry_date', [$now, $now->copy()->addDays(7)])->count(), '15' => (clone $policies)->whereBetween('expiry_date', [$now, $now->copy()->addDays(15)])->count(), '30' => $expiring, 'expired' => (clone $policies)->whereDate('expiry_date', '<', $now)->count(), 'renewed' => $renewals],
+            'work' => ['puc_due' => (clone $vehicles)->whereIn('puc_status', ['not_added', 'due', 'expired'])->count(), 'fitness_due' => (clone $vehicles)->whereIn('fitness_status', ['not_added', 'due', 'expired'])->count(), 'permit_due' => (clone $vehicles)->whereIn('permit_status', ['not_added', 'due', 'expired'])->count(), 'payment_follow_up' => (clone $vehicles)->where('payment_due', '>', 0)->count()],
         ]]);
     }
 }

@@ -10,7 +10,7 @@ export type DashboardPermission =
   | "settings.manage";
 
 export interface DashboardSession {
-  tenant: { id: string; name: string; plan: string; shortName: string };
+  tenant: { id: string; name: string; plan: string; shortName: string; tagline?: string; logoUrl?: string | null };
   user: {
     id: string;
     name: string;
@@ -30,10 +30,10 @@ export const dashboardSession: DashboardSession = {
   },
   user: {
     id: "current-user",
-    name: "Administrator",
+    name: "Signed-in user",
     email: BRAND.officialEmail,
-    role: "Administrator",
-    initials: "AD",
+    role: "User",
+    initials: "U",
   },
   permissions: [
     "dashboard.view",
