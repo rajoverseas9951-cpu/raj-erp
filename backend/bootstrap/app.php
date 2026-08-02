@@ -12,12 +12,6 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-    $middleware->statefulApi();
-
-    $middleware->validateCsrfTokens(except: [
-        'api/v1/auth/login',
-    ]);
-
     $middleware->alias([
         'active' => \App\Http\Middleware\EnsureUserIsActive::class,
     ]);

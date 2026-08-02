@@ -1,6 +1,7 @@
 "use client";
 import { invalidateDashboard } from "@/lib/dashboard-refresh";
 import { apiUrl } from "@/lib/api-url";
+import { bearerRequestInit } from "@/lib/bearer-request";
 
 
 type ApiEnvelope<T> = {
@@ -57,19 +58,9 @@ async function authenticatedFetch<T>(
   const token = sessionStorage.getItem("raj_erp_token");
   if (!token) redirectToLogin();
 
-  const isFormData = init.body instanceof FormData;
   let response: Response;
   try {
-    response = await fetch(apiUrl(path), {
-      ...init,
-      headers: {
-        Accept: "application/json",
-        ...(!isFormData ? { "Content-Type": "application/json" } : {}),
-        Authorization: `Bearer ${token}`,
-        ...(init.headers ?? {}),
-      },
-      cache: "no-store",
-    });
+    response = await fetch(apiUrl(path), bearerRequestInit(token, init));
   } catch {
     throw new Error("Unable to reach the server. Check your network connection and try again.");
   }
