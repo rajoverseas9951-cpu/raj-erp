@@ -23,7 +23,11 @@ class DataIntegrityInspector
     {
         if (! Schema::hasTable('vehicle_insurances') || ! Schema::hasTable('vehicles') || ! Schema::hasColumn('vehicles', 'deleted_at')) return [];
         return DB::table('vehicle_insurances')->join('vehicles', 'vehicles.id', '=', 'vehicle_insurances.vehicle_id')
-            ->whereNotNull('vehicles.deleted_at')->whereNull('vehicle_insurances.deleted_at')->pluck('vehicle_insurances.id')->all();
+            ->whereNotNull('vehicles.deleted_at')->whereNull('vehicle_insurances.deleted_at')
+            ->where(function ($query) {
+                $query->where('vehicle_insurances.status', '!=', 'cancelled')
+                    ->orWhereNull('vehicle_insurances.archived_at');
+            })->pluck('vehicle_insurances.id')->all();
     }
 
     private function firstOrphans(array $tables, string $foreignKey, string $parent): array
@@ -38,6 +42,9 @@ class DataIntegrityInspector
         return DB::table($table)->leftJoin($parent, "{$parent}.id", '=', "{$table}.{$foreignKey}")
             ->whereNotNull("{$table}.{$foreignKey}")->whereNull("{$parent}.id")
             ->when(Schema::hasColumn($table, 'deleted_at'), fn ($q) => $q->whereNull("{$table}.deleted_at"))
+            ->when($table === 'vehicle_insurances' && Schema::hasColumn($table, 'archived_at'), fn ($q) => $q->where(function ($policy) use ($table) {
+                $policy->where("{$table}.status", '!=', 'cancelled')->orWhereNull("{$table}.archived_at");
+            }))
             ->pluck("{$table}.id")->all();
     }
 }

@@ -7,6 +7,7 @@ use App\Features\Vehicles\Models\Vehicle;
 use App\Features\Vehicles\Models\VehicleInsurance;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -74,6 +75,40 @@ class VehiclePolicyLifecycleTest extends TestCase
         $other = User::factory()->create(['tenant_id' => (string) Str::uuid(), 'is_admin' => true]);
         $this->actingAs($other)->deleteJson("/api/v1/vehicles/{$vehicle->id}/insurances/{$policy->id}")->assertNotFound();
         $this->assertDatabaseHas('vehicle_insurances', ['id' => $policy->id, 'tenant_id' => $owner->tenant_id]);
+    }
+
+    public function test_integrity_repair_cancels_orphaned_policy_and_records_commission_reversal_once(): void
+    {
+        [$user, $vehicle] = $this->vehicle();
+        $policy = $this->policy($vehicle, 'running');
+        DB::table('insurance_companies')->insert(['id' => $company = (string) Str::uuid(), 'tenant_id' => $user->tenant_id, 'company_name' => 'Repair Insurance', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('insurance_commissions')->insert([
+            'id' => $commission = (string) Str::uuid(), 'tenant_id' => $user->tenant_id, 'insurance_company_id' => $company,
+            'policy_id' => $policy->id, 'statement_date' => now()->toDateString(), 'gross_commission' => 392.70,
+            'tds_amount' => 19.64, 'net_receivable' => 373.06, 'received_amount' => 0, 'status' => 'pending',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $vehicle->delete();
+
+        Artisan::call('data:repair-integrity', ['--dry-run' => true]);
+        $this->assertStringContainsString($policy->id, Artisan::output());
+        $this->assertStringContainsString($commission, Artisan::output());
+        $this->assertDatabaseHas('vehicle_insurances', ['id' => $policy->id, 'status' => 'running']);
+        $this->assertDatabaseMissing('insurance_commission_reversals', ['policy_id' => $policy->id]);
+
+        Artisan::call('data:repair-integrity', ['--apply' => true]);
+        $this->assertDatabaseHas('vehicle_insurances', ['id' => $policy->id, 'status' => 'cancelled']);
+        $this->assertNotNull(DB::table('vehicle_insurances')->where('id', $policy->id)->value('archived_at'));
+        $this->assertNotNull(DB::table('vehicle_insurances')->where('id', $policy->id)->value('cancelled_at'));
+        $this->assertDatabaseHas('insurance_commissions', ['id' => $commission, 'status' => 'cancelled']);
+        $this->assertDatabaseHas('insurance_commission_reversals', [
+            'policy_id' => $policy->id, 'commission_id' => $commission,
+            'gross_commission' => -392.70, 'tds_amount' => -19.64, 'net_receivable' => -373.06,
+        ]);
+
+        Artisan::call('data:repair-integrity', ['--apply' => true]);
+        $this->assertSame(1, DB::table('insurance_commission_reversals')->where('policy_id', $policy->id)->count());
+        $this->assertStringNotContainsString($policy->id, Artisan::output());
     }
 
     private function vehicle(?User $user = null): array
