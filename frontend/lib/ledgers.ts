@@ -1,6 +1,6 @@
 'use client';
 
-import { apiUrl } from '@/lib/api-url';
+import { authenticatedRequest } from '@/lib/api-client';
 
 export type Ledger = {
   id: string;
@@ -36,24 +36,7 @@ export type LedgerStatement = {
 };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = sessionStorage.getItem('raj_erp_token');
-  const response = await fetch(apiUrl(path), {
-    ...init,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(init?.headers || {}),
-    },
-    cache: 'no-store',
-  });
-
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const firstError = payload.errors ? Object.values(payload.errors as Record<string, string[]>)[0]?.[0] : undefined;
-    throw new Error(firstError ?? payload.message ?? `API request failed: ${response.status}`);
-  }
-  return payload.data as T;
+  return authenticatedRequest<T>(path, init);
 }
 
 export const ledgerApi = {

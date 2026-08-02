@@ -15,7 +15,7 @@ class DashboardController extends Controller
     public function summary(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'period' => ['sometimes', Rule::in(['today', 'yesterday', 'this_week', 'this_month', 'last_month', 'custom', 'all_time'])],
+            'period' => ['sometimes', Rule::in(['today', 'yesterday', 'this_week', 'this_month', 'last_month', 'this_year', 'custom', 'all_time'])],
             'date_from' => ['nullable', 'date_format:Y-m-d', 'required_if:period,custom'],
             'date_to' => ['nullable', 'date_format:Y-m-d', 'required_if:period,custom', 'after_or_equal:date_from'],
         ]);
@@ -51,7 +51,11 @@ class DashboardController extends Controller
         $commissionRevenue = round((float) $dateTimePeriod($validPolicies(), 'vehicle_insurances.created_at')->sum('gross_commission'), 2);
         $previousCommissionRevenue = round((float) $previousDateTimePeriod($validPolicies(), 'vehicle_insurances.created_at')->sum('gross_commission'), 2);
         $agentCommission = round((float) $dateTimePeriod($validPolicies(), 'vehicle_insurances.created_at')->sum('agent_commission'), 2);
-        $netProfit = round($commissionRevenue - $agentCommission - $expenses, 2);
+        $tds = round((float) $datePeriod(
+            $scoped('insurance_commissions')->where('status', '!=', 'cancelled'),
+            'statement_date'
+        )->sum('tds_amount'), 2);
+        $netProfit = round($commissionRevenue - $tds - $agentCommission - $expenses, 2);
         $outstanding = (float) (clone $vehicles)->sum('payment_due');
         $activePolicies = (clone $policies)->whereDate('expiry_date', '>=', $now->toDateString())
             ->where(fn ($query) => $query->whereNull('status')->orWhereNotIn('status', ['cancelled', 'expired']))->count();
@@ -63,11 +67,14 @@ class DashboardController extends Controller
             'revenue' => $commissionRevenue,
             'expenses' => $expenses,
         ]]);
-        $byVehicle = fn (array $types) => DB::table('vehicle_insurances')
+        $byVehicle = fn (array $types) => $dateTimePeriod(DB::table('vehicle_insurances')
             ->join('vehicles', 'vehicles.id', '=', 'vehicle_insurances.vehicle_id')
             ->where('vehicle_insurances.tenant_id', $tenant)
             ->whereNull('vehicle_insurances.deleted_at')->whereNull('vehicles.deleted_at')
-            ->whereIn('vehicles.vehicle_type', $types)->count();
+            ->where(fn ($query) => $query->whereNull('vehicle_insurances.status')->orWhere('vehicle_insurances.status', '!=', 'cancelled'))
+            ->whereIn('vehicles.vehicle_type', $types), 'vehicle_insurances.created_at')->count();
+        $periodPolicies = fn () => $dateTimePeriod($validPolicies(), 'vehicle_insurances.created_at');
+        $masterCounts = $this->masterCounts($tenant);
 
         return response()->json(['success' => true, 'data' => [
             'period' => ['key' => $period, 'from' => $from?->toDateString(), 'to' => $to->toDateString(), 'timezone' => $timezone],
@@ -79,15 +86,17 @@ class DashboardController extends Controller
                 'payments_received' => ['value' => $received, 'growth' => $comparison($received, $previousReceived)],
                 'outstanding_amount' => ['value' => $outstanding, 'growth' => null],
                 'monthly_revenue' => ['value' => $commissionRevenue, 'growth' => $comparison($commissionRevenue, $previousCommissionRevenue)],
+                'tds' => ['value' => $tds, 'growth' => null],
                 'agent_commission' => ['value' => $agentCommission, 'growth' => null],
                 'monthly_expenses' => ['value' => $expenses, 'growth' => $comparison($expenses, $previousExpenses)],
                 'net_result' => ['value' => $netProfit, 'growth' => null],
                 'renewal_count' => ['value' => $renewals, 'growth' => null],
             ],
-            'revenue' => ['current' => $commissionRevenue, 'previous' => $previousCommissionRevenue, 'agent_commission' => $agentCommission, 'expenses' => $expenses, 'net_result' => $netProfit, 'outstanding' => $outstanding, 'trend' => $trend],
-            'policies' => ['new' => $newPolicies, 'renewals' => $renewals, 'comprehensive' => (clone $policies)->whereIn('insurance_type', ['comprehensive', 'package'])->count(), 'third_party' => (clone $policies)->whereIn('insurance_type', ['third_party', 'standalone_tp'])->count(), 'two_wheeler' => $byVehicle(['two_wheeler']), 'private_car' => $byVehicle(['private_car']), 'commercial' => $byVehicle(['lgv', 'hgv', 'taxi'])],
+            'revenue' => ['current' => $commissionRevenue, 'previous' => $previousCommissionRevenue, 'tds' => $tds, 'agent_commission' => $agentCommission, 'expenses' => $expenses, 'net_result' => $netProfit, 'outstanding' => $outstanding, 'trend' => $trend],
+            'policies' => ['new' => $newPolicies, 'renewals' => $renewals, 'comprehensive' => $periodPolicies()->whereIn('insurance_type', ['comprehensive', 'package'])->count(), 'third_party' => $periodPolicies()->whereIn('insurance_type', ['third_party', 'standalone_tp'])->count(), 'two_wheeler' => $byVehicle(['two_wheeler']), 'private_car' => $byVehicle(['private_car']), 'commercial' => $byVehicle(['lgv', 'hgv', 'taxi'])],
             'renewals' => ['7' => (clone $policies)->whereBetween('expiry_date', [$now->toDateString(), $now->addDays(7)->toDateString()])->count(), '15' => (clone $policies)->whereBetween('expiry_date', [$now->toDateString(), $now->addDays(15)->toDateString()])->count(), '30' => (clone $policies)->whereBetween('expiry_date', [$now->toDateString(), $now->addDays(30)->toDateString()])->count(), 'expired' => (clone $policies)->whereDate('expiry_date', '<', $now->toDateString())->count(), 'renewed' => $renewals],
             'work' => ['puc_due' => (clone $vehicles)->whereIn('puc_status', ['not_added', 'due', 'expired'])->count(), 'fitness_due' => (clone $vehicles)->whereIn('fitness_status', ['not_added', 'due', 'expired'])->count(), 'permit_due' => (clone $vehicles)->whereIn('permit_status', ['not_added', 'due', 'expired'])->count(), 'payment_follow_up' => (clone $vehicles)->where('payment_due', '>', 0)->count()],
+            'master_counts' => $masterCounts,
         ]])->header('Cache-Control', 'private, no-store, no-cache, must-revalidate')
             ->header('Pragma', 'no-cache')->header('Expires', '0');
     }
@@ -100,6 +109,7 @@ class DashboardController extends Controller
             'this_week' => [$period, $now->startOfWeek(), $now->endOfDay()],
             'this_month' => [$period, $now->startOfMonth(), $now->endOfDay()],
             'last_month' => [$period, $now->subMonthNoOverflow()->startOfMonth(), $now->subMonthNoOverflow()->endOfMonth()],
+            'this_year' => [$period, $now->startOfYear(), $now->endOfDay()],
             'custom' => [$period, CarbonImmutable::parse($input['date_from'], $now->timezone)->startOfDay(), CarbonImmutable::parse($input['date_to'], $now->timezone)->endOfDay()],
             'all_time' => [$period, null, $now->endOfDay()],
             default => ['today', $now->startOfDay(), $now->endOfDay()],
@@ -123,5 +133,24 @@ class DashboardController extends Controller
     {
         if (! $from || ! $to) return $query;
         return $query->whereBetween($column, [$from->toDateString(), $to->toDateString()]);
+    }
+
+    private function masterCounts(string $tenant): array
+    {
+        $counts = [];
+        foreach (['manufacturers', 'models', 'variants', 'colours', 'vehicle_types', 'vehicle_classes', 'body_types', 'fuel_types', 'rto_offices'] as $type) {
+            $query = DB::table('vehicle_masters')->where('tenant_id', $tenant)->where('type', $type)->whereNull('deleted_at');
+            $counts[$type] = ['total' => (clone $query)->count(), 'active' => (clone $query)->where('status', 'active')->count()];
+        }
+        foreach (['insurance_companies' => 'status', 'insurance_purchase_sources' => 'is_active', 'ledgers' => 'status'] as $table => $statusColumn) {
+            $query = DB::table($table)->where('tenant_id', $tenant)->whereNull('deleted_at');
+            $counts[$table] = [
+                'total' => (clone $query)->count(),
+                'active' => $statusColumn === 'is_active'
+                    ? (clone $query)->where($statusColumn, true)->count()
+                    : (clone $query)->where($statusColumn, 'active')->count(),
+            ];
+        }
+        return $counts;
     }
 }

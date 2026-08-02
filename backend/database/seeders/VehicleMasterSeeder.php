@@ -11,6 +11,7 @@ class VehicleMasterSeeder extends Seeder
     private const DEFAULTS = [
         'manufacturers' => ['Maruti Suzuki', 'Hyundai', 'Tata Motors', 'Mahindra', 'Toyota', 'Honda Cars', 'Kia', 'MG Motor', 'Skoda', 'Volkswagen', 'Renault', 'Nissan', 'Jeep', 'BMW', 'Mercedes-Benz', 'Audi', 'Hero MotoCorp', 'Honda Motorcycle', 'TVS', 'Bajaj', 'Royal Enfield', 'Yamaha', 'Suzuki Motorcycle', 'KTM', 'Jawa', 'Yezdi', 'Ather', 'Ola Electric'],
         'colours' => ['White', 'Pearl White', 'Black', 'Silver', 'Grey', 'Metallic Grey', 'Red', 'Blue', 'Dark Blue', 'Brown', 'Green', 'Yellow', 'Orange', 'Golden', 'Beige', 'Purple', 'Maroon'],
+        'vehicle_types' => ['Two Wheeler', 'Private Car', 'LGV', 'HGV', 'Taxi'],
         'fuel_types' => ['Petrol', 'Diesel', 'CNG', 'LPG', 'Electric', 'Hybrid', 'Petrol+CNG', 'Petrol+LPG', 'Hydrogen', 'Flex Fuel'],
         'vehicle_classes' => ['LMV', 'MMV', 'HMV', 'MCWG', 'MCWOG', 'Transport', 'Non Transport'],
         'body_types' => ['Hatchback', 'Sedan', 'SUV', 'MUV', 'Coupe', 'Convertible', 'Pickup', 'Truck', 'Bus', 'Van', 'Auto Rickshaw', 'Tempo', 'Tractor', 'Tanker', 'Tipper', 'Trailer', 'Scooter', 'Motorcycle', 'Moped'],
@@ -83,7 +84,7 @@ class VehicleMasterSeeder extends Seeder
     private function backfillVehicleValues(string $tenant): void
     {
         $vehicles = DB::table('vehicles')->where('tenant_id', $tenant)->whereNull('deleted_at')
-            ->get(['manufacturer', 'model', 'colour']);
+            ->get(['manufacturer', 'model', 'variant', 'colour', 'vehicle_type', 'registration_authority']);
         foreach ($vehicles->pluck('manufacturer')->filter()->unique(fn ($v) => strtoupper(trim($v))) as $name) {
             $this->insert($tenant, 'manufacturers', $name);
         }
@@ -97,6 +98,18 @@ class VehicleMasterSeeder extends Seeder
         }
         foreach ($vehicles->pluck('colour')->filter()->unique(fn ($v) => strtoupper(trim($v))) as $name) {
             $this->insert($tenant, 'colours', $name);
+        }
+        foreach ($vehicles->pluck('vehicle_type')->filter()->unique(fn ($v) => strtoupper(trim($v))) as $name) {
+            $this->insert($tenant, 'vehicle_types', str_replace('_', ' ', $name));
+        }
+        foreach ($vehicles->pluck('registration_authority')->filter()->unique(fn ($v) => strtoupper(trim($v))) as $name) {
+            $this->insert($tenant, 'rto_offices', $name);
+        }
+        foreach ($vehicles as $vehicle) {
+            if (! $vehicle->variant || ! $vehicle->model) continue;
+            $parent = DB::table('vehicle_masters')->where('tenant_id', $tenant)->where('type', 'models')
+                ->whereRaw('UPPER(name) = ?', [strtoupper(trim($vehicle->model))])->value('id');
+            if ($parent) $this->insert($tenant, 'variants', $vehicle->variant, $parent);
         }
     }
 

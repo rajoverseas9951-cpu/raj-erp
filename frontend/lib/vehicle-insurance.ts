@@ -1,4 +1,4 @@
-import { apiUrl } from '@/lib/api-url';
+import { authenticatedRequest } from '@/lib/api-client';
 import { invalidateDashboard } from '@/lib/dashboard-refresh';
 
 export type VehicleInsurancePolicy = {
@@ -72,42 +72,15 @@ export type InsuranceCalculation = {
 };
 
 async function multipart<T>(path: string, body: FormData): Promise<T> {
-  const token = sessionStorage.getItem('raj_erp_token');
-  const response = await fetch(apiUrl(path), {
-    method: 'POST',
-    headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    body,
-  });
-  const payload = await response.json().catch(() => ({})) as { data?: T; message?: string; errors?: Record<string,string[]> };
-  if (!response.ok) throw new Error(payload.errors ? Object.values(payload.errors)[0]?.[0] : payload.message ?? `Policy request failed: ${response.status}`);
+  const result = await authenticatedRequest<T>(path, { method: 'POST', body });
   invalidateDashboard();
-  return payload.data as T;
+  return result;
 }
 
 async function request<T>(path: string, init?: RequestInit, invalidate = false): Promise<T> {
-  const token = sessionStorage.getItem('raj_erp_token');
-  const response = await fetch(apiUrl(path), {
-    ...init,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(init?.headers ?? {}),
-    },
-  });
-  const payload = await response.json().catch(() => ({})) as {
-    data?: T;
-    message?: string;
-    errors?: Record<string, string[]>;
-  };
-
-  if (!response.ok) {
-    const validationError = payload.errors ? Object.values(payload.errors)[0]?.[0] : undefined;
-    throw new Error(validationError ?? payload.message ?? `Policy request failed: ${response.status}`);
-  }
-
+  const result = await authenticatedRequest<T>(path, init);
   if (invalidate) invalidateDashboard();
-  return payload.data as T;
+  return result;
 }
 
 export const vehicleInsuranceApi = {

@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { accountingApi, TrialBalance, Voucher } from '@/lib/accounting';
 import { Ledger, ledgerApi } from '@/lib/ledgers';
+import { DASHBOARD_REFRESH_EVENT } from '@/lib/dashboard-refresh';
 
 export default function AccountsPage() {
   const [ledgers,setLedgers]=useState<Ledger[]>([]);
@@ -21,6 +22,7 @@ export default function AccountsPage() {
     }catch(e){setError(e instanceof Error?e.message:'Accounts load nahi hua.');}
   }
   useEffect(()=>{void load();},[]);
+  useEffect(()=>{const refresh=()=>void load();addEventListener(DASHBOARD_REFRESH_EVENT,refresh);return()=>removeEventListener(DASHBOARD_REFRESH_EVENT,refresh)},[]);
 
   async function submit(e:FormEvent<HTMLFormElement>){
     e.preventDefault();setSaving(true);setError('');setSuccess('');

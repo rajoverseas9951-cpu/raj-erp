@@ -52,14 +52,18 @@ class DashboardSummaryTest extends TestCase
             ['id' => (string) Str::uuid(), 'tenant_id' => $tenantA, 'voucher_number' => 'REC-A', 'voucher_type' => 'receipt', 'voucher_date' => $now->toDateString(), 'total_debit' => 1200, 'total_credit' => 1200, 'status' => 'posted', 'created_at' => $now, 'updated_at' => $now],
             ['id' => (string) Str::uuid(), 'tenant_id' => $tenantA, 'voucher_number' => 'PAY-A', 'voucher_type' => 'payment', 'voucher_date' => $now->toDateString(), 'total_debit' => 200, 'total_credit' => 200, 'status' => 'posted', 'created_at' => $now, 'updated_at' => $now],
         ]);
+        $companyId = (string) Str::uuid();
+        DB::table('insurance_companies')->insert(['id' => $companyId, 'tenant_id' => $tenantA, 'company_name' => 'Dashboard Insurance', 'status' => 'active', 'created_at' => $now, 'updated_at' => $now]);
+        DB::table('insurance_commissions')->insert(['id' => (string) Str::uuid(), 'tenant_id' => $tenantA, 'insurance_company_id' => $companyId, 'statement_date' => $now->toDateString(), 'gross_commission' => 1058.67, 'tds_percent' => 10, 'tds_amount' => 100, 'net_receivable' => 958.67, 'created_at' => $now, 'updated_at' => $now]);
 
         $this->actingAs($user)->getJson('/api/v1/dashboard/summary')->assertOk()
             ->assertJsonPath('data.kpis.customers.value', 1)
             ->assertJsonPath('data.kpis.payments_received.value', 1200)
             ->assertJsonPath('data.kpis.monthly_revenue.value', 1058.67)
             ->assertJsonPath('data.kpis.agent_commission.value', 58.67)
+            ->assertJsonPath('data.kpis.tds.value', 100)
             ->assertJsonPath('data.kpis.monthly_expenses.value', 200)
-            ->assertJsonPath('data.kpis.net_result.value', 800)
+            ->assertJsonPath('data.kpis.net_result.value', 700)
             ->assertJsonPath('data.period.key', 'today')
             ->assertJsonPath('data.period.timezone', 'Asia/Kolkata')
             ->assertJsonPath('data.revenue.current', 1058.67);
@@ -67,9 +71,11 @@ class DashboardSummaryTest extends TestCase
         DB::table('vehicle_insurances')->where('id', $policyA)->update(['gross_commission' => 1200, 'updated_at' => now()]);
         $this->actingAs($user)->getJson('/api/v1/dashboard/summary')->assertOk()
             ->assertJsonPath('data.kpis.monthly_revenue.value', 1200)
-            ->assertJsonPath('data.kpis.net_result.value', 941.33);
+            ->assertJsonPath('data.kpis.net_result.value', 841.33);
 
         $this->actingAs($user)->getJson('/api/v1/dashboard/summary?period=custom&date_from='.$now->toDateString().'&date_to='.$now->toDateString())
             ->assertOk()->assertJsonPath('data.kpis.monthly_revenue.value', 1200);
+        $this->actingAs($user)->getJson('/api/v1/dashboard/summary?period=this_year')
+            ->assertOk()->assertJsonPath('data.period.key', 'this_year')->assertJsonPath('data.kpis.monthly_revenue.value', 1200);
     }
 }

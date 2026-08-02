@@ -186,6 +186,10 @@ class VehicleInsurancePolicyTest extends TestCase
             ->assertJsonPath('data.gross_commission','1500.00')
             ->assertJsonPath('data.commission_receivable_from_type','insurance_company')
             ->assertJsonPath('data.commission_receivable_from_id',$companyId);
+        $this->assertDatabaseHas('insurance_commissions', [
+            'tenant_id' => $user->tenant_id, 'policy_id' => $package->json('data.id'),
+            'gross_commission' => 1500, 'tds_amount' => 75, 'net_receivable' => 1425,
+        ]);
 
         $this->actingAs($user)->putJson(
             "/api/v1/vehicles/{$vehicle->id}/insurances/{$package->json('data.id')}",
@@ -197,13 +201,28 @@ class VehicleInsurancePolicyTest extends TestCase
             ->assertJsonPath('data.gross_commission','777.00')
             ->assertJsonPath('data.commission_receivable_from_type','purchase_source')
             ->assertJsonPath('data.commission_receivable_from_id',$sourceId);
+        $this->assertDatabaseCount('insurance_commissions', 1);
+        $this->assertDatabaseHas('insurance_commissions', [
+            'tenant_id' => $user->tenant_id, 'policy_id' => $package->json('data.id'),
+            'gross_commission' => 777, 'tds_amount' => 0, 'net_receivable' => 777,
+        ]);
 
-        $this->actingAs($user)->postJson("/api/v1/vehicles/{$vehicle->id}/insurances", array_merge($base, [
+        $this->actingAs($user)->deleteJson("/api/v1/vehicles/{$vehicle->id}/insurances/{$package->json('data.id')}")->assertOk();
+        $this->assertSoftDeleted('insurance_commissions', ['tenant_id' => $user->tenant_id, 'policy_id' => $package->json('data.id')]);
+        $this->assertDatabaseHas('vehicles', ['id' => $vehicle->id, 'insurance_status' => 'not_added']);
+
+        $tpPolicy = $this->actingAs($user)->postJson("/api/v1/vehicles/{$vehicle->id}/insurances", array_merge($base, [
             'policy_number'=>'PRIVATE-TP','insurance_type'=>'third_party','has_od_cover'=>false,
             'purchase_from_type'=>'direct_company','commission_basis'=>'NET_PREMIUM','commission_percent'=>2.5,
         ]))->assertCreated()
             ->assertJsonPath('data.od_premium','0.00')
             ->assertJsonPath('data.gross_commission','75.00');
+        $this->actingAs($user)->getJson('/api/v1/policies?search=PRIVATE-TP')
+            ->assertOk()->assertJsonPath('data.total', 1)->assertJsonPath('data.data.0.id', $tpPolicy->json('data.id'));
+        $this->actingAs($user)->getJson('/api/v1/reports/policies/summary')
+            ->assertOk()->assertJsonPath('data.policy_count', 1)
+            ->assertJsonPath('data.gross_commission', 75)
+            ->assertJsonPath('data.tds', 3.75);
     }
 
     private function payload(): array

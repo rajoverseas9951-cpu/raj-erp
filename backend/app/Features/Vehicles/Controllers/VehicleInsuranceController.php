@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class VehicleInsuranceController
@@ -37,6 +38,7 @@ class VehicleInsuranceController
             ));
             $this->saveDocument($request, $vehicleModel, $policy);
             $this->syncVehicle($vehicleModel, $policy);
+            $this->syncCommission($vehicleModel, $policy, $request->user()?->id);
             $this->timeline($vehicleModel, $request->user()?->id, $policy, 'created');
             return $policy->refresh();
         });
@@ -78,6 +80,7 @@ class VehicleInsuranceController
             $policy->update($this->policyData($request->validated(), $vehicleModel, $request->user()?->id, false));
             $this->saveDocument($request, $vehicleModel, $policy);
             $this->syncVehicle($vehicleModel, $policy);
+            $this->syncCommission($vehicleModel, $policy, $request->user()?->id);
             $this->timeline($vehicleModel, $request->user()?->id, $policy, 'updated');
         });
 
@@ -88,7 +91,20 @@ class VehicleInsuranceController
     {
         $vehicleModel = $this->vehicle($request, $vehicle);
         $this->authorize($request, 'vehicle.delete');
-        $vehicleModel->insurances()->findOrFail($insurance)->delete();
+        $policy = $vehicleModel->insurances()->findOrFail($insurance);
+        DB::transaction(function () use ($request, $vehicleModel, $policy) {
+            DB::table('insurance_commissions')->where('tenant_id', $vehicleModel->tenant_id)
+                ->where('policy_id', $policy->id)->whereNull('deleted_at')
+                ->update(['deleted_at' => now(), 'updated_by' => $request->user()?->id, 'updated_at' => now()]);
+            $this->timeline($vehicleModel, $request->user()?->id, $policy, 'deleted');
+            $policy->delete();
+            $latest = $vehicleModel->insurances()->whereNotIn('status', ['cancelled', 'expired'])
+                ->orderByDesc('expiry_date')->first();
+            $vehicleModel->update([
+                'insurance_expiry' => $latest?->expiry_date,
+                'insurance_status' => $latest ? 'active' : 'not_added',
+            ]);
+        });
 
         return response()->json(['success' => true, 'data' => null]);
     }
@@ -194,6 +210,63 @@ class VehicleInsuranceController
     private function syncVehicle(Vehicle $vehicle, $policy): void
     {
         $vehicle->update(['insurance_expiry' => $policy->expiry_date, 'insurance_status' => 'active']);
+    }
+
+    private function syncCommission(Vehicle $vehicle, $policy, ?string $actor): void
+    {
+        if (! $policy->insurance_company_id) return;
+        $company = DB::table('insurance_companies')->where('tenant_id', $vehicle->tenant_id)
+            ->where('id', $policy->insurance_company_id)->whereNull('deleted_at')->first();
+        if (! $company) return;
+        if ($policy->status === 'cancelled') {
+            DB::table('insurance_commissions')->where('tenant_id', $vehicle->tenant_id)
+                ->where('policy_id', $policy->id)->whereNull('deleted_at')
+                ->update(['deleted_at' => now(), 'updated_by' => $actor, 'updated_at' => now()]);
+            return;
+        }
+        $tdsPercent = (float) $company->tds_percent;
+        if ($policy->purchase_from_type === 'agent' && $policy->purchase_source_id) {
+            $source = DB::table('insurance_purchase_sources')->where('tenant_id', $vehicle->tenant_id)
+                ->where('id', $policy->purchase_source_id)->whereNull('deleted_at')->first();
+            $tdsPercent = $source && $source->tds_applicable ? (float) $source->tds_percent : 0;
+        }
+        $gross = round((float) $policy->gross_commission, 2);
+        $tds = round($gross * $tdsPercent / 100, 2);
+        $existing = DB::table('insurance_commissions')->where('tenant_id', $vehicle->tenant_id)
+            ->where('policy_id', $policy->id)->first();
+        if (! $existing) {
+            $existing = DB::table('insurance_commissions')->where('tenant_id', $vehicle->tenant_id)
+                ->whereNull('policy_id')->whereNull('deleted_at')
+                ->where('insurance_company_id', $policy->insurance_company_id)
+                ->whereRaw('LOWER(policy_number) = ?', [strtolower($policy->policy_number)])->first();
+        }
+        $received = min((float) ($existing->received_amount ?? 0), max(0, $gross - $tds));
+        $values = [
+            'insurance_company_id' => $policy->insurance_company_id,
+            'statement_date' => $policy->policy_date ?? $policy->issue_date,
+            'policy_number' => $policy->policy_number,
+            'customer_name' => trim(($vehicle->customer?->first_name ?? '').' '.($vehicle->customer?->last_name ?? '')),
+            'gross_premium' => round((float) $policy->gross_premium, 2),
+            'commission_percent' => round((float) $policy->commission_percent, 3),
+            'gross_commission' => $gross,
+            'tds_percent' => $tdsPercent,
+            'tds_amount' => $tds,
+            'net_receivable' => round($gross - $tds, 2),
+            'received_amount' => $received,
+            'status' => $received >= ($gross - $tds) && $gross > 0 ? 'received' : ($received > 0 ? 'partial' : 'pending'),
+            'updated_by' => $actor,
+            'updated_at' => now(),
+            'deleted_at' => null,
+        ];
+        if ($existing) {
+            DB::table('insurance_commissions')->where('tenant_id', $vehicle->tenant_id)->where('id', $existing->id)
+                ->update($values + ['policy_id' => $policy->id]);
+            return;
+        }
+        DB::table('insurance_commissions')->insert($values + [
+            'id' => (string) Str::uuid(), 'tenant_id' => $vehicle->tenant_id, 'policy_id' => $policy->id,
+            'created_by' => $actor, 'created_at' => now(),
+        ]);
     }
 
     private function timeline(Vehicle $vehicle, ?string $actor, $policy, string $action): void

@@ -79,6 +79,13 @@ const kpis = [
     "from-teal-400 to-emerald-700",
   ],
   [
+    "tds",
+    "TDS",
+    "payments",
+    true,
+    "from-amber-400 to-orange-700",
+  ],
+  [
     "renewal_count",
     "Renewals This Month",
     "clock",
@@ -175,7 +182,7 @@ export default function DashboardPage() {
         </div>
       </section>
       <section className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="Dashboard period filters">
-        <label className="text-xs font-bold uppercase tracking-wide text-slate-500">Period<select value={period} onChange={event=>setPeriod(event.target.value as DashboardPeriod)} className="mt-1 block min-w-44 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900"><option value="today">Today</option><option value="yesterday">Yesterday</option><option value="this_week">This Week</option><option value="this_month">This Month</option><option value="last_month">Last Month</option><option value="custom">Custom Date Range</option><option value="all_time">All Time</option></select></label>
+        <label className="text-xs font-bold uppercase tracking-wide text-slate-500">Period<select value={period} onChange={event=>setPeriod(event.target.value as DashboardPeriod)} className="mt-1 block min-w-44 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900"><option value="today">Today</option><option value="this_month">This Month</option><option value="this_year">This Year</option><option value="all_time">All Time</option><option value="custom">Custom Date Range</option></select></label>
         {period==="custom"&&<><label className="text-xs font-bold uppercase tracking-wide text-slate-500">From<input type="date" value={dateFrom} max={dateTo} onChange={event=>setDateFrom(event.target.value)} className="mt-1 block rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900"/></label><label className="text-xs font-bold uppercase tracking-wide text-slate-500">To<input type="date" value={dateTo} min={dateFrom} onChange={event=>setDateTo(event.target.value)} className="mt-1 block rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900"/></label></>}
         <p className="ml-auto text-xs text-slate-500">Timezone: <strong>Asia/Kolkata</strong>{data?.period.from&&<> · {data.period.from} to {data.period.to}</>}</p>
       </section>

@@ -11,7 +11,7 @@ use Illuminate\Validation\ValidationException;
 
 class VehicleMasterController
 {
-    private const TYPES = ['manufacturers', 'models', 'colours', 'vehicle_classes', 'body_types', 'fuel_types'];
+    private const TYPES = ['manufacturers', 'models', 'variants', 'colours', 'vehicle_types', 'vehicle_classes', 'body_types', 'fuel_types', 'rto_offices'];
 
     public function index(Request $request, string $type): JsonResponse
     {
@@ -32,8 +32,17 @@ class VehicleMasterController
             $request->validate(['manufacturer_id' => ['required', 'uuid']]);
             $query->where('vehicle_masters.parent_id', $request->query('manufacturer_id'));
         }
+        if ($type === 'variants' && $request->filled('model_id')) {
+            $request->validate(['model_id' => ['required', 'uuid']]);
+            $query->where('vehicle_masters.parent_id', $request->query('model_id'));
+        }
 
-        return response()->json(['success' => true, 'data' => $query->orderBy('vehicle_masters.name')->get()]);
+        $query->orderBy('vehicle_masters.name');
+        if ($request->boolean('paginate')) {
+            $request->validate(['per_page' => ['sometimes', 'integer', 'min:5', 'max:100']]);
+            return response()->json(['success' => true, 'data' => $query->paginate((int) $request->query('per_page', 20))]);
+        }
+        return response()->json(['success' => true, 'data' => $query->get()]);
     }
 
     public function store(Request $request, string $type): JsonResponse
@@ -69,7 +78,7 @@ class VehicleMasterController
         if (isset($data['name'])) $this->ensureUnique($request, $type, $data['name'], $id);
         if (array_key_exists('parent_id', $data)) $this->validateParent($request, $type, $data['parent_id']);
         if (isset($data['name'])) $data['name'] = strtoupper(trim($data['name']));
-        DB::table('vehicle_masters')->where('id', $id)->update([
+        $this->query($request, $type)->where('id', $id)->update([
             ...$data,
             'updated_by' => $request->user()?->id,
             'updated_at' => now(),
@@ -86,10 +95,17 @@ class VehicleMasterController
         $column = [
             'manufacturers' => 'manufacturer_id', 'models' => 'model_id', 'colours' => 'colour_id',
             'vehicle_classes' => 'vehicle_class_id', 'body_types' => 'vehicle_category_id', 'fuel_types' => 'fuel_type_id',
-        ][$type];
-        $inUse = DB::table('vehicles')->where('tenant_id', $this->tenant($request))->whereNull('deleted_at')->where($column, $id)->exists();
-        $hasModels = $type === 'manufacturers' && $this->query($request, 'models')->where('parent_id', $id)->exists();
-        if ($inUse || $hasModels) {
+        ][$type] ?? null;
+        $record = $this->find($request, $type, $id);
+        $vehicleQuery = DB::table('vehicles')->where('tenant_id', $this->tenant($request))->whereNull('deleted_at');
+        $inUse = $column
+            ? $vehicleQuery->where($column, $id)->exists()
+            : $vehicleQuery->where([
+                'variants' => 'variant', 'vehicle_types' => 'vehicle_type', 'rto_offices' => 'registration_authority',
+            ][$type], $record->name)->exists();
+        $hasChildren = ($type === 'manufacturers' && $this->query($request, 'models')->where('parent_id', $id)->exists())
+            || ($type === 'models' && $this->query($request, 'variants')->where('parent_id', $id)->exists());
+        if ($inUse || $hasChildren) {
             return response()->json(['success' => false, 'message' => 'This master is in use and cannot be deleted. Deactivate it instead.'], 409);
         }
         $this->query($request, $type)->where('id', $id)->update(['deleted_at' => now(), 'updated_by' => $request->user()?->id, 'updated_at' => now()]);
@@ -101,7 +117,7 @@ class VehicleMasterController
         return $request->validate([
             'name' => [$updating ? 'sometimes' : 'required', 'string', 'max:160'],
             'code' => ['nullable', 'string', 'max:40'],
-            'parent_id' => [$type === 'models' ? ($updating ? 'sometimes' : 'required') : 'nullable', 'uuid'],
+            'parent_id' => [in_array($type, ['models', 'variants'], true) ? ($updating ? 'sometimes' : 'required') : 'nullable', 'uuid'],
             'status' => ['sometimes', Rule::in(['active', 'inactive'])],
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
@@ -109,9 +125,12 @@ class VehicleMasterController
 
     private function validateParent(Request $request, string $type, ?string $parentId): void
     {
-        if ($type !== 'models') return;
-        $valid = $parentId && $this->query($request, 'manufacturers')->where('id', $parentId)->exists();
-        if (! $valid) throw ValidationException::withMessages(['parent_id' => ['Select a valid vehicle manufacturer.']]);
+        $parentType = ['models' => 'manufacturers', 'variants' => 'models'][$type] ?? null;
+        if (! $parentType) return;
+        $valid = $parentId && $this->query($request, $parentType)->where('id', $parentId)->exists();
+        if (! $valid) throw ValidationException::withMessages(['parent_id' => [
+            $type === 'models' ? 'Select a valid vehicle manufacturer.' : 'Select a valid vehicle model.',
+        ]]);
     }
 
     private function ensureUnique(Request $request, string $type, string $name, ?string $except = null): void

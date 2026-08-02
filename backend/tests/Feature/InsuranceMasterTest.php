@@ -58,6 +58,11 @@ class InsuranceMasterTest extends TestCase
             'tds_percent' => 0,
             'is_active' => false,
         ])->assertOk()->assertJsonPath('data.is_active', 0);
+        $this->actingAs($user)->getJson('/api/v1/insurance-accounting/companies?paginate=1&per_page=5&search=TATA')
+            ->assertOk()->assertJsonPath('data.total', 1)->assertJsonPath('data.data.0.id', $companyId);
+        $this->actingAs($user)->deleteJson("/api/v1/insurance-accounting/purchase-sources/{$sourceId}")->assertOk();
+        $this->actingAs($user)->deleteJson("/api/v1/insurance-accounting/companies/{$companyId}")->assertOk();
+        $this->actingAs($user)->getJson('/api/v1/insurance-accounting/companies')->assertOk()->assertJsonCount(0, 'data');
     }
 
     public function test_purchase_source_cannot_link_to_another_tenants_company(): void

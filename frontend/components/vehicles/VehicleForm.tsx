@@ -18,14 +18,17 @@ const initial: Values = {
   vehicle_number: "",
   registration_date: "",
   registration_authority: "",
+  rto_office_id: "",
   state: "Gujarat",
   district: "",
   vehicle_type: "two_wheeler",
+  vehicle_type_id: "",
   vehicle_class: "",
   vehicle_category: "",
   manufacturer: "",
   model: "",
   variant: "",
+  variant_id: "",
   manufacturing_year: "",
   colour: "",
   fuel_type: "",
@@ -287,10 +290,13 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
   >({
     manufacturers: [],
     models: [],
+    variants: [],
     colours: [],
+    vehicle_types: [],
     vehicle_classes: [],
     body_types: [],
     fuel_types: [],
+    rto_offices: [],
   });
   const [masterModal, setMasterModal] = useState<VehicleMasterType>();
   const [masterSaving, setMasterSaving] = useState(false);
@@ -350,10 +356,13 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
     type NonModelMaster = Exclude<VehicleMasterType, "models">;
     const types: NonModelMaster[] = [
       "manufacturers",
+      "variants",
       "colours",
+      "vehicle_types",
       "vehicle_classes",
       "body_types",
       "fuel_types",
+      "rto_offices",
     ];
     setMasterLoading(true);
     setMasterLoadError("");
@@ -377,7 +386,10 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
         return {
           ...current,
           manufacturer_id: manufacturerId,
-          model_id: "",
+          model_id: current.model_id,
+          variant_id: current.variant_id || match("variants", current.variant),
+          vehicle_type_id: current.vehicle_type_id || match("vehicle_types", current.vehicle_type),
+          rto_office_id: current.rto_office_id || match("rto_offices", current.registration_authority),
           colour_id: current.colour_id || match("colours", current.colour),
           vehicle_class_id:
             current.vehicle_class_id ||
@@ -452,7 +464,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
       const created = await vehicleMasterApi.create(masterModal, {
         name: fd.get("name"),
         code: fd.get("code"),
-        parent_id: masterModal === "models" ? values.manufacturer_id : null,
+        parent_id: masterModal === "models" ? values.manufacturer_id : masterModal === "variants" ? values.model_id : null,
         status: "active",
       });
       if (masterModal === "models")
@@ -461,17 +473,21 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
       const fields: Record<VehicleMasterType, [string, string]> = {
         manufacturers: ["manufacturer_id", "manufacturer"],
         models: ["model_id", "model"],
+        variants: ["variant_id", "variant"],
         colours: ["colour_id", "colour"],
+        vehicle_types: ["vehicle_type_id", "vehicle_type"],
         vehicle_classes: ["vehicle_class_id", "vehicle_class"],
         body_types: ["vehicle_category_id", "vehicle_category"],
         fuel_types: ["fuel_type_id", "fuel_type"],
+        rto_offices: ["rto_office_id", "registration_authority"],
       };
       const [idField, nameField] = fields[masterModal];
       setValues((current) => ({
         ...current,
         [idField]: created.id,
         [nameField]: created.name,
-        ...(masterModal === "manufacturers" ? { model_id: "", model: "" } : {}),
+        ...(masterModal === "manufacturers" ? { model_id: "", model: "", variant_id: "", variant: "" } : {}),
+        ...(masterModal === "models" ? { variant_id: "", variant: "" } : {}),
       }));
       setMasterModal(undefined);
       setSuccess(`${created.name} added and selected.`);
@@ -784,10 +800,16 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
               value={values.registration_date}
               onChange={(v) => set("registration_date", v)}
             />
-            <Input
-              label="Registration Authority"
-              value={values.registration_authority}
-              onChange={(v) => set("registration_authority", v)}
+            <MasterSelect
+              label="Registration Authority / RTO"
+              value={values.rto_office_id}
+              onChange={(id) => {
+                const item = masters.rto_offices.find((row) => row.id === id);
+                setValues((current) => ({ ...current, rto_office_id: id, registration_authority: item?.name ?? "" }));
+              }}
+              options={masters.rto_offices}
+              add={() => setMasterModal("rto_offices")}
+              loading={masterLoading}
             />
             <Input
               label="State"
@@ -799,17 +821,16 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
               value={values.district}
               onChange={(v) => set("district", v)}
             />
-            <Select
+            <MasterSelect
               label="Vehicle Type"
-              value={values.vehicle_type}
-              onChange={(v) => set("vehicle_type", v)}
-              options={[
-                { value: "two_wheeler", label: "Motorcycle / Scooter" },
-                { value: "private_car", label: "Private Car" },
-                { value: "lgv", label: "LGV / Pickup" },
-                { value: "hgv", label: "HGV / GT" },
-                { value: "taxi", label: "Taxi" },
-              ]}
+              value={values.vehicle_type_id}
+              onChange={(id) => {
+                const item = masters.vehicle_types.find((row) => row.id === id);
+                setValues((current) => ({ ...current, vehicle_type_id: id, vehicle_type: item?.code?.toLowerCase() || item?.name.toLowerCase().replaceAll(" ", "_") || "" }));
+              }}
+              options={masters.vehicle_types}
+              add={() => setMasterModal("vehicle_types")}
+              loading={masterLoading}
             />
           </Card>
         </div>
@@ -877,6 +898,8 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
                   ...x,
                   model_id: id,
                   model: item?.name ?? "",
+                  variant_id: "",
+                  variant: "",
                 }));
               }}
               options={masters.models}
@@ -891,10 +914,19 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
               placeholder="Select Model"
               emptyLabel="No models found"
             />
-            <Input
+            <MasterSelect
               label="Variant"
-              value={values.variant}
-              onChange={(v) => set("variant", v)}
+              value={values.variant_id}
+              onChange={(id) => {
+                const item = masters.variants.find((row) => row.id === id);
+                setValues((current) => ({ ...current, variant_id: id, variant: item?.name ?? "" }));
+              }}
+              options={masters.variants.filter((row) => row.parent_id === values.model_id)}
+              add={() => values.model_id ? setMasterModal("variants") : setError("Select a model before adding a variant.")}
+              loading={masterLoading}
+              disabled={!values.model_id}
+              placeholder="Select Variant"
+              emptyLabel="No variants found"
             />
             <Input
               label="Manufacturing Year"
@@ -1284,10 +1316,13 @@ function MasterModal({
   const labels: Record<VehicleMasterType, string> = {
     manufacturers: "Manufacturer",
     models: "Vehicle Model",
+    variants: "Vehicle Variant",
     colours: "Vehicle Colour",
+    vehicle_types: "Vehicle Type",
     vehicle_classes: "Vehicle Class",
     body_types: "Body Type",
     fuel_types: "Fuel Type",
+    rto_offices: "RTO Office",
   };
   const label = labels[type];
   return (

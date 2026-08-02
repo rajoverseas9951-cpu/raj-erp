@@ -97,6 +97,20 @@ class VehicleMasterTest extends TestCase
             ->assertOk()->assertJsonFragment(['name'=>'SPLENDOR PLUS'])->assertJsonMissing(['name'=>'CRETA']);
         $this->actingAs($user)->getJson('/api/v1/vehicle-masters/colours')
             ->assertOk()->assertJsonCount(17,'data')->assertJsonFragment(['name'=>'PEARL WHITE']);
+        $this->actingAs($user)->getJson('/api/v1/vehicle-masters/vehicle_types')
+            ->assertOk()->assertJsonCount(5, 'data')->assertJsonFragment(['name' => 'PRIVATE CAR']);
+    }
+
+    public function test_variants_are_model_scoped_and_master_lists_paginate(): void
+    {
+        $user = User::factory()->create(['is_admin' => true]);
+        $make = $this->actingAs($user)->postJson('/api/v1/vehicle-masters/manufacturers', ['name' => 'Variant Make'])->assertCreated()->json('data.id');
+        $model = $this->actingAs($user)->postJson('/api/v1/vehicle-masters/models', ['name' => 'Variant Model', 'parent_id' => $make])->assertCreated()->json('data.id');
+        $variant = $this->actingAs($user)->postJson('/api/v1/vehicle-masters/variants', ['name' => 'Variant One', 'parent_id' => $model])->assertCreated()->json('data.id');
+        $this->actingAs($user)->getJson("/api/v1/vehicle-masters/variants?model_id={$model}&status=active")
+            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $variant);
+        $this->actingAs($user)->getJson('/api/v1/vehicle-masters/variants?paginate=1&per_page=5')
+            ->assertOk()->assertJsonPath('data.total', 1)->assertJsonPath('data.data.0.id', $variant);
     }
 
     public function test_vehicle_save_uses_master_ids_and_persists_master_names(): void

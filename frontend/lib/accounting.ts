@@ -1,25 +1,12 @@
 'use client';
 
-import { apiUrl } from '@/lib/api-url';
+import { authenticatedRequest } from '@/lib/api-client';
+import { invalidateDashboard } from '@/lib/dashboard-refresh';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = sessionStorage.getItem('raj_erp_token');
-  const response = await fetch(apiUrl(path), {
-    ...init,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(init?.headers || {}),
-    },
-    cache: 'no-store',
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const first = payload.errors ? Object.values(payload.errors as Record<string,string[]>)[0]?.[0] : undefined;
-    throw new Error(first ?? payload.message ?? `API request failed: ${response.status}`);
-  }
-  return payload.data as T;
+  const result = await authenticatedRequest<T>(path, init);
+  if (init?.method && init.method !== 'GET') invalidateDashboard();
+  return result;
 }
 
 export type VoucherEntryInput = { ledger_id: string; entry_type: 'debit'|'credit'; amount: number; description?: string };

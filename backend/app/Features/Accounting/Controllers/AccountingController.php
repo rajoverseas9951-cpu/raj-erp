@@ -144,12 +144,22 @@ class AccountingController
 
     public function profitLoss(Request $request)
     {
-        $trial = $this->trialData($request);
-        $incomeGroups = ['Direct Incomes','Indirect Incomes'];
-        $expenseGroups = ['Direct Expenses','Indirect Expenses'];
-        $income = collect($trial)->whereIn('ledger_group', $incomeGroups)->sum(fn ($r) => $r['credit'] - $r['debit']);
-        $expense = collect($trial)->whereIn('ledger_group', $expenseGroups)->sum(fn ($r) => $r['debit'] - $r['credit']);
-        return response()->json(['success' => true, 'data' => ['income' => $income, 'expense' => $expense, 'net_profit' => $income - $expense]]);
+        $tenant = $this->tenant($request);
+        $policies = DB::table('vehicle_insurances')->where('tenant_id', $tenant)->whereNull('deleted_at')
+            ->where(fn ($query) => $query->whereNull('status')->orWhere('status', '!=', 'cancelled'));
+        $grossCommission = round((float) (clone $policies)->sum('gross_commission'), 2);
+        $agentCommission = round((float) (clone $policies)->sum('agent_commission'), 2);
+        $tds = round((float) DB::table('insurance_commissions')->where('tenant_id', $tenant)
+            ->whereNull('deleted_at')->sum('tds_amount'), 2);
+        $recordedExpenses = round((float) DB::table('accounting_vouchers')->where('tenant_id', $tenant)
+            ->where('status', 'posted')->where('voucher_type', 'payment')->sum('total_debit'), 2);
+        $expense = round($tds + $agentCommission + $recordedExpenses, 2);
+        return response()->json(['success' => true, 'data' => [
+            'income' => $grossCommission, 'expense' => $expense,
+            'gross_commission' => $grossCommission, 'tds' => $tds,
+            'agent_commission' => $agentCommission, 'recorded_expenses' => $recordedExpenses,
+            'net_profit' => round($grossCommission - $expense, 2),
+        ]])->header('Cache-Control', 'private, no-store, no-cache, must-revalidate');
     }
 
     public function balanceSheet(Request $request)

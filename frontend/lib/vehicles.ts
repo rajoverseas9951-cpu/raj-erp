@@ -69,6 +69,11 @@ export type VehicleTimelineEvent = {
 };
 export type VehiclePagination = { current_page: number; last_page: number; per_page: number; total: number };
 export type VehicleListResponse = { data: Vehicle[]; links?: unknown; meta?: VehiclePagination; current_page?: number; last_page?: number; per_page?: number; total?: number };
+async function mutateVehicle<T>(path: string, init: RequestInit): Promise<T> {
+  const result = await authenticatedRequest<T>(path, init);
+  invalidateDashboard();
+  return result;
+}
 export const vehicleApi = {
   list: (q = "") =>
     authenticatedRequest<VehicleListResponse>(
@@ -80,24 +85,25 @@ export const vehicleApi = {
       `/vehicles/${id}/timeline`,
     ),
   create: (body: unknown) =>
-    authenticatedRequest<Vehicle>("/vehicles", {
+    mutateVehicle<Vehicle>("/vehicles", {
       method: "POST",
       body: JSON.stringify(body),
     }),
   update: (id: string, body: unknown) =>
-    authenticatedRequest<Vehicle>(`/vehicles/${id}`, {
+    mutateVehicle<Vehicle>(`/vehicles/${id}`, {
       method: "PUT",
       body: JSON.stringify(body),
     }),
   bulkDelete: (ids: string[]) =>
-    authenticatedRequest("/vehicles/bulk-delete", {
+    mutateVehicle("/vehicles/bulk-delete", {
       method: "POST",
       body: JSON.stringify({ ids }),
     }),
   bulkUpdate: (ids: string[], updates: Record<string, string>) =>
-    authenticatedRequest("/vehicles/bulk-update", {
+    mutateVehicle("/vehicles/bulk-update", {
       method: "POST",
       body: JSON.stringify({ ids, updates }),
     }),
 };
 import { authenticatedRequest } from "@/lib/api-client";
+import { invalidateDashboard } from "@/lib/dashboard-refresh";

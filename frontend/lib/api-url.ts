@@ -16,8 +16,7 @@ function resolveApiOrigin(): string {
     if (
       process.env.NODE_ENV === "production" &&
       (parsed.protocol !== "https:" ||
-        parsed.hostname === "localhost" ||
-        /^127(?:\.\d{1,3}){3}$/.test(parsed.hostname) ||
+        !parsed.hostname.includes(".") ||
         /^\d{1,3}(?:\.\d{1,3}){3}$/.test(parsed.hostname))
     ) {
       throw new Error(
@@ -28,12 +27,8 @@ function resolveApiOrigin(): string {
     return apiOrigin;
   }
 
-  if (process.env.NODE_ENV !== "production") {
-    return `http://${["127", "0", "0", "1"].join(".")}:8000`;
-  }
-
   throw new Error(
-    "NEXT_PUBLIC_API_URL is required for production frontend builds.",
+    "NEXT_PUBLIC_API_URL is required for frontend builds.",
   );
 }
 

@@ -24,7 +24,12 @@ class InsuranceAccountingController
             $query->where(fn ($q) => $q->whereRaw('LOWER(company_name) LIKE ?', [$term])
                 ->orWhereRaw('LOWER(short_code) LIKE ?', [$term])->orWhereRaw('LOWER(agency_code_name) LIKE ?', [$term]));
         }
-        return response()->json(['success' => true, 'data' => $query->orderBy('company_name')->get()]);
+        $query->orderBy('company_name');
+        if ($request->boolean('paginate')) {
+            $request->validate(['per_page' => ['sometimes', 'integer', 'min:5', 'max:100']]);
+            return response()->json(['success' => true, 'data' => $query->paginate((int) $request->query('per_page', 20))]);
+        }
+        return response()->json(['success' => true, 'data' => $query->get()]);
     }
 
     public function storeCompany(Request $request)
@@ -100,7 +105,12 @@ class InsuranceAccountingController
         if ($search = trim((string)$request->query('search'))) {
             $query->whereRaw('LOWER(name) LIKE ?', ['%'.strtolower($search).'%']);
         }
-        return response()->json(['success'=>true,'data'=>$query->orderBy('name')->get()]);
+        $query->orderBy('name');
+        if ($request->boolean('paginate')) {
+            $request->validate(['per_page' => ['sometimes', 'integer', 'min:5', 'max:100']]);
+            return response()->json(['success' => true, 'data' => $query->paginate((int) $request->query('per_page', 20))]);
+        }
+        return response()->json(['success'=>true,'data'=>$query->get()]);
     }
 
     public function storePurchaseSource(Request $request)
@@ -156,6 +166,39 @@ class InsuranceAccountingController
         }
     }
 
+    public function destroyCompany(Request $request, string $id)
+    {
+        $this->authorize($request, 'vehicle.delete');
+        $tenant = $this->tenant($request);
+        $company = DB::table('insurance_companies')->where('tenant_id', $tenant)->whereNull('deleted_at')->where('id', $id)->first();
+        abort_unless($company, 404);
+        $inUse = DB::table('vehicle_insurances')->where('tenant_id', $tenant)->whereNull('deleted_at')->where('insurance_company_id', $id)->exists()
+            || DB::table('insurance_purchase_sources')->where('tenant_id', $tenant)->whereNull('deleted_at')->where('linked_company_id', $id)->exists()
+            || DB::table('insurance_commissions')->where('tenant_id', $tenant)->whereNull('deleted_at')->where('insurance_company_id', $id)->exists();
+        if ($inUse) return response()->json(['success' => false, 'message' => 'This company is in use and cannot be deleted. Deactivate it instead.'], 409);
+        DB::table('insurance_companies')->where('tenant_id', $tenant)->where('id', $id)->update([
+            'company_name' => "__DELETED__{$id}__{$company->company_name}", 'deleted_at' => now(),
+            'updated_by' => $request->user()?->id, 'updated_at' => now(),
+        ]);
+        return response()->json(['success' => true, 'message' => 'Insurance company deleted safely.', 'data' => null]);
+    }
+
+    public function destroyPurchaseSource(Request $request, string $id)
+    {
+        $this->authorize($request, 'vehicle.delete');
+        $tenant = $this->tenant($request);
+        $source = DB::table('insurance_purchase_sources')->where('tenant_id', $tenant)->whereNull('deleted_at')->where('id', $id)->first();
+        abort_unless($source, 404);
+        if (DB::table('vehicle_insurances')->where('tenant_id', $tenant)->whereNull('deleted_at')->where('purchase_source_id', $id)->exists()) {
+            return response()->json(['success' => false, 'message' => 'This purchase source is in use and cannot be deleted. Deactivate it instead.'], 409);
+        }
+        DB::table('insurance_purchase_sources')->where('tenant_id', $tenant)->where('id', $id)->update([
+            'name' => "__DELETED__{$id}__{$source->name}", 'deleted_at' => now(),
+            'updated_by' => $request->user()?->id, 'updated_at' => now(),
+        ]);
+        return response()->json(['success' => true, 'message' => 'Purchase source deleted safely.', 'data' => null]);
+    }
+
     private function authorize(Request $request, string $permission): void
     {
         abort_unless($request->user()?->can($permission), 403);
@@ -184,6 +227,13 @@ class InsuranceAccountingController
         $tenant = $this->tenant($request);
         if (! DB::table('insurance_companies')->where('tenant_id', $tenant)->whereNull('deleted_at')->where('id', $data['insurance_company_id'])->exists()) {
             throw ValidationException::withMessages(['insurance_company_id' => ['Select an insurance company from this organization.']]);
+        }
+        if (! empty($data['policy_number'])) {
+            $policyId = DB::table('vehicle_insurances')->where('tenant_id', $tenant)->whereNull('deleted_at')
+                ->whereRaw('LOWER(policy_number) = ?', [strtolower($data['policy_number'])])->value('id');
+            if ($policyId && DB::table('insurance_commissions')->where('tenant_id', $tenant)->whereNull('deleted_at')->where('policy_id', $policyId)->exists()) {
+                throw ValidationException::withMessages(['policy_number' => ['Commission for this policy is already synchronized.']]);
+            }
         }
         $grossCommission = (float) ($data['gross_commission'] ?? 0);
         if ($grossCommission <= 0) $grossCommission = round(((float)($data['gross_premium'] ?? 0) * (float)$data['commission_percent']) / 100, 2);

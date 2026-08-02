@@ -1,5 +1,6 @@
 import { apiUrl } from "@/lib/api-url";
 import { authenticatedRequest } from "@/lib/api-client";
+import { invalidateDashboard } from "@/lib/dashboard-refresh";
 
 export type Customer = {
   id: string;
@@ -37,7 +38,9 @@ export type Customer = {
 };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  return authenticatedRequest<T>(path, init);
+  const result = await authenticatedRequest<T>(path, init);
+  if (init?.method && init.method !== "GET") invalidateDashboard();
+  return result;
 }
 
 export type CustomerPagination = {
