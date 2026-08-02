@@ -36,11 +36,14 @@ class DashboardController extends Controller
         $previousDatePeriod = fn (Builder $query, string $column) => $this->dateRange($query, $column, $previousFrom, $previousTo);
 
         $customers = $scoped('customers');
-        $vehicles = $scoped('vehicles');
-        $policies = $scoped('vehicle_insurances');
+        $vehicles = $scoped('vehicles')->whereNull('vehicles.archived_at');
+        $policies = $scoped('vehicle_insurances')->whereNull('vehicle_insurances.archived_at');
         $validPolicies = fn () => (clone $policies)
             ->where(fn ($query) => $query->whereNull('status')->orWhere('status', '!=', 'cancelled'));
-        $vouchers = $scoped('accounting_vouchers')->where('accounting_vouchers.status', 'posted');
+        $vouchers = $scoped('accounting_vouchers')->where('accounting_vouchers.status', 'posted')
+            ->whereNotExists(fn ($query) => $query->selectRaw('1')->from('accounting_vouchers as reversals')
+                ->whereColumn('reversals.reversal_of_id', 'accounting_vouchers.id')
+                ->where('reversals.status', 'posted')->whereNull('reversals.deleted_at'));
 
         $newPolicies = $dateTimePeriod($validPolicies(), 'vehicle_insurances.created_at')->count();
         $previousPolicies = $previousDateTimePeriod($validPolicies(), 'vehicle_insurances.created_at')->count();
@@ -55,11 +58,12 @@ class DashboardController extends Controller
         $previousPolicyRevenue = round((float) $previousDateTimePeriod($validPolicies(), 'vehicle_insurances.created_at')->sum($customerPay), 2);
         $agentCommission = round((float) $dateTimePeriod($validPolicies(), 'vehicle_insurances.created_at')->sum('agent_commission'), 2);
         $tds = round((float) $datePeriod(
-            $scoped('insurance_commissions')->where('status', '!=', 'cancelled'),
+            $scoped('insurance_commissions')->whereNotIn('status', ['cancelled', 'reversed', 'void']),
             'statement_date'
         )->sum('tds_amount'), 2);
-        $companyCost = round($tds + $agentCommission, 2);
-        $grossProfit = round($commissionRevenue - $companyCost, 2);
+        $otherPolicyCost = round((float) $dateTimePeriod($validPolicies(), 'vehicle_insurances.created_at')->sum('other_charges'), 2);
+        $companyCost = round($tds + $otherPolicyCost, 2);
+        $grossProfit = round($commissionRevenue - $companyCost - $agentCommission, 2);
         $netProfit = round($grossProfit - $expenses, 2);
         $outstanding = round((float) $dateTimePeriod((clone $vehicles), 'vehicles.created_at')->sum('payment_due'), 2);
         $activePolicies = (clone $policies)->whereDate('expiry_date', '>=', $now->toDateString())
@@ -75,7 +79,7 @@ class DashboardController extends Controller
         $byVehicle = fn (array $types) => $dateTimePeriod(DB::table('vehicle_insurances')
             ->join('vehicles', 'vehicles.id', '=', 'vehicle_insurances.vehicle_id')
             ->where('vehicle_insurances.tenant_id', $tenant)
-            ->whereNull('vehicle_insurances.deleted_at')->whereNull('vehicles.deleted_at')
+            ->whereNull('vehicle_insurances.deleted_at')->whereNull('vehicle_insurances.archived_at')->whereNull('vehicles.deleted_at')
             ->where(fn ($query) => $query->whereNull('vehicle_insurances.status')->orWhere('vehicle_insurances.status', '!=', 'cancelled'))
             ->whereIn('vehicles.vehicle_type', $types), 'vehicle_insurances.created_at')->count();
         $periodPolicies = fn () => $dateTimePeriod($validPolicies(), 'vehicle_insurances.created_at');

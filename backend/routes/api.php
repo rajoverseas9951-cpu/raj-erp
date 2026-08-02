@@ -32,6 +32,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::post('profile', [ProfileController::class, 'update']);
     Route::get('dashboard/summary', [DashboardController::class, 'summary']);
     Route::get('policies', [PolicyController::class, 'index']);
+    Route::get('policies/{policy}', [PolicyController::class, 'show']);
     Route::get('reports/policies/summary', [PolicyController::class, 'summary']);
     Route::post('ocr', [OcrController::class, 'scan'])->middleware('throttle:30,1');
     Route::post('auth/logout', [AuthController::class, 'logout']);
@@ -70,12 +71,15 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::delete('vehicle-masters/{type}/{id}', [VehicleMasterController::class, 'destroy']);
     Route::post('vehicles/bulk-delete', [VehicleController::class, 'bulkDelete']);
     Route::post('vehicles/bulk-update', [VehicleController::class, 'bulkUpdate']);
+    Route::post('vehicles/{vehicle}/archive', [VehicleController::class, 'archive']);
     Route::get('vehicles/{vehicle}/timeline', [VehicleController::class, 'timeline']);
     Route::get('vehicles/{vehicle}/insurances', [VehicleInsuranceController::class, 'index']);
     Route::post('vehicles/{vehicle}/insurance-calculation', [VehicleInsuranceController::class, 'calculate']);
     Route::post('vehicles/{vehicle}/insurances', [VehicleInsuranceController::class, 'store']);
     Route::put('vehicles/{vehicle}/insurances/{insurance}', [VehicleInsuranceController::class, 'update']);
     Route::delete('vehicles/{vehicle}/insurances/{insurance}', [VehicleInsuranceController::class, 'destroy']);
+    Route::post('vehicles/{vehicle}/insurances/{insurance}/archive', [VehicleInsuranceController::class, 'archive']);
+    Route::post('vehicles/{vehicle}/insurances/{insurance}/cancel', [VehicleInsuranceController::class, 'cancel']);
     Route::get('vehicles/{vehicle}/insurances/{insurance}/document', [VehicleInsuranceController::class, 'document']);
     Route::apiResource('vehicles', VehicleController::class);
 

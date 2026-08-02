@@ -50,6 +50,9 @@ export type VehicleInsurancePolicy = {
   agent_commission: number;
   payment_details?: Record<string, unknown>;
   created_at: string;
+  archived_at?: string;
+  cancelled_at?: string;
+  cancellation_reason?: string;
 };
 
 export type InsuranceCalculation = {
@@ -103,5 +106,11 @@ export const vehicleInsuranceApi = {
   }, true),
   remove: (vehicleId: string, policyId: string) => request<null>(`/vehicles/${vehicleId}/insurances/${policyId}`, {
     method: 'DELETE',
+  }, true),
+  archive: (vehicleId: string, policyId: string) => request<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances/${policyId}/archive`, {
+    method: 'POST',
+  }, true),
+  cancel: (vehicleId: string, policyId: string, body: {cancellation_date:string;cancellation_reason:string;refund_amount:number;cancellation_charges:number;confirmed:boolean}) => request<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances/${policyId}/cancel`, {
+    method: 'POST', body: JSON.stringify(body),
   }, true),
 };

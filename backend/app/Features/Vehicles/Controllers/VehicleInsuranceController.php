@@ -5,6 +5,8 @@ namespace App\Features\Vehicles\Controllers;
 use App\Features\Vehicles\Models\Vehicle;
 use App\Features\Vehicles\Requests\VehicleInsuranceRequest;
 use App\Features\Vehicles\Services\InsuranceCalculationService;
+use App\Features\Vehicles\Services\RecordDependencyService;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +16,7 @@ use Illuminate\Validation\ValidationException;
 
 class VehicleInsuranceController
 {
-    public function __construct(private readonly InsuranceCalculationService $calculator)
+    public function __construct(private readonly InsuranceCalculationService $calculator, private readonly RecordDependencyService $dependencies)
     {
     }
 
@@ -92,12 +94,18 @@ class VehicleInsuranceController
         $vehicleModel = $this->vehicle($request, $vehicle);
         $this->authorize($request, 'vehicle.delete');
         $policy = $vehicleModel->insurances()->findOrFail($insurance);
+        $dependencies = $this->dependencies->policy($vehicleModel->tenant_id, $policy->id);
+        if ($policy->status !== 'draft' || $dependencies) return response()->json([
+            'success' => false,
+            'message' => 'Delete is only allowed for a draft policy with no linked financial, claim, payment or document records. Cancel or archive this policy instead.',
+            'dependency_counts' => $dependencies,
+            'available_actions' => ['cancel', 'archive'],
+        ], 409);
         DB::transaction(function () use ($request, $vehicleModel, $policy) {
-            DB::table('insurance_commissions')->where('tenant_id', $vehicleModel->tenant_id)
-                ->where('policy_id', $policy->id)->whereNull('deleted_at')
-                ->update(['deleted_at' => now(), 'updated_by' => $request->user()?->id, 'updated_at' => now()]);
+            DB::table('insurance_commissions')->where('tenant_id', $vehicleModel->tenant_id)->where('policy_id', $policy->id)
+                ->whereNull('deleted_at')->update(['deleted_at' => now(), 'updated_by' => $request->user()?->id, 'updated_at' => now()]);
             $this->timeline($vehicleModel, $request->user()?->id, $policy, 'deleted');
-            $policy->delete();
+            $policy->forceDelete();
             $latest = $vehicleModel->insurances()->whereNotIn('status', ['cancelled', 'expired'])
                 ->orderByDesc('expiry_date')->first();
             $vehicleModel->update([
@@ -107,6 +115,88 @@ class VehicleInsuranceController
         });
 
         return response()->json(['success' => true, 'data' => null]);
+    }
+
+    public function archive(Request $request, string $vehicle, string $insurance): JsonResponse
+    {
+        $vehicleModel = $this->vehicle($request, $vehicle);
+        $this->authorize($request, 'vehicle.delete');
+        $policy = $vehicleModel->insurances()->findOrFail($insurance);
+        DB::transaction(function () use ($request, $vehicleModel, $policy) {
+            $policy->update(['archived_at' => now(), 'archived_by' => $request->user()?->id, 'updated_by' => $request->user()?->id]);
+            $this->timeline($vehicleModel, $request->user()?->id, $policy, 'archived');
+            $this->syncLatestVehiclePolicy($vehicleModel);
+        });
+        return response()->json(['success' => true, 'message' => 'Policy archived successfully.', 'data' => $policy->refresh()]);
+    }
+
+    public function cancel(Request $request, string $vehicle, string $insurance): JsonResponse
+    {
+        $vehicleModel = $this->vehicle($request, $vehicle);
+        $this->authorize($request, 'vehicle.update');
+        $data = $request->validate([
+            'cancellation_date' => ['required', 'date_format:Y-m-d'],
+            'cancellation_reason' => ['required', 'string', 'max:2000'],
+            'refund_amount' => ['nullable', 'numeric', 'min:0'],
+            'cancellation_charges' => ['nullable', 'numeric', 'min:0'],
+            'confirmed' => ['accepted'],
+        ]);
+        $policy = $vehicleModel->insurances()->findOrFail($insurance);
+        if ($policy->status === 'cancelled') return response()->json(['success' => false, 'message' => 'Policy is already cancelled.'], 409);
+        DB::transaction(function () use ($request, $vehicleModel, $policy, $data) {
+            $commission = DB::table('insurance_commissions')->where('tenant_id', $vehicleModel->tenant_id)
+                ->where('policy_id', $policy->id)->whereNull('deleted_at')->first();
+            if ($commission) DB::table('insurance_commission_reversals')->updateOrInsert(
+                ['tenant_id' => $vehicleModel->tenant_id, 'policy_id' => $policy->id],
+                ['id' => (string) Str::uuid(), 'commission_id' => $commission->id, 'reversal_date' => $data['cancellation_date'],
+                    'gross_commission' => -abs((float) $commission->gross_commission), 'tds_amount' => -abs((float) $commission->tds_amount),
+                    'net_receivable' => -abs((float) $commission->net_receivable), 'received_amount' => -abs((float) $commission->received_amount),
+                    'reason' => $data['cancellation_reason'], 'created_by' => $request->user()?->id, 'created_at' => now(), 'updated_at' => now()]
+            );
+            if ($commission) DB::table('insurance_commissions')->where('id', $commission->id)->where('tenant_id', $vehicleModel->tenant_id)
+                ->update(['status' => 'cancelled', 'remarks' => trim(($commission->remarks ? $commission->remarks."\n" : '').'Reversed on cancellation: '.$data['cancellation_reason']), 'updated_by' => $request->user()?->id, 'updated_at' => now()]);
+            $this->reverseAccounting($vehicleModel, $policy->id, $data['cancellation_date'], $data['cancellation_reason'], $request->user()?->id);
+            $policy->update(['status' => 'cancelled', 'cancelled_at' => CarbonImmutable::parse($data['cancellation_date'])->startOfDay(),
+                'cancelled_by' => $request->user()?->id, 'cancellation_reason' => $data['cancellation_reason'],
+                'refund_amount' => $data['refund_amount'] ?? 0, 'cancellation_charges' => $data['cancellation_charges'] ?? 0,
+                'updated_by' => $request->user()?->id]);
+            $this->timeline($vehicleModel, $request->user()?->id, $policy, 'cancelled');
+            $this->syncLatestVehiclePolicy($vehicleModel);
+        });
+        return response()->json(['success' => true, 'message' => 'Policy cancelled and accounting reversal recorded.', 'data' => $policy->refresh()]);
+    }
+
+    private function reverseAccounting(Vehicle $vehicle, string $policyId, string $date, string $reason, ?string $actor): void
+    {
+        $vouchers = DB::table('accounting_vouchers')->where('tenant_id', $vehicle->tenant_id)->where('policy_id', $policyId)
+            ->where('status', 'posted')->whereNull('reversal_of_id')->whereNull('deleted_at')->get();
+        foreach ($vouchers as $voucher) {
+            if (DB::table('accounting_vouchers')->where('tenant_id', $vehicle->tenant_id)->where('reversal_of_id', $voucher->id)->exists()) continue;
+            $reversalId = (string) Str::uuid();
+            DB::table('accounting_vouchers')->insert([
+                'id' => $reversalId, 'tenant_id' => $vehicle->tenant_id, 'policy_id' => $policyId, 'reversal_of_id' => $voucher->id,
+                'voucher_number' => 'REV-'.substr(str_replace('-', '', $voucher->id), 0, 16), 'voucher_type' => 'journal',
+                'voucher_date' => $date, 'reference_number' => $voucher->voucher_number,
+                'narration' => 'Policy cancellation reversal: '.$reason, 'total_debit' => $voucher->total_credit,
+                'total_credit' => $voucher->total_debit, 'status' => 'posted', 'created_by' => $actor, 'updated_by' => $actor,
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+            foreach (DB::table('accounting_voucher_entries')->where('tenant_id', $vehicle->tenant_id)->where('voucher_id', $voucher->id)->get() as $entry) {
+                DB::table('accounting_voucher_entries')->insert([
+                    'id' => (string) Str::uuid(), 'tenant_id' => $vehicle->tenant_id, 'voucher_id' => $reversalId,
+                    'ledger_id' => $entry->ledger_id, 'entry_type' => $entry->entry_type === 'debit' ? 'credit' : 'debit',
+                    'amount' => $entry->amount, 'description' => 'Reversal: '.($entry->description ?? $reason),
+                    'created_at' => now(), 'updated_at' => now(),
+                ]);
+            }
+        }
+    }
+
+    private function syncLatestVehiclePolicy(Vehicle $vehicle): void
+    {
+        $latest = $vehicle->insurances()->whereNull('archived_at')->whereNotIn('status', ['cancelled', 'expired'])
+            ->orderByDesc('expiry_date')->first();
+        $vehicle->update(['insurance_expiry' => $latest?->expiry_date, 'insurance_status' => $latest ? 'active' : 'not_added']);
     }
 
     private function vehicle(Request $request, string $id): Vehicle

@@ -9,6 +9,7 @@ type ApiEnvelope<T> = {
   message?: string;
   error?: { message?: string };
   errors?: Record<string, string[]>;
+  dependency_counts?: Record<string, number>;
 };
 let authenticationRedirectStarted = false;
 
@@ -78,11 +79,14 @@ async function authenticatedFetch<T>(
     const validationError = payload.errors
       ? Object.values(payload.errors)[0]?.[0]
       : undefined;
+    const dependencySummary = payload.dependency_counts
+      ? ` (${Object.entries(payload.dependency_counts).map(([name, count]) => `${name.replaceAll("_", " ")}: ${count}`).join(", ")})`
+      : "";
     throw new Error(
-      validationError ??
+      (validationError ??
         payload.message ??
         payload.error?.message ??
-        `API request failed: ${response.status}`,
+        `API request failed: ${response.status}`) + dependencySummary,
     );
   }
   const method = (init.method ?? "GET").toUpperCase();

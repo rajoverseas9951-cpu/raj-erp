@@ -25,7 +25,8 @@ class VehicleInsurance extends Model
         'long_term_tp_expiry',
         'purchase_from_type', 'purchase_source_id', 'commission_receivable_from_type',
         'commission_receivable_from_id', 'commission_basis',
-        'created_by', 'updated_by',
+        'archived_at', 'archived_by', 'cancelled_at', 'cancelled_by',
+        'cancellation_reason', 'refund_amount', 'cancellation_charges', 'created_by', 'updated_by',
     ];
 
     protected $hidden = ['tp_net_premium'];
@@ -62,6 +63,8 @@ class VehicleInsurance extends Model
             'tp_commission_amount' => 'decimal:2',
             'long_term_tp_expiry' => 'date:Y-m-d',
             'payment_details' => 'array',
+            'archived_at' => 'datetime', 'cancelled_at' => 'datetime',
+            'refund_amount' => 'decimal:2', 'cancellation_charges' => 'decimal:2',
         ];
     }
 

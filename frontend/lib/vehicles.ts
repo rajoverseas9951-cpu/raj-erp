@@ -51,6 +51,7 @@ export type Vehicle = {
   counter_tax_expiry?: string;
   payment_due?: number | string;
   documents?: VehicleDocument[];
+  archived_at?: string;
 };
 export type VehicleDocument = {
   id: string;
@@ -94,6 +95,10 @@ export const vehicleApi = {
       method: "PUT",
       body: JSON.stringify(body),
     }),
+  archive: (id: string) =>
+    mutateVehicle<Vehicle>(`/vehicles/${id}/archive`, { method: "POST" }),
+  remove: (id: string) =>
+    mutateVehicle<null>(`/vehicles/${id}`, { method: "DELETE" }),
   bulkDelete: (ids: string[]) =>
     mutateVehicle("/vehicles/bulk-delete", {
       method: "POST",

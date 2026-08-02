@@ -47,7 +47,7 @@ export function VehicleTable({ vehicles, meta, loading = false, onChanged }: Pro
     finally { setMutating(false); }
   }
   async function bulkDelete() {
-    if (!selectedCount || mutating || !confirm(`Delete ${selectedCount} selected vehicle${selectedCount === 1 ? "" : "s"}?`)) return;
+    if (!selectedCount || mutating || !confirm(`Archive ${selectedCount} selected vehicle${selectedCount === 1 ? "" : "s"}? Historical records will remain available.`)) return;
     setMutating(true);
     try { await vehicleApi.bulkDelete(selected); setSelected([]); onChanged(); }
     finally { setMutating(false); }
@@ -66,7 +66,7 @@ export function VehicleTable({ vehicles, meta, loading = false, onChanged }: Pro
       </div>
       <div className="flex min-h-10 flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2">
         <p className="text-sm font-semibold text-slate-600">{selectedCount ? `${selectedCount} selected` : `${meta?.total ?? vehicles.length} vehicle${(meta?.total ?? vehicles.length) === 1 ? "" : "s"}`}{loading&&<span className="ml-2 text-blue-600">Updating…</span>}</p>
-        <div className="flex gap-2"><button type="button" disabled={!selectedCount||mutating} onClick={bulkUpdate} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-40">Bulk Update</button><button type="button" disabled={!selectedCount||mutating} onClick={bulkDelete} className="rounded-lg bg-rose-600 px-3 py-2 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">Bulk Delete</button></div>
+        <div className="flex gap-2"><button type="button" disabled={!selectedCount||mutating} onClick={bulkUpdate} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-40">Bulk Update</button><button type="button" disabled={!selectedCount||mutating} onClick={bulkDelete} className="rounded-lg bg-amber-600 px-3 py-2 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">Archive Selected</button></div>
       </div>
     </div>
 

@@ -37,7 +37,7 @@ class VehicleInsuranceRequest extends FormRequest
             'policy_date' => ['nullable', 'date'],
             'issue_date' => ['required', 'date'],
             'expiry_date' => ['required', 'date', 'after_or_equal:issue_date'],
-            'status' => ['required', Rule::in(['running', 'pending', 'expired', 'cancelled'])],
+            'status' => ['required', Rule::in(['draft', 'running', 'pending', 'expired', 'cancelled'])],
             'insurance_type' => ['required', Rule::in(['comprehensive', 'third_party', 'standalone_od', 'commercial_package'])],
             'remark' => ['nullable', 'string', 'max:2000'],
             'od_premium' => ['required', 'numeric', 'min:0'],
