@@ -25,20 +25,24 @@ jobs:
           password: ${{ secrets.PRODUCTION_SSH_PASSWORD }}
           port: ${{ secrets.PRODUCTION_SSH_PORT || '22' }}
           command_timeout: 25m
-          script_stop: true
           script: |
             set -Eeuo pipefail
 
             APP_DIR=/var/www/raj-erp
             FRONTEND_PM2=raj-erp-frontend
             BACKEND_PM2=raj-erp-backend
+            EXPECTED_COMMIT='${{ github.sha }}'
 
-            echo "Deploying commit: ${{ github.sha }}"
+            echo "Deploying commit: $EXPECTED_COMMIT"
             cd "$APP_DIR"
 
             git fetch origin main
             git checkout main
             git pull --ff-only origin main
+
+            ACTUAL_COMMIT="$(git rev-parse HEAD)"
+            test "$ACTUAL_COMMIT" = "$EXPECTED_COMMIT"
+            echo "Server checked out commit: $ACTUAL_COMMIT"
 
             cd "$APP_DIR/backend"
             composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
@@ -56,8 +60,17 @@ jobs:
             pm2 reload "$BACKEND_PM2" --update-env
             pm2 reload "$FRONTEND_PM2" --update-env
             pm2 save
+            sleep 5
+
+            pm2 describe "$BACKEND_PM2" >/dev/null
+            pm2 describe "$FRONTEND_PM2" >/dev/null
 
             curl --fail --silent --show-error https://erp.vimawallah.com/api/health
-            curl --fail --silent --show-error https://erp.vimawallah.com/login > /dev/null
+            LOGIN_HTML="$(curl --fail --silent --show-error https://erp.vimawallah.com/login)"
 
+            ASSET_PATH="$(printf '%s' "$LOGIN_HTML" | grep -oE '/_next/static/[^\"[:space:]]+\.(css|js)' | head -n 1 || true)"
+            test -n "$ASSET_PATH"
+            curl --fail --silent --show-error "https://erp.vimawallah.com$ASSET_PATH" >/dev/null
+
+            echo "Verified frontend asset: $ASSET_PATH"
             echo "Production deployment completed successfully."
