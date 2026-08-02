@@ -38,9 +38,14 @@ git pull --ff-only origin main
 # named volume on the first startup and are reused on later restarts.
 cd ocr-service
 test -f .env || cp .env.example .env
-docker compose -f compose.production.yml build
-docker compose -f compose.production.yml up -d
+docker compose -f compose.production.yml build --no-cache ocr
+docker compose -f compose.production.yml up -d --force-recreate ocr
 docker compose -f compose.production.yml ps
+docker compose -f compose.production.yml exec -T ocr \
+  python -c "import paddle, paddleocr, paddlex; print('paddle', paddle.__version__); print('paddleocr', paddleocr.__version__); print('paddlex', paddlex.__version__)"
+curl --fail --silent --show-error http://127.0.0.1:8001/health
+docker compose -f compose.production.yml exec -T ocr \
+  python scripts/inference_smoke_test.py
 
 # Install the loopback-only Nginx listener once, or refresh it after changes.
 sudo install -m 0644 deploy/nginx-ocr-internal.conf /etc/nginx/conf.d/ocr-internal.conf

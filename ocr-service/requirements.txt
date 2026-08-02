@@ -1,8 +1,9 @@
 # Runtime (Python 3.11, CPU only)
 fastapi==0.139.2
 uvicorn[standard]==0.51.0
-paddleocr==3.7.0
-paddlepaddle==3.3.1
+paddlepaddle==3.2.2
+paddleocr==3.4.1
+paddlex[ocr-core]==3.4.3
 opencv-contrib-python-headless==4.10.0.84
 numpy==1.26.4
 Pillow==12.3.0

@@ -18,7 +18,7 @@ remain `null`; the service does not invent them.
 3. OpenCV downsizes large images, gently improves local contrast, and applies a
    light bilateral denoise. It deliberately avoids destructive thresholding.
 4. A single PaddleOCR pipeline is created during application startup. It uses
-   CPU inference, PP-OCRv6 small detection/recognition models, document orientation,
+   CPU inference, PP-OCRv5 mobile detection/recognition models, document orientation,
    and no unwarping, VLM, LLM, or document-structure features.
 5. Front, back, and combined inputs are OCR'd separately. Their text lines and
    confidence values are merged without losing the source image.
@@ -98,11 +98,11 @@ All settings use the `OCR_` prefix.
 | `OCR_PREPROCESSING_MAX_SIDE` | `2600` | Maximum preprocessed width or height |
 | `OCR_REQUEST_TIMEOUT_SECONDS` | `90` | OCR processing timeout |
 | `OCR_MIN_FIELD_CONFIDENCE` | `0.55` | Parser acceptance threshold |
-| `OCR_CPU_THREADS` | `4` | Paddle CPU inference threads |
+| `OCR_CPU_THREADS` | `2` | Paddle CPU inference threads |
 | `OCR_MODEL_CACHE_DIR` | `/models` | Persistent Paddle/PaddleX model cache |
 | `OCR_ENABLE_DOCUMENT_ORIENTATION` | `true` | Enable 0/90/180/270 orientation model |
-| `OCR_TEXT_DETECTION_MODEL_NAME` | `PP-OCRv6_small_det` | Lightweight detection model |
-| `OCR_TEXT_RECOGNITION_MODEL_NAME` | `PP-OCRv6_small_rec` | Lightweight recognition model |
+| `OCR_TEXT_DETECTION_MODEL_NAME` | `PP-OCRv5_mobile_det` | Lightweight detection model |
+| `OCR_TEXT_RECOGNITION_MODEL_NAME` | `PP-OCRv5_mobile_rec` | Lightweight recognition model |
 | `OCR_CORS_ALLOWED_ORIGINS` | empty | Comma-separated exact browser origins |
 | `OCR_CORS_ALLOW_CREDENTIALS` | `false` | Allow CORS credentials |
 
@@ -129,10 +129,22 @@ the VPS loopback interface:
 
 ```bash
 cp .env.example .env
-docker compose -f compose.production.yml up -d --build
+docker compose -f compose.production.yml build --no-cache ocr
+docker compose -f compose.production.yml up -d --force-recreate ocr
 docker compose -f compose.production.yml ps
 curl --fail http://127.0.0.1:8001/health
+docker compose -f compose.production.yml exec -T ocr \
+  python -c "import paddle, paddleocr, paddlex; print('paddle', paddle.__version__); print('paddleocr', paddleocr.__version__); print('paddlex', paddlex.__version__)"
+docker compose -f compose.production.yml exec -T ocr \
+  python scripts/inference_smoke_test.py
 ```
+
+The CPU runtime is pinned to PaddlePaddle 3.2.2, PaddleOCR 3.4.1, and PaddleX
+3.4.3. `FLAGS_use_mkldnn=0` is set in the image and Compose environment, and the
+constructor passes `enable_mkldnn=False`, avoiding the affected oneDNN execution
+path. `FLAGS_enable_pir_api` is intentionally not changed because disabling
+MKLDNN is sufficient for this compatible runtime. Startup emits an `ocr_runtime`
+JSON log with all three versions, CPU mode, and the MKLDNN state.
 
 The Nginx template in `deploy/nginx-ocr-internal.conf` adds a second loopback-only
 listener on port 8081. Configure Laravel with
@@ -153,7 +165,10 @@ pytest -q
 ```
 
 API tests mock the OCR engine. A separate smoke test with a real RC image is
-recommended on the deployment server after the model cache is populated.
+recommended on the deployment server after the model cache is populated. The
+checked-in synthetic smoke test always performs real model inference and fails
+the deployment on a non-JSON response, an HTTP error, or an unsuccessful OCR
+response even when `/health` is healthy.
 
 ## Server requirements
 

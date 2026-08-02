@@ -29,11 +29,11 @@ class Settings(BaseSettings):
     upload_chunk_bytes: int = Field(default=1024 * 1024, ge=64 * 1024)
 
     min_field_confidence: float = Field(default=0.55, ge=0, le=1)
-    cpu_threads: int = Field(default=4, ge=1, le=32)
+    cpu_threads: int = Field(default=2, ge=1, le=32)
     model_cache_dir: Path = Path("/models")
     enable_document_orientation: bool = True
-    text_detection_model_name: str = "PP-OCRv6_small_det"
-    text_recognition_model_name: str = "PP-OCRv6_small_rec"
+    text_detection_model_name: str = "PP-OCRv5_mobile_det"
+    text_recognition_model_name: str = "PP-OCRv5_mobile_rec"
 
     cors_allowed_origins: str = ""
     cors_allow_credentials: bool = False

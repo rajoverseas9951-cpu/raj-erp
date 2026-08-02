@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import tempfile
 import threading
@@ -12,6 +13,9 @@ import numpy as np
 
 from .config import Settings
 from .schemas import OCRLine
+
+
+logger = logging.getLogger("ocr_service")
 
 
 class OCREngine(Protocol):
@@ -31,9 +35,26 @@ class PaddleOCREngine:
         cache_dir.mkdir(parents=True, exist_ok=True)
         os.environ["PADDLE_HOME"] = str(cache_dir / "paddle")
         os.environ["PADDLE_PDX_CACHE_HOME"] = str(cache_dir / "paddlex")
+        # This must be set before importing Paddle. The constructor option below
+        # is also required because PaddleX selects its own inference backend.
+        os.environ["FLAGS_use_mkldnn"] = "0"
 
         # Lazy import keeps API/parser tests independent from large model packages.
+        import paddle
+        import paddleocr
+        import paddlex
         from paddleocr import PaddleOCR
+
+        logger.info(
+            "ocr_runtime",
+            extra={
+                "paddle_version": paddle.__version__,
+                "paddleocr_version": paddleocr.__version__,
+                "paddlex_version": paddlex.__version__,
+                "device": "cpu",
+                "mkldnn_enabled": False,
+            },
+        )
 
         self._pipeline = PaddleOCR(
             device="cpu",
@@ -42,7 +63,7 @@ class PaddleOCREngine:
             use_doc_orientation_classify=self.settings.enable_document_orientation,
             use_doc_unwarping=False,
             use_textline_orientation=False,
-            enable_mkldnn=True,
+            enable_mkldnn=False,
             cpu_threads=self.settings.cpu_threads,
         )
 

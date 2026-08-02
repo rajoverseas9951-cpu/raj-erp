@@ -47,8 +47,16 @@ jobs:
             cd "$APP_DIR/ocr-service"
             test -f .env || cp .env.example .env
             docker compose -f compose.production.yml config --quiet
-            docker compose -f compose.production.yml build
-            docker compose -f compose.production.yml up -d
+
+            if docker compose -f compose.production.yml ps --status running --services | grep -Fxq ocr; then
+              echo "Previously installed OCR runtime versions:"
+              docker compose -f compose.production.yml exec -T ocr python -c "import paddle, paddleocr, paddlex; print('paddle', paddle.__version__); print('paddleocr', paddleocr.__version__); print('paddlex', paddlex.__version__)"
+            else
+              echo "No running OCR container was available for previous-version inspection."
+            fi
+
+            docker compose -f compose.production.yml build --no-cache ocr
+            docker compose -f compose.production.yml up -d --force-recreate ocr
 
             OCR_READY=0
             for attempt in $(seq 1 60); do
@@ -58,7 +66,18 @@ jobs:
               fi
               sleep 10
             done
-            test "$OCR_READY" = "1"
+            if [ "$OCR_READY" != "1" ]; then
+              docker compose -f compose.production.yml logs --no-color --tail=200 ocr
+              exit 1
+            fi
+
+            echo "Installed OCR runtime versions:"
+            docker compose -f compose.production.yml exec -T ocr python -c "import paddle, paddleocr, paddlex; print('paddle', paddle.__version__); print('paddleocr', paddleocr.__version__); print('paddlex', paddlex.__version__)"
+
+            if ! docker compose -f compose.production.yml exec -T ocr python scripts/inference_smoke_test.py; then
+              docker compose -f compose.production.yml logs --no-color --tail=200 ocr
+              exit 1
+            fi
 
             sudo -n install -m 0644 deploy/nginx-ocr-internal.conf /etc/nginx/conf.d/ocr-internal.conf
             sudo -n nginx -t

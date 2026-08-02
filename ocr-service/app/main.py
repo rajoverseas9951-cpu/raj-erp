@@ -37,7 +37,18 @@ class JsonFormatter(logging.Formatter):
             "level": record.levelname,
             "event": record.getMessage(),
         }
-        for key in ("request_id", "method", "path", "status_code", "processing_ms"):
+        for key in (
+            "request_id",
+            "method",
+            "path",
+            "status_code",
+            "processing_ms",
+            "paddle_version",
+            "paddleocr_version",
+            "paddlex_version",
+            "device",
+            "mkldnn_enabled",
+        ):
             value = getattr(record, key, None)
             if value is not None:
                 payload[key] = value

@@ -5,7 +5,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     HOME=/home/ocr \
     PADDLE_HOME=/models/paddle \
-    PADDLE_PDX_CACHE_HOME=/models/paddlex
+    PADDLE_PDX_CACHE_HOME=/models/paddlex \
+    FLAGS_use_mkldnn=0
 
 RUN apt-get update \
     && apt-get install --no-install-recommends -y libgomp1 libglib2.0-0 \
@@ -23,9 +24,11 @@ COPY requirements.txt ./requirements.txt
 RUN python -m pip install --upgrade pip \
     && python -m pip install -r requirements.txt \
     && python -m pip install --force-reinstall --no-deps opencv-contrib-python-headless==4.10.0.84 \
-    && python -m pip check
+    && python -m pip check \
+    && python -c "import paddle, paddleocr, paddlex; print('paddle', paddle.__version__); print('paddleocr', paddleocr.__version__); print('paddlex', paddlex.__version__)"
 
 COPY --chown=ocr:ocr app ./app
+COPY --chown=ocr:ocr scripts ./scripts
 
 USER ocr
 
