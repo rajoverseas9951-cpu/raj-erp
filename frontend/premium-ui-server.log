@@ -1,0 +1,56 @@
+
+> dev
+> next dev
+
+   ▲ Next.js 15.4.11
+   - Local:        http://localhost:3000
+   - Network:      http://10.27.230.214:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 23.2s
+ ○ Compiling /customers ...
+ ✓ Compiled /customers in 106.7s (607 modules)
+ GET /customers 200 in 8503ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 2.9s (618 modules)
+ GET /login 200 in 4382ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 4.4s (625 modules)
+ GET /dashboard 200 in 6283ms
+ ○ Compiling /masters ...
+ ✓ Compiled /masters in 33.6s (633 modules)
+ GET /masters 200 in 2654ms
+ GET /masters 200 in 34200ms
+ ✓ Compiled in 3.5s (626 modules)
+ ✓ Compiled in 2.1s (640 modules)
+ GET /masters 200 in 348ms
+ GET /masters 200 in 7624ms
+ GET /dashboard 200 in 113ms
+ ○ Compiling /customers/new ...
+ ✓ Compiled /customers/new in 1197ms (651 modules)
+ GET /customers/new 200 in 1471ms
+ GET /customers/new 200 in 52ms
+ ○ Compiling /vehicles/new ...
+ ✓ Compiled /vehicles/new in 927ms (649 modules)
+ GET /vehicles/new 200 in 1182ms
+ GET /dashboard 200 in 514ms
+ GET /masters 200 in 78ms
+ ○ Compiling /claims ...
+ ✓ Compiled /claims in 1221ms (654 modules)
+ GET /claims 200 in 1514ms
+ ○ Compiling /customers ...
+ ✓ Compiled /customers in 526ms (412 modules)
+ GET /customers 200 in 725ms
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 19.4s (989 modules)
+ GET /customers 500 in 30448ms
+ GET /customers 200 in 4316ms
+ GET /customers 200 in 840ms
+ GET /customers 200 in 366ms
+ GET /customers 200 in 1425ms
+ ✓ Compiled in 4.2s (989 modules)
+ GET /customers 200 in 707ms
+ ○ Compiling /customers/[customerId] ...
+ ✓ Compiled /customers/[customerId] in 2.4s (891 modules)
+[?25h

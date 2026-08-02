@@ -1,0 +1,63 @@
+
+> dev
+> next dev
+
+   ▲ Next.js 15.4.11
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.31.39:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 28s
+ ○ Compiling /vehicles/new ...
+ ✓ Compiled /vehicles/new in 51.2s (614 modules)
+ GET /vehicles/new 200 in 21752ms
+ GET /vehicles/new 200 in 1418ms
+ GET /vehicles/new 200 in 650ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /login in 2.9s (632 modules)
+ GET /login 200 in 5284ms
+ GET /login 200 in 1139ms
+ GET /dashboard 200 in 738ms
+ ○ Compiling /masters ...
+ ✓ Compiled /masters in 6.3s (654 modules)
+ GET /masters 200 in 9053ms
+ ✓ Compiled in 2.7s (257 modules)
+ GET /masters 200 in 1472ms
+ GET /masters 200 in 465ms
+ GET /masters 200 in 97ms
+ GET /dashboard 200 in 548ms
+ GET /login 200 in 149ms
+ ○ Compiling /accounts ...
+ ✓ Compiled /accounts in 1777ms (665 modules)
+ GET /accounts 200 in 4036ms
+ GET /login 200 in 2262ms
+ GET /dashboard 200 in 590ms
+ GET /accounts 200 in 6539ms
+ ○ Compiling /customers/new ...
+ ✓ Compiled /customers/new in 2.1s (673 modules)
+ GET /customers/new 200 in 3280ms
+ ✓ Compiled in 1175ms (266 modules)
+ GET /customers/new 200 in 662ms
+ GET /customers/new 200 in 120ms
+ GET /customers/new 200 in 311ms
+ GET /vehicles/new 200 in 326ms
+ GET /accounts 200 in 221ms
+ ✓ Compiled in 7.8s (673 modules)
+ GET /accounts 200 in 472ms
+ GET /accounts 200 in 507ms
+ ✓ Compiled in 8.3s (674 modules)
+ ✓ Compiled in 3.5s (676 modules)
+ ✓ Compiled in 1470ms (662 modules)
+ ✓ Compiled in 19s (676 modules)
+ ✓ Compiled in 12.3s (678 modules)
+ ✓ Compiled in 3.9s (678 modules)
+ ✓ Compiled in 3.4s (678 modules)
+ ✓ Compiled in 3.2s (678 modules)
+ ✓ Compiled in 732ms (268 modules)
+ ✓ Compiled in 3s (678 modules)
+ ✓ Compiled in 5.9s (678 modules)
+ ✓ Compiled in 934ms (268 modules)
+ ✓ Compiled in 2.4s (678 modules)
+ ✓ Compiled in 6.6s (678 modules)
+[?25h

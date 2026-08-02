@@ -1,0 +1,75 @@
+
+> dev
+> next dev
+
+   ▲ Next.js 15.4.11
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.31.39:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 8.3s
+ ○ Compiling /vehicles ...
+ ✓ Compiled /_not-found in 39.6s (618 modules)
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 200 in 36106ms
+ GET /_next/static/webpack/431cff073d139071.webpack.hot-update.json 404 in 39747ms
+ GET /vehicles 200 in 1533ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 200 in 8555ms
+ ○ Compiling /vehicles/[vehicleId]/insurance ...
+ ✓ Compiled /vehicles/[vehicleId]/insurance in 38.4s (608 modules)
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance 200 in 43027ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 200 in 226ms
+ ○ Compiling /vehicles/[vehicleId]/edit ...
+ ✓ Compiled /vehicles/[vehicleId]/edit in 975ms (619 modules)
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/edit 500 in 2931ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 200 in 251ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance 200 in 517ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 200 in 203ms
+ ○ Compiling /vehicles ...
+ ✓ Compiled /vehicles in 24.5s (387 modules)
+ GET /vehicles 200 in 27187ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 200 in 1697ms
+ GET /vehicles 200 in 385ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 200 in 390ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/edit 500 in 778ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 2.4s (640 modules)
+ GET /dashboard 200 in 4371ms
+ GET /vehicles 200 in 349ms
+ ✓ Compiled in 1723ms (253 modules)
+ ○ Compiling /vehicles/new ...
+ ✓ Compiled /vehicles/new in 2.3s (390 modules)
+ ✓ Compiled in 3.2s (256 modules)
+ GET /vehicles 200 in 11458ms
+ GET /vehicles/new 200 in 10063ms
+ ○ Compiling /vehicles/[vehicleId]/edit ...
+ ✓ Compiled /vehicles/[vehicleId]/edit in 2.6s (646 modules)
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/edit 200 in 4453ms
+ GET /vehicles/new 200 in 1884ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 3.5s (657 modules)
+ GET /login 200 in 4664ms
+ GET /vehicles/019fb6f7-1d9d-73be-a805-3fcb36f2cb45 200 in 2563ms
+ GET /vehicles/019fb6f7-1d9d-73be-a805-3fcb36f2cb45/insurance 200 in 932ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/edit 200 in 346ms
+ GET /vehicles/019fb6f7-1d9d-73be-a805-3fcb36f2cb45 200 in 375ms
+ GET /vehicles/019fb6f7-1d9d-73be-a805-3fcb36f2cb45/edit 200 in 343ms
+ GET /vehicles/019fb6f7-1d9d-73be-a805-3fcb36f2cb45 200 in 454ms
+ GET /vehicles/new 200 in 77ms
+ GET /vehicles 200 in 312ms
+ GET /dashboard 200 in 356ms
+ GET /vehicles 200 in 52ms
+ GET /vehicles 200 in 48ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 200 in 349ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance 200 in 388ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance 200 in 1540ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 200 in 452ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance 200 in 504ms
+ ✓ Compiled in 3.3s (659 modules)
+ ✓ Compiled in 544ms (262 modules)
+ ✓ Compiled in 3s (659 modules)
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance 200 in 729ms
+ ✓ Compiled in 1654ms (659 modules)
+ ✓ Compiled in 2.1s (659 modules)
+ ✓ Compiled in 1400ms (659 modules)
+[?25h

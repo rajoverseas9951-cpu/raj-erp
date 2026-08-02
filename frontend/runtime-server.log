@@ -1,0 +1,90 @@
+
+> dev
+> next dev
+
+   ▲ Next.js 15.4.11
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.31.39:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 9s
+ ○ Compiling /vehicles/[vehicleId]/edit ...
+ ✓ Compiled /vehicles/[vehicleId]/edit in 5.1s (599 modules)
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/edit 200 in 9537ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/edit 200 in 5595ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/edit 200 in 369ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/edit 200 in 9263ms
+ ○ Compiling /vehicles/[vehicleId] ...
+ ✓ Compiled /vehicles/[vehicleId] in 20.9s (606 modules)
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 200 in 644ms
+ ○ Compiling /vehicles ...
+ ✓ Compiled /dashboard in 25.5s (644 modules)
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 200 in 8444ms
+ GET /vehicles 200 in 280ms
+ GET /dashboard 200 in 469ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 2.5s (641 modules)
+ GET /vehicles 200 in 3644ms
+ GET /dashboard 200 in 854ms
+ GET /login 200 in 502ms
+ GET /dashboard 200 in 995ms
+ GET /vehicles 200 in 202ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 200 in 394ms
+ ○ Compiling /vehicles/[vehicleId]/insurance ...
+ ✓ Compiled /vehicles/[vehicleId]/insurance in 2.4s (652 modules)
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance 200 in 7024ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 200 in 610ms
+ GET /vehicles 200 in 226ms
+ GET /dashboard 200 in 437ms
+ ○ Compiling /customers ...
+ ✓ Compiled /customers in 2.8s (654 modules)
+ GET /customers 200 in 3700ms
+ GET /customers 200 in 299ms
+ ○ Compiling /customers/new ...
+ ✓ Compiled /customers/new in 7.5s (662 modules)
+ GET /customers/new 200 in 8165ms
+ GET /customers 200 in 225ms
+ GET /dashboard 200 in 192ms
+ ○ Compiling /policies ...
+ ✓ Compiled /policies in 3.8s (660 modules)
+ GET /policies 200 in 3996ms
+ GET /policies 200 in 64ms
+ GET /policies 200 in 51ms
+ GET /vehicles 200 in 63ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 200 in 475ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance 200 in 265ms
+ GET /vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 200 in 189ms
+ GET /vehicles 200 in 110ms
+ GET /dashboard 200 in 589ms
+ GET /dashboard 200 in 1986ms
+ GET /vehicles 200 in 75ms
+ ○ Compiling /vehicle-body-types ...
+ ✓ Compiled /vehicle-body-types in 5.5s (670 modules)
+ GET /vehicle-body-types 200 in 7216ms
+ ✓ Compiled in 1779ms (269 modules)
+ GET /vehicle-body-types 200 in 1152ms
+ GET /vehicle-body-types 200 in 351ms
+ GET /vehicle-body-types 200 in 95ms
+ GET /vehicle-body-types 200 in 136ms
+ GET /vehicle-body-types 200 in 66ms
+ ✓ Compiled in 3.5s (652 modules)
+ ✓ Compiled in 2.1s (638 modules)
+ ○ Compiling /vehicle-body-types ...
+ ✓ Compiled /vehicle-body-types in 618ms (390 modules)
+ GET /vehicle-body-types 200 in 1162ms
+ GET /vehicle-body-types 200 in 66ms
+ GET /vehicle-body-types 200 in 67ms
+ GET /vehicle-body-types 200 in 134ms
+ ✓ Compiled in 1122ms (269 modules)
+ GET /vehicle-body-types 200 in 93ms
+ ✓ Compiled in 407ms (269 modules)
+ GET /vehicle-body-types 200 in 67ms
+ ✓ Compiled in 543ms (269 modules)
+ ✓ Compiled in 4s (637 modules)
+ GET /vehicle-body-types 200 in 2687ms
+ GET /vehicle-body-types 200 in 59ms
+ GET /vehicle-body-types 200 in 58ms
+ ✓ Compiled in 786ms (269 modules)
+ GET /vehicle-body-types 200 in 63ms
+[?25h

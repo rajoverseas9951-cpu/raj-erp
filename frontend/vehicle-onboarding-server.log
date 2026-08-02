@@ -1,0 +1,45 @@
+
+> dev
+> next dev
+
+   ▲ Next.js 15.4.11
+   - Local:        http://localhost:3000
+   - Network:      http://10.163.94.214:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 6.7s
+ ○ Compiling /vehicles/new ...
+ ✓ Compiled /vehicles/new in 17.5s (612 modules)
+ GET /vehicles/new 200 in 18955ms
+ GET /vehicles/new 200 in 170ms
+ GET /vehicles/new 200 in 1029ms
+ GET /vehicles/new 200 in 1470ms
+ ○ Compiling /vehicles ...
+ ✓ Compiled /vehicles in 4.3s (621 modules)
+ GET /vehicles 200 in 5674ms
+ ✓ Compiled in 1997ms (246 modules)
+ GET /vehicles 200 in 3372ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 1082ms (632 modules)
+ GET /login 200 in 4240ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 2.2s (653 modules)
+ GET /login 200 in 1381ms
+ GET /dashboard 200 in 3823ms
+ GET /dashboard 200 in 3454ms
+ ✓ Compiled in 10.9s (641 modules)
+ GET /dashboard 200 in 730ms
+ ✓ Compiled in 959ms (641 modules)
+ ✓ Compiled in 3.1s (655 modules)
+ GET /dashboard 200 in 287ms
+ ✓ Compiled in 1786ms (653 modules)
+ GET /dashboard 200 in 197ms
+ ✓ Compiled in 2.8s (655 modules)
+ GET /dashboard 200 in 640ms
+ ✓ Compiled in 12.3s (655 modules)
+ GET /dashboard 200 in 6660ms
+ GET /vehicles/new 200 in 772ms
+ GET /vehicles/new 200 in 2561ms
+ GET /login?returnTo=%2Fvehicles%2Fnew 200 in 1147ms
+[?25h

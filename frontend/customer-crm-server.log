@@ -1,0 +1,83 @@
+
+> dev
+> next dev
+
+   ▲ Next.js 15.4.11
+   - Local:        http://localhost:3000
+   - Network:      http://10.27.230.214:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 14.9s
+ ○ Compiling /vehicles ...
+ ✓ Compiled /vehicles in 74.3s (607 modules)
+ GET /vehicles 200 in 76446ms
+ ○ Compiling /masters ...
+ ✓ Compiled /masters in 5.2s (622 modules)
+ GET /vehicles 200 in 3288ms
+ GET /dashboard 200 in 8686ms
+ ○ Compiling /customers/new ...
+ ✓ Compiled /customers/new in 2.5s (634 modules)
+ GET /customers/new 200 in 3124ms
+ GET /customers/new 200 in 179ms
+ ○ Compiling /customers ...
+ ✓ Compiled /customers in 2.7s (643 modules)
+ GET /customers 200 in 3054ms
+ ○ Compiling /accounts/ledgers ...
+ ✓ Compiled /accounts/ledgers in 60.5s (652 modules)
+ GET /customers 200 in 4135ms
+ GET /accounts/ledgers 200 in 65909ms
+ GET /accounts/ledgers 200 in 38021ms
+ GET /accounts/ledgers 200 in 35394ms
+ GET /accounts/ledgers 200 in 5796ms
+ GET /customers 200 in 520ms
+ GET /customers 200 in 160ms
+ GET /customers 200 in 74ms
+ GET /accounts/ledgers 200 in 97ms
+ GET /accounts/ledgers 200 in 1351ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 4.3s (671 modules)
+ ✓ Compiled in 2.3s (264 modules)
+ GET /login 200 in 6706ms
+ GET /dashboard 200 in 524ms
+ GET /customers 200 in 169ms
+ GET /accounts/ledgers 200 in 117ms
+ ✓ Compiled in 1485ms (650 modules)
+ ✓ Compiled in 2.6s (655 modules)
+ ✓ Compiled in 2.9s (641 modules)
+ ○ Compiling /accounts/ledgers ...
+ ✓ Compiled /accounts/ledgers in 2.9s (656 modules)
+ GET /accounts/ledgers 200 in 3611ms
+ GET /accounts/ledgers 200 in 86ms
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 5.5s (998 modules)
+ GET /accounts/ledgers 500 in 14312ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 3.8s (988 modules)
+ GET /_next/static/webpack/5c0053ab0d17b0ab.webpack.hot-update.json 500 in 5586ms
+ GET /accounts/ledgers 500 in 550ms
+ GET /accounts/ledgers 500 in 769ms
+ GET /accounts/ledgers 500 in 1081ms
+ GET /accounts/ledgers 500 in 774ms
+ GET /accounts/ledgers 500 in 1308ms
+ GET /_next/static/chunks/fallback/webpack.js 500 in 10365ms
+ GET /_next/static/chunks/fallback/main.js 500 in 10361ms
+ GET /_next/static/chunks/fallback/react-refresh.js 500 in 10360ms
+ GET /_next/static/chunks/fallback/pages/_app.js 500 in 10352ms
+ GET /_next/static/chunks/fallback/pages/_error.js 500 in 10350ms
+ GET /accounts/ledgers 500 in 139ms
+ GET /_next/static/chunks/fallback/webpack.js 500 in 5439ms
+ GET /_next/static/chunks/fallback/main.js 500 in 5433ms
+ GET /_next/static/chunks/fallback/react-refresh.js 500 in 5433ms
+ GET /_next/static/chunks/fallback/pages/_app.js 500 in 5433ms
+ GET /_next/static/chunks/fallback/pages/_error.js 500 in 5433ms
+ GET /accounts/ledgers 500 in 586ms
+ GET /_next/static/chunks/fallback/webpack.js 500 in 23734ms
+ GET /_next/static/chunks/fallback/main.js 500 in 23577ms
+ GET /_next/static/chunks/fallback/react-refresh.js 500 in 23475ms
+ GET /_next/static/chunks/fallback/pages/_app.js 500 in 23397ms
+ GET /_next/static/chunks/fallback/pages/_error.js 500 in 23286ms
+ GET /accounts/ledgers 500 in 128ms
+ GET /accounts/ledgers 500 in 393ms
+ GET /accounts/ledgers 500 in 364ms
+[?25h

@@ -1,0 +1,63 @@
+
+> dev
+> next dev
+
+   ▲ Next.js 15.4.11
+   - Local:        http://localhost:3000
+   - Network:      http://10.163.94.214:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 13.3s
+ ○ Compiling /accounts/ledgers ...
+ ✓ Compiled /accounts/ledgers in 21.1s (609 modules)
+ GET /accounts/ledgers 200 in 23103ms
+ GET /accounts/ledgers 200 in 511ms
+ ○ Compiling /accounts ...
+ ✓ Compiled /dashboard in 36s (627 modules)
+ GET /accounts 200 in 40352ms
+ GET /dashboard 200 in 6499ms
+ GET /dashboard 200 in 31143ms
+ GET /dashboard 200 in 6577ms
+ ○ Compiling /vehicles ...
+ ✓ Compiled /vehicles in 17.1s (638 modules)
+ GET /vehicles 200 in 17396ms
+ ○ Compiling /vehicles/new ...
+ ✓ Compiled /vehicles/new in 1409ms (652 modules)
+ GET /vehicles/new 200 in 1841ms
+ GET /vehicles 200 in 1644ms
+ GET /vehicles 200 in 92ms
+ ○ Compiling /masters ...
+ ✓ Compiled /masters in 9.1s (659 modules)
+ GET /masters 200 in 17619ms
+ GET /login 200 in 33884ms
+ ✓ Compiled in 7.4s (673 modules)
+ ✓ Compiled in 1ms (405 modules)
+ GET /dashboard 200 in 9621ms
+ ✓ Compiled in 4.8s (673 modules)
+ ✓ Compiled in 3ms (405 modules)
+ ○ Compiling /vehicles ...
+ ✓ Compiled /vehicles in 3.3s (405 modules)
+ GET /vehicles 200 in 1702ms
+ GET /vehicles 200 in 4438ms
+ ✓ Compiled in 5.4s (673 modules)
+ GET /vehicles 200 in 353ms
+ GET /vehicles/new 200 in 988ms
+ ✓ Compiled in 2.4s (673 modules)
+ GET /vehicles/new 200 in 277ms
+ ✓ Compiled in 5.4s (673 modules)
+ GET /vehicles/new 200 in 334ms
+ ✓ Compiled in 4.7s (673 modules)
+ GET /vehicles/new 200 in 504ms
+ GET /vehicles/new 200 in 80408ms
+ ✓ Compiled in 3s (673 modules)
+ GET /vehicles/new 200 in 747ms
+ ✓ Compiled in 2.9s (673 modules)
+ GET /vehicles/new 200 in 170ms
+ ✓ Compiled in 1884ms (673 modules)
+ GET /vehicles/new 200 in 105ms
+ ✓ Compiled in 1942ms (673 modules)
+ GET /vehicles/new 200 in 283ms
+ ✓ Compiled in 4.2s (673 modules)
+ GET /vehicles/new 200 in 229ms
+[?25h

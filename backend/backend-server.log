@@ -1,0 +1,1175 @@
+
+   INFO  Server running on [http://127.0.0.1:8000].  
+
+  Press Ctrl+C to stop the server
+
+  PHP Fatal error:  Maximum execution time of 30 seconds exceeded in C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\Renderer\Frame.php on line 122
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\Renderer\Frame.php(122): is_string()
+  #1 C:\Projects\raj-erp\backend\storage\framework\views\fcf9bc13b4acca2198d88a16e1e699e1.php(32): Illuminate\Foundation\Exceptions\Renderer\Frame->file()
+  #2 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Filesystem\Filesystem.php(123): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Filesystem\Filesystem.php(124): Illuminate\Filesystem\Filesystem::{closure:Illuminate\Filesystem\Filesystem::getRequire():120}()
+  #4 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\Engines\PhpEngine.php(57): Illuminate\Filesystem\Filesystem->getRequire()
+  #5 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\Engines\CompilerEngine.php(76): Illuminate\View\Engines\PhpEngine->evaluatePath()
+  #6 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\View.php(208): Illuminate\View\Engines\CompilerEngine->get()
+  #7 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\View.php(191): Illuminate\View\View->getContents()
+  #8 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\View.php(160): Illuminate\View\View->renderContents()
+  #9 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\Concerns\ManagesComponents.php(103): Illuminate\View\View->render()
+  #10 C:\Projects\raj-erp\backend\storage\framework\views\d167820768f38277814d9f19a9be2e67.php(69): Illuminate\View\Factory->renderComponent()
+  #11 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Filesystem\Filesystem.php(123): require('...')
+  #12 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Filesystem\Filesystem.php(124): Illuminate\Filesystem\Filesystem::{closure:Illuminate\Filesystem\Filesystem::getRequire():120}()
+  #13 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\Engines\PhpEngine.php(57): Illuminate\Filesystem\Filesystem->getRequire()
+  #14 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\Engines\CompilerEngine.php(76): Illuminate\View\Engines\PhpEngine->evaluatePath()
+  #15 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\View.php(208): Illuminate\View\Engines\CompilerEngine->get()
+  #16 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\View.php(191): Illuminate\View\View->getContents()
+  #17 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\View.php(160): Illuminate\View\View->renderContents()
+  #18 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\Concerns\ManagesComponents.php(103): Illuminate\View\View->render()
+  #19 C:\Projects\raj-erp\backend\storage\framework\views\53778d8e5f2ac2961c03b3f491b61b13.php(156): Illuminate\View\Factory->renderComponent()
+  #20 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Filesystem\Filesystem.php(123): require('...')
+  #21 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Filesystem\Filesystem.php(124): Illuminate\Filesystem\Filesystem::{closure:Illuminate\Filesystem\Filesystem::getRequire():120}()
+  #22 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\Engines\PhpEngine.php(57): Illuminate\Filesystem\Filesystem->getRequire()
+  #23 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\Engines\CompilerEngine.php(76): Illuminate\View\Engines\PhpEngine->evaluatePath()
+  #24 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\View.php(208): Illuminate\View\Engines\CompilerEngine->get()
+  #25 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\View.php(191): Illuminate\View\View->getContents()
+  #26 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\View.php(160): Illuminate\View\View->renderContents()
+  #27 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\Concerns\ManagesComponents.php(103): Illuminate\View\View->render()
+  #28 C:\Projects\raj-erp\backend\storage\framework\views\2d9d339aa48d4f80d006bdffb79a90b5.php(71): Illuminate\View\Factory->renderComponent()
+  #29 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Filesystem\Filesystem.php(123): require('...')
+  #30 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Filesystem\Filesystem.php(124): Illuminate\Filesystem\Filesystem::{closure:Illuminate\Filesystem\Filesystem::getRequire():120}()
+  #31 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\Engines\PhpEngine.php(57): Illuminate\Filesystem\Filesystem->getRequire()
+  #32 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\Engines\CompilerEngine.php(76): Illuminate\View\Engines\PhpEngine->evaluatePath()
+  #33 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\View.php(208): Illuminate\View\Engines\CompilerEngine->get()
+  #34 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\View.php(191): Illuminate\View\View->getContents()
+  #35 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\View.php(160): Illuminate\View\View->renderContents()
+  #36 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\Concerns\ManagesComponents.php(103): Illuminate\View\View->render()
+  #37 C:\Projects\raj-erp\backend\storage\framework\views\de464639ec0eff2427f96d3404f23ce2.php(155): Illuminate\View\Factory->renderComponent()
+  #38 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Filesystem\Filesystem.php(123): require('...')
+  #39 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Filesystem\Filesystem.php(124): Illuminate\Filesystem\Filesystem::{closure:Illuminate\Filesystem\Filesystem::getRequire():120}()
+  #40 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\Engines\PhpEngine.php(57): Illuminate\Filesystem\Filesystem->getRequire()
+  #41 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\Engines\CompilerEngine.php(76): Illuminate\View\Engines\PhpEngine->evaluatePath()
+  #42 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\View.php(208): Illuminate\View\Engines\CompilerEngine->get()
+  #43 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\View.php(191): Illuminate\View\View->getContents()
+  #44 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\View.php(160): Illuminate\View\View->renderContents()
+  #45 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\Renderer\Renderer.php(100): Illuminate\View\View->render()
+  #46 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\Handler.php(879): Illuminate\Foundation\Exceptions\Renderer\Renderer->render()
+  #47 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\Handler.php(860): Illuminate\Foundation\Exceptions\Handler->renderExceptionContent()
+  #48 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\Handler.php(839): Illuminate\Foundation\Exceptions\Handler->convertExceptionToResponse()
+  #49 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\Handler.php(738): Illuminate\Foundation\Exceptions\Handler->prepareResponse()
+  #50 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\Handler.php(626): Illuminate\Foundation\Exceptions\Handler->renderExceptionResponse()
+  #51 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Routing\Pipeline.php(51): Illuminate\Foundation\Exceptions\Handler->render()
+  #52 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(224): Illuminate\Routing\Pipeline->handleException()
+  #53 C:\Projects\raj-erp\backend\vendor\laravel\sanctum\src\Http\Middleware\EnsureFrontendRequestsAreStateful.php(26): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #54 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful->{closure:Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::handle():25}()
+  #55 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(137): Illuminate\Pipeline\Pipeline->{closure:Illuminate\Pipeline\Pipeline::prepareDestination():178}()
+  #56 C:\Projects\raj-erp\backend\vendor\laravel\sanctum\src\Http\Middleware\EnsureFrontendRequestsAreStateful.php(25): Illuminate\Pipeline\Pipeline->then()
+  #57 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful->handle()
+  #58 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(137): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #59 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Routing\Router.php(821): Illuminate\Pipeline\Pipeline->then()
+  #60 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Routing\Router.php(800): Illuminate\Routing\Router->runRouteWithinStack()
+  #61 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Routing\Router.php(764): Illuminate\Routing\Router->runRoute()
+  #62 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Routing\Router.php(753): Illuminate\Routing\Router->dispatchToRoute()
+  #63 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(200): Illuminate\Routing\Router->dispatch()
+  #64 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Kernel->{closure:Illuminate\Foundation\Http\Kernel::dispatchToRouter():197}()
+  #65 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline->{closure:Illuminate\Pipeline\Pipeline::prepareDestination():178}()
+  #66 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull.php(31): Illuminate\Foundation\Http\Middleware\TransformsRequest->handle()
+  #67 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull->handle()
+  #68 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #69 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TrimStrings.php(51): Illuminate\Foundation\Http\Middleware\TransformsRequest->handle()
+  #70 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Illuminate\Foundation\Http\Middleware\TrimStrings->handle()
+  #71 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Http\Middleware\ValidatePostSize.php(27): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #72 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Illuminate\Http\Middleware\ValidatePostSize->handle()
+  #73 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance.php(109): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #74 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance->handle()
+  #75 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Http\Middleware\HandleCors.php(74): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #76 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Illuminate\Http\Middleware\HandleCors->handle()
+  #77 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Http\Middleware\TrustProxies.php(58): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #78 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Illuminate\Http\Middleware\TrustProxies->handle()
+  #79 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\InvokeDeferredCallbacks.php(22): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #80 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Illuminate\Foundation\Http\Middleware\InvokeDeferredCallbacks->handle()
+  #81 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Http\Middleware\ValidatePathEncoding.php(26): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #82 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Illuminate\Http\Middleware\ValidatePathEncoding->handle()
+  #83 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(137): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #84 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(175): Illuminate\Pipeline\Pipeline->then()
+  #85 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(144): Illuminate\Foundation\Http\Kernel->sendRequestThroughRouter()
+  #86 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Application.php(1220): Illuminate\Foundation\Http\Kernel->handle()
+  #87 C:\Projects\raj-erp\backend\public\index.php(6): Illuminate\Foundation\Application->handleRequest()
+  #88 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #89 {main}
+  PHP Fatal error:  Maximum execution time of 30 seconds exceeded in C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\Renderer\Exception.php on line 118
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\Renderer\Exception.php(118): realpath()
+  #1 [internal function]: Illuminate\Foundation\Exceptions\Renderer\Exception->{closure:{closure:Illuminate\Foundation\Exceptions\Renderer\Exception::frames():116}:117}()
+  #2 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\Renderer\Exception.php(117): array_map()
+  #3 [internal function]: Illuminate\Foundation\Exceptions\Renderer\Exception->{closure:Illuminate\Foundation\Exceptions\Renderer\Exception::frames():116}()
+  #4 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Support\Once.php(67): call_user_func()
+  #5 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Support\helpers.php(256): Illuminate\Support\Once->value()
+  #6 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\Renderer\Exception.php(116): once()
+  #7 C:\Projects\raj-erp\backend\storage\framework\views\50c44e5aed889e64c7040ca81f61ab75.php(16): Illuminate\Foundation\Exceptions\Renderer\Exception->frames()
+  #8 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Filesystem\Filesystem.php(123): require('...')
+  #9 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Filesystem\Filesystem.php(124): Illuminate\Filesystem\Filesystem::{closure:Illuminate\Filesystem\Filesystem::getRequire():120}()
+  #10 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\Engines\PhpEngine.php(57): Illuminate\Filesystem\Filesystem->getRequire()
+  #11 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\Engines\CompilerEngine.php(76): Illuminate\View\Engines\PhpEngine->evaluatePath()
+  #12 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\View.php(208): Illuminate\View\Engines\CompilerEngine->get()
+  #13 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\View.php(191): Illuminate\View\View->getContents()
+  #14 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\View\View.php(160): Illuminate\View\View->renderContents()
+  #15 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\Renderer\Renderer.php(95): Illuminate\View\View->render()
+  #16 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\Handler.php(879): Illuminate\Foundation\Exceptions\Renderer\Renderer->render()
+  #17 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\Handler.php(860): Illuminate\Foundation\Exceptions\Handler->renderExceptionContent()
+  #18 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\Handler.php(839): Illuminate\Foundation\Exceptions\Handler->convertExceptionToResponse()
+  #19 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\Handler.php(738): Illuminate\Foundation\Exceptions\Handler->prepareResponse()
+  #20 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\Handler.php(626): Illuminate\Foundation\Exceptions\Handler->renderExceptionResponse()
+  #21 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Bootstrap\HandleExceptions.php(225): Illuminate\Foundation\Exceptions\Handler->render()
+  #22 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Bootstrap\HandleExceptions.php(202): Illuminate\Foundation\Bootstrap\HandleExceptions->renderHttpResponse()
+  #23 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Bootstrap\HandleExceptions.php(238): Illuminate\Foundation\Bootstrap\HandleExceptions->handleException()
+  #24 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Bootstrap\HandleExceptions.php(262): Illuminate\Foundation\Bootstrap\HandleExceptions->handleShutdown()
+  #25 [internal function]: Illuminate\Foundation\Bootstrap\HandleExceptions->{closure:Illuminate\Foundation\Bootstrap\HandleExceptions::forwardsTo():261}()
+  #26 {main}
+  2026-07-31 12:44:08 /api/v1/ocr ............................................................................. ~ 31s
+  2026-07-31 12:45:04 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .................................... ~ 3s
+  2026-07-31 12:45:07 /api/v1/insurance-accounting/companies ................................................... ~ 2s
+  2026-07-31 12:45:07 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ......................... ~ 4s
+  PHP Fatal error:  Maximum execution time of 30 seconds exceeded in C:\Projects\raj-erp\backend\vendor\composer\ClassLoader.php on line 429
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Auth\User.php(14): Composer\Autoload\ClassLoader->loadClass()
+  #1 C:\Projects\raj-erp\backend\vendor\composer\ClassLoader.php(576): include('...')
+  #2 C:\Projects\raj-erp\backend\vendor\composer\ClassLoader.php(427): {closure:Composer\Autoload\ClassLoader::initializeIncludeClosure():575}()
+  #3 C:\Projects\raj-erp\backend\app\Models\User.php(13): Composer\Autoload\ClassLoader->loadClass()
+  #4 C:\Projects\raj-erp\backend\vendor\composer\ClassLoader.php(576): include('...')
+  #5 C:\Projects\raj-erp\backend\vendor\composer\ClassLoader.php(427): {closure:Composer\Autoload\ClassLoader::initializeIncludeClosure():575}()
+  #6 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Concerns\HasRelationships.php(1035): Composer\Autoload\ClassLoader->loadClass()
+  #7 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Concerns\HasRelationships.php(448): Illuminate\Database\Eloquent\Model->newRelatedInstance()
+  #8 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Concerns\HasRelationships.php(417): Illuminate\Database\Eloquent\Model->morphInstanceTo()
+  #9 C:\Projects\raj-erp\backend\vendor\laravel\sanctum\src\PersonalAccessToken.php(49): Illuminate\Database\Eloquent\Model->morphTo()
+  #10 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Concerns\HasAttributes.php(623): Laravel\Sanctum\PersonalAccessToken->tokenable()
+  #11 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Concerns\HasAttributes.php(575): Illuminate\Database\Eloquent\Model->getRelationshipFromMethod()
+  #12 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Concerns\HasAttributes.php(494): Illuminate\Database\Eloquent\Model->getRelationValue()
+  #13 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php(2427): Illuminate\Database\Eloquent\Model->getAttribute()
+  #14 C:\Projects\raj-erp\backend\vendor\laravel\sanctum\src\Guard.php(130): Illuminate\Database\Eloquent\Model->__get()
+  #15 C:\Projects\raj-erp\backend\vendor\laravel\sanctum\src\Guard.php(45): Laravel\Sanctum\Guard->isValidAccessToken()
+  #16 [internal function]: Laravel\Sanctum\Guard->__invoke()
+  #17 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Auth\RequestGuard.php(56): call_user_func()
+  #18 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Auth\GuardHelpers.php(56): Illuminate\Auth\RequestGuard->user()
+  #19 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Auth\Middleware\Authenticate.php(82): Illuminate\Auth\RequestGuard->check()
+  #20 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Auth\Middleware\Authenticate.php(61): Illuminate\Auth\Middleware\Authenticate->authenticate()
+  #21 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Illuminate\Auth\Middleware\Authenticate->handle()
+  #22 C:\Projects\raj-erp\backend\vendor\laravel\sanctum\src\Http\Middleware\EnsureFrontendRequestsAreStateful.php(26): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #23 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful->{closure:Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::handle():25}()
+  #24 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(137): Illuminate\Pipeline\Pipeline->{closure:Illuminate\Pipeline\Pipeline::prepareDestination():178}()
+  #25 C:\Projects\raj-erp\backend\vendor\laravel\sanctum\src\Http\Middleware\EnsureFrontendRequestsAreStateful.php(25): Illuminate\Pipeline\Pipeline->then()
+  #26 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful->handle()
+  #27 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(137): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #28 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Routing\Router.php(821): Illuminate\Pipeline\Pipeline->then()
+  #29 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Routing\Router.php(800): Illuminate\Routing\Router->runRouteWithinStack()
+  #30 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Routing\Router.php(764): Illuminate\Routing\Router->runRoute()
+  #31 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Routing\Router.php(753): Illuminate\Routing\Router->dispatchToRoute()
+  #32 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(200): Illuminate\Routing\Router->dispatch()
+  #33 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(180): Illuminate\Foundation\Http\Kernel->{closure:Illuminate\Foundation\Http\Kernel::dispatchToRouter():197}()
+  #34 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline->{closure:Illuminate\Pipeline\Pipeline::prepareDestination():178}()
+  #35 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull.php(31): Illuminate\Foundation\Http\Middleware\TransformsRequest->handle()
+  #36 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull->handle()
+  #37 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TransformsRequest.php(21): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #38 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\TrimStrings.php(51): Illuminate\Foundation\Http\Middleware\TransformsRequest->handle()
+  #39 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Illuminate\Foundation\Http\Middleware\TrimStrings->handle()
+  #40 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Http\Middleware\ValidatePostSize.php(27): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #41 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Illuminate\Http\Middleware\ValidatePostSize->handle()
+  #42 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance.php(109): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #43 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance->handle()
+  #44 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Http\Middleware\HandleCors.php(74): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #45 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Illuminate\Http\Middleware\HandleCors->handle()
+  #46 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Http\Middleware\TrustProxies.php(58): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #47 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Illuminate\Http\Middleware\TrustProxies->handle()
+  #48 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Middleware\InvokeDeferredCallbacks.php(22): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #49 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Illuminate\Foundation\Http\Middleware\InvokeDeferredCallbacks->handle()
+  #50 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Http\Middleware\ValidatePathEncoding.php(26): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #51 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(219): Illuminate\Http\Middleware\ValidatePathEncoding->handle()
+  #52 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php(137): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}()
+  #53 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(175): Illuminate\Pipeline\Pipeline->then()
+  #54 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(144): Illuminate\Foundation\Http\Kernel->sendRequestThroughRouter()
+  #55 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Application.php(1220): Illuminate\Foundation\Http\Kernel->handle()
+  #56 C:\Projects\raj-erp\backend\public\index.php(6): Illuminate\Foundation\Application->handleRequest()
+  #57 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #58 {main}
+  2026-07-31 12:45:09 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................... ~ 36s
+  2026-07-31 12:45:11 /api/v1/insurance-accounting/companies .................................................. ~ 36s
+  2026-07-31 12:45:46 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ......................... ~ 2s
+  2026-07-31 12:46:25 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.84ms
+  2026-07-31 12:46:25 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 512.03ms
+  2026-07-31 12:46:40 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 503.26ms
+  2026-07-31 12:46:40 /api/v1/insurance-accounting/companies ............................................... ~ 0.44ms
+  2026-07-31 12:46:40 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ..................... ~ 3.14ms
+  2026-07-31 12:46:40 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 515.08ms
+  2026-07-31 12:46:40 /api/v1/insurance-accounting/companies ............................................. ~ 515.84ms
+  2026-07-31 12:46:41 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ..................... ~ 2.95ms
+  2026-07-31 12:47:06 /api/v1/ocr .............................................................................. ~ 2s
+  2026-07-31 12:47:08 /api/v1/ocr .............................................................................. ~ 3s
+  2026-07-31 12:54:35 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .................................... ~ 1s
+  2026-07-31 12:54:36 /api/v1/insurance-accounting/companies ............................................... ~ 3.81ms
+  2026-07-31 12:54:36 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 520.27ms
+  2026-07-31 12:54:36 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .................................... ~ 1s
+  2026-07-31 12:54:37 /api/v1/insurance-accounting/companies ............................................. ~ 540.01ms
+  2026-07-31 12:54:37 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 520.47ms
+  2026-07-31 12:54:39 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 501.79ms
+  2026-07-31 12:54:40 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.48ms
+  2026-07-31 12:54:40 /api/v1/insurance-accounting/companies ............................................... ~ 0.71ms
+  2026-07-31 12:54:40 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 513.72ms
+  2026-07-31 12:54:40 /api/v1/insurance-accounting/companies ............................................... ~ 0.49ms
+  2026-07-31 12:54:40 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 507.16ms
+  2026-07-31 12:54:50 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.90ms
+  2026-07-31 12:54:50 /api/v1/insurance-accounting/companies ............................................. ~ 510.36ms
+  2026-07-31 12:54:50 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 513.33ms
+  2026-07-31 12:54:50 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 509.67ms
+  2026-07-31 12:54:50 /api/v1/insurance-accounting/companies ............................................. ~ 510.70ms
+  2026-07-31 12:54:50 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ..................... ~ 4.19ms
+  2026-07-31 12:56:42 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.89ms
+  2026-07-31 12:56:42 /api/v1/insurance-accounting/companies ............................................... ~ 0.53ms
+  2026-07-31 12:56:42 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 515.86ms
+  2026-07-31 12:56:42 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 515.79ms
+  2026-07-31 12:56:42 /api/v1/insurance-accounting/companies ............................................... ~ 2.55ms
+  2026-07-31 12:56:42 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 509.34ms
+  2026-07-31 12:57:36 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.57ms
+  2026-07-31 12:57:36 /api/v1/insurance-accounting/companies ............................................. ~ 515.34ms
+  2026-07-31 12:57:36 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 517.94ms
+  2026-07-31 12:57:37 /api/v1/insurance-accounting/companies ............................................... ~ 2.65ms
+  2026-07-31 12:57:37 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 506.05ms
+  2026-07-31 12:57:37 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ..................... ~ 0.41ms
+  2026-07-31 13:08:40 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 515.31ms
+  2026-07-31 13:08:40 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 518.97ms
+  2026-07-31 13:08:40 /api/v1/insurance-accounting/companies ............................................. ~ 511.56ms
+  2026-07-31 13:08:40 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 511.85ms
+  2026-07-31 13:08:41 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 515.51ms
+  2026-07-31 13:08:41 /api/v1/insurance-accounting/companies ............................................. ~ 515.30ms
+  2026-07-31 13:11:26 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 515.05ms
+  2026-07-31 13:11:27 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.37ms
+  2026-07-31 13:11:59 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .................................... ~ 1s
+  2026-07-31 13:11:59 /api/v1/insurance-accounting/companies ................................................... ~ 1s
+  2026-07-31 13:12:01 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ..................... ~ 3.06ms
+  2026-07-31 13:12:01 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 2.10ms
+  2026-07-31 13:12:01 /api/v1/insurance-accounting/companies ............................................. ~ 507.44ms
+  2026-07-31 13:12:01 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 509.42ms
+  2026-07-31 13:24:41 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 1.07ms
+  2026-07-31 13:24:42 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 513.13ms
+  2026-07-31 13:24:44 /api/v1/vehicles ..................................................................... ~ 0.89ms
+  2026-07-31 13:24:44 /api/v1/vehicles ................................................................... ~ 513.57ms
+  2026-07-31 13:25:44 ....................................................................................... ~ 1m 7s
+  2026-07-31 13:25:45 ....................................................................................... ~ 1m 7s
+  2026-07-31 13:27:35 /api/v1/customers .................................................................. ~ 505.06ms
+  2026-07-31 13:27:36 /api/v1/customers .................................................................... ~ 0.52ms
+  2026-07-31 13:27:36 /api/v1/customers .................................................................... ~ 4.95ms
+  2026-07-31 13:27:36 /api/v1/customers .................................................................. ~ 505.50ms
+  2026-07-31 13:47:15 /api/v1/vehicles ................................................................... ~ 518.36ms
+  2026-07-31 13:47:15 /api/v1/vehicles ................................................................... ~ 522.49ms
+  2026-07-31 13:47:15 /api/v1/vehicles ..................................................................... ~ 3.71ms
+  2026-07-31 13:47:16 /api/v1/vehicles ................................................................... ~ 521.93ms
+  2026-07-31 13:47:25 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.86ms
+  2026-07-31 13:47:25 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 511.95ms
+  2026-07-31 13:47:33 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 514.52ms
+  2026-07-31 13:47:33 /api/v1/insurance-accounting/companies ............................................. ~ 517.16ms
+  2026-07-31 13:47:33 /api/v1/insurance-accounting/purchase-sources ........................................ ~ 3.50ms
+  2026-07-31 13:47:34 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 508.59ms
+  2026-07-31 13:47:34 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 508.51ms
+  2026-07-31 13:47:34 /api/v1/insurance-accounting/companies ............................................... ~ 2.81ms
+  2026-07-31 13:47:34 /api/v1/insurance-accounting/purchase-sources ...................................... ~ 511.93ms
+  2026-07-31 13:47:34 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 510.41ms
+  2026-07-31 13:48:52 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.93ms
+  2026-07-31 13:48:52 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 514.68ms
+  2026-07-31 13:49:38 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 504.94ms
+  2026-07-31 13:49:38 /api/v1/insurance-accounting/purchase-sources ........................................ ~ 0.35ms
+  2026-07-31 13:49:38 /api/v1/insurance-accounting/companies ............................................... ~ 2.23ms
+  2026-07-31 13:49:38 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ..................... ~ 2.54ms
+  2026-07-31 13:49:38 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 505.63ms
+  2026-07-31 13:49:39 /api/v1/insurance-accounting/purchase-sources ...................................... ~ 506.08ms
+  2026-07-31 13:49:39 /api/v1/insurance-accounting/companies ............................................... ~ 3.95ms
+  2026-07-31 13:49:39 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 511.42ms
+  2026-07-31 13:49:48 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.59ms
+  2026-07-31 13:49:48 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 510.45ms
+  2026-07-31 13:49:49 /api/v1/vehicles ..................................................................... ~ 0.93ms
+  2026-07-31 13:49:49 /api/v1/vehicles ................................................................... ~ 512.72ms
+  2026-07-31 13:50:15 /api/v1/customers .................................................................... ~ 0.52ms
+  2026-07-31 13:50:15 /api/v1/customers .................................................................... ~ 0.82ms
+  2026-07-31 13:50:15 /api/v1/customers .................................................................. ~ 511.95ms
+  2026-07-31 13:50:15 /api/v1/customers .................................................................. ~ 508.02ms
+  2026-07-31 13:53:53 /api/v1/ledgers .......................................................................... ~ 1s
+  2026-07-31 13:53:54 /api/v1/ledgers ...................................................................... ~ 0.53ms
+  2026-07-31 13:54:09 /api/v1/auth/login ................................................................. ~ 501.21ms
+  2026-07-31 13:54:09 /api/v1/auth/login ....................................................................... ~ 4s
+  2026-07-31 14:27:52 /api/v1/insurance-accounting/companies ............................................... ~ 2.77ms
+  2026-07-31 14:27:52 /api/v1/insurance-accounting/companies ............................................... ~ 5.19ms
+  2026-07-31 14:27:53 /api/v1/insurance-accounting/companies ............................................. ~ 520.08ms
+  2026-07-31 14:27:53 /api/v1/insurance-accounting/companies ............................................. ~ 518.80ms
+  2026-07-31 14:28:07 /api/v1/insurance-accounting/purchase-sources ........................................ ~ 0.68ms
+  2026-07-31 14:28:07 /api/v1/insurance-accounting/companies ............................................. ~ 504.49ms
+  2026-07-31 14:28:07 /api/v1/insurance-accounting/purchase-sources ...................................... ~ 504.59ms
+  2026-07-31 14:28:07 /api/v1/insurance-accounting/companies ............................................... ~ 2.16ms
+  2026-07-31 14:28:07 /api/v1/insurance-accounting/purchase-sources ........................................ ~ 3.30ms
+  2026-07-31 14:28:07 /api/v1/insurance-accounting/companies ............................................... ~ 2.18ms
+  2026-07-31 14:28:07 /api/v1/insurance-accounting/purchase-sources ...................................... ~ 510.90ms
+  2026-07-31 14:28:07 /api/v1/insurance-accounting/companies ............................................. ~ 510.56ms
+  2026-07-31 14:28:37 /api/v1/vehicles ..................................................................... ~ 0.61ms
+  2026-07-31 14:28:38 /api/v1/vehicles ..................................................................... ~ 0.69ms
+  2026-07-31 14:28:38 /api/v1/vehicles ................................................................... ~ 511.33ms
+  2026-07-31 14:28:38 /api/v1/vehicles ..................................................................... ~ 0.40ms
+  2026-07-31 14:28:47 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.52ms
+  2026-07-31 14:28:47 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.28ms
+  2026-07-31 14:28:59 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 510.98ms
+  2026-07-31 14:28:59 /api/v1/insurance-accounting/purchase-sources ...................................... ~ 513.22ms
+  2026-07-31 14:28:59 /api/v1/insurance-accounting/companies ............................................... ~ 2.24ms
+  2026-07-31 14:28:59 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ..................... ~ 1.62ms
+  2026-07-31 14:28:59 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 513.57ms
+  2026-07-31 14:28:59 /api/v1/insurance-accounting/purchase-sources ...................................... ~ 514.71ms
+  2026-07-31 14:29:00 /api/v1/insurance-accounting/companies ............................................... ~ 2.30ms
+  2026-07-31 14:29:00 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ..................... ~ 2.02ms
+  2026-07-31 14:30:20 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.37ms
+  2026-07-31 14:30:20 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 513.97ms
+  2026-07-31 14:30:31 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 515.37ms
+  2026-07-31 14:30:31 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.61ms
+  2026-07-31 14:30:31 /api/v1/customers .................................................................. ~ 510.38ms
+  2026-07-31 14:30:31 /api/v1/customers .................................................................. ~ 513.71ms
+  2026-07-31 14:30:31 /api/v1/customers .................................................................... ~ 0.33ms
+  2026-07-31 14:30:31 /api/v1/customers .................................................................... ~ 2.37ms
+  2026-07-31 14:30:59 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 512.87ms
+  2026-07-31 14:31:00 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.30ms
+  2026-07-31 14:31:02 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 1.52ms
+  2026-07-31 14:31:02 /api/v1/insurance-accounting/companies ............................................. ~ 520.17ms
+  2026-07-31 14:31:02 /api/v1/insurance-accounting/purchase-sources ...................................... ~ 541.15ms
+  2026-07-31 14:31:02 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances .................... ~ 33.95ms
+  2026-07-31 14:31:02 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .................................... ~ 1s
+  2026-07-31 14:31:02 /api/v1/insurance-accounting/companies ................................................... ~ 1s
+  2026-07-31 14:31:04 /api/v1/insurance-accounting/purchase-sources ........................................ ~ 4.51ms
+  2026-07-31 14:31:04 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ..................... ~ 4.00ms
+  2026-07-31 14:31:21 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.78ms
+  2026-07-31 14:31:21 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 516.04ms
+  2026-07-31 14:31:24 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 544.41ms
+  2026-07-31 14:31:24 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 4.74ms
+  2026-07-31 14:31:24 /api/v1/customers .................................................................... ~ 3.68ms
+  2026-07-31 14:31:24 /api/v1/customers ................................................................... ~ 36.56ms
+  2026-07-31 14:31:24 /api/v1/customers ........................................................................ ~ 3s
+  2026-07-31 14:31:24 /api/v1/customers ........................................................................ ~ 3s
+  2026-07-31 14:31:47 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.50ms
+  2026-07-31 14:31:47 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.41ms
+  2026-07-31 14:31:47 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 513.23ms
+  2026-07-31 14:31:47 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 515.31ms
+  2026-07-31 14:31:47 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.52ms
+  2026-07-31 14:31:47 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 506.94ms
+  2026-07-31 14:31:53 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 512.05ms
+  2026-07-31 14:31:54 /api/v1/insurance-accounting/companies ............................................... ~ 0.62ms
+  2026-07-31 14:31:54 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ..................... ~ 4.08ms
+  2026-07-31 14:31:54 /api/v1/insurance-accounting/purchase-sources ........................................ ~ 2.61ms
+  2026-07-31 14:31:54 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 507.54ms
+  2026-07-31 14:31:54 /api/v1/insurance-accounting/companies ............................................. ~ 507.13ms
+  2026-07-31 14:31:54 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ..................... ~ 1.88ms
+  2026-07-31 14:31:54 /api/v1/insurance-accounting/purchase-sources ........................................ ~ 1.86ms
+  2026-07-31 14:47:04 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 516.50ms
+  2026-07-31 14:47:04 /api/v1/insurance-accounting/companies ............................................... ~ 0.66ms
+  2026-07-31 14:47:04 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ..................... ~ 7.61ms
+  2026-07-31 14:47:05 /api/v1/insurance-accounting/purchase-sources ........................................ ~ 4.56ms
+  2026-07-31 14:47:05 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 516.37ms
+  2026-07-31 14:47:05 /api/v1/insurance-accounting/companies ............................................. ~ 515.75ms
+  2026-07-31 14:47:05 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 516.32ms
+  2026-07-31 14:47:05 /api/v1/insurance-accounting/purchase-sources ...................................... ~ 515.58ms
+  2026-07-31 14:47:11 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 530.96ms
+  2026-07-31 14:47:11 /api/v1/insurance-accounting/companies ............................................... ~ 0.54ms
+  2026-07-31 14:47:11 /api/v1/insurance-accounting/purchase-sources ........................................ ~ 3.76ms
+  2026-07-31 14:47:11 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 514.34ms
+  2026-07-31 14:47:12 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .................................... ~ 1s
+  2026-07-31 14:47:12 /api/v1/insurance-accounting/companies ............................................. ~ 516.32ms
+  2026-07-31 14:47:12 /api/v1/insurance-accounting/purchase-sources ...................................... ~ 515.90ms
+  2026-07-31 14:47:13 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 516.36ms
+  2026-07-31 14:48:05 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 521.77ms
+  2026-07-31 14:48:06 /api/v1/insurance-accounting/companies ............................................... ~ 0.54ms
+  2026-07-31 14:48:06 /api/v1/insurance-accounting/purchase-sources ........................................ ~ 3.51ms
+  2026-07-31 14:48:06 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 522.97ms
+  2026-07-31 14:48:06 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 523.53ms
+  2026-07-31 14:48:06 /api/v1/insurance-accounting/companies ............................................. ~ 510.84ms
+  2026-07-31 14:48:06 /api/v1/insurance-accounting/purchase-sources ...................................... ~ 511.85ms
+  2026-07-31 14:48:06 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 517.04ms
+  2026-07-31 14:48:08 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 524.29ms
+  2026-07-31 14:48:09 /api/v1/insurance-accounting/companies ............................................... ~ 0.45ms
+  2026-07-31 14:48:09 /api/v1/insurance-accounting/purchase-sources ...................................... ~ 523.53ms
+  2026-07-31 14:48:09 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 525.14ms
+  2026-07-31 14:48:09 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 515.16ms
+  2026-07-31 14:48:09 /api/v1/insurance-accounting/companies ................................................... ~ 1s
+  2026-07-31 14:48:10 /api/v1/insurance-accounting/purchase-sources ...................................... ~ 590.92ms
+  2026-07-31 14:48:10 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ..................... ~ 9.21ms
+  2026-07-31 15:01:54 .......................................................................................... ~ 1m
+  2026-07-31 15:01:54 .......................................................................................... ~ 1m
+  2026-07-31 15:28:49 /api/health ........................................................................ ~ 506.19ms
+  2026-07-31 15:33:32 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 517.18ms
+  2026-07-31 15:33:32 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 509.31ms
+  2026-07-31 15:33:49 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 510.89ms
+  2026-07-31 15:33:49 /api/v1/insurance-accounting/companies ............................................... ~ 0.48ms
+  2026-07-31 15:33:49 /api/v1/insurance-accounting/purchase-sources ........................................ ~ 3.15ms
+  2026-07-31 15:33:49 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 509.55ms
+  2026-07-31 15:33:49 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 510.16ms
+  2026-07-31 15:33:50 /api/v1/insurance-accounting/companies ............................................. ~ 514.21ms
+  2026-07-31 15:33:50 /api/v1/insurance-accounting/purchase-sources ...................................... ~ 513.87ms
+  2026-07-31 15:33:50 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ..................... ~ 4.12ms
+  2026-07-31 15:33:51 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation .......... ~ 0.60ms
+  2026-07-31 15:33:51 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation ........ ~ 511.40ms
+  2026-07-31 15:34:00 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 517.48ms
+  2026-07-31 15:34:00 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.48ms
+  2026-07-31 15:34:08 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 508.82ms
+  2026-07-31 15:34:08 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 508.67ms
+  2026-07-31 15:34:14 /api/v1/vehicles ..................................................................... ~ 1.99ms
+  2026-07-31 15:34:14 /api/v1/vehicles ................................................................... ~ 508.28ms
+  2026-07-31 15:42:49 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.59ms
+  2026-07-31 15:42:49 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.40ms
+  2026-07-31 16:28:03 /api/v1/vehicles ................................................................... ~ 512.05ms
+  2026-07-31 16:28:03 /api/v1/vehicles ..................................................................... ~ 0.29ms
+  2026-07-31 16:28:03 /api/v1/vehicles ..................................................................... ~ 1.88ms
+  2026-07-31 16:28:03 /api/v1/vehicles ..................................................................... ~ 3.38ms
+  2026-07-31 16:28:12 /api/v1/auth/login ................................................................... ~ 0.80ms
+  2026-07-31 16:28:13 /api/v1/auth/login ....................................................................... ~ 1s
+  2026-07-31 16:28:16 /api/v1/vehicles ..................................................................... ~ 0.75ms
+  2026-07-31 16:28:16 /api/v1/vehicles ..................................................................... ~ 0.38ms
+  2026-07-31 16:28:16 /api/v1/vehicles ..................................................................... ~ 2.96ms
+  2026-07-31 16:28:16 /api/v1/vehicles ................................................................... ~ 508.41ms
+  2026-07-31 16:28:20 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.70ms
+  2026-07-31 16:28:20 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 514.63ms
+  2026-07-31 16:28:26 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.51ms
+  2026-07-31 16:28:26 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.45ms
+  2026-07-31 16:28:26 /api/v1/customers .................................................................. ~ 511.81ms
+  2026-07-31 16:28:26 /api/v1/vehicle-masters/manufacturers ................................................ ~ 0.47ms
+  2026-07-31 16:28:26 /api/v1/vehicle-masters/models ..................................................... ~ 511.64ms
+  2026-07-31 16:28:26 /api/v1/vehicle-masters/colours .................................................... ~ 511.57ms
+  2026-07-31 16:28:27 /api/v1/customers .................................................................... ~ 1.98ms
+  2026-07-31 16:28:27 /api/v1/vehicle-masters/manufacturers ................................................ ~ 2.58ms
+  2026-07-31 16:28:27 /api/v1/vehicle-masters/models ....................................................... ~ 2.48ms
+  2026-07-31 16:28:27 /api/v1/vehicle-masters/colours ...................................................... ~ 3.01ms
+  2026-07-31 16:28:27 /api/v1/customers .................................................................. ~ 504.53ms
+  2026-07-31 16:28:27 /api/v1/vehicle-masters/manufacturers .............................................. ~ 504.53ms
+  2026-07-31 16:28:27 /api/v1/vehicle-masters/models ....................................................... ~ 2.41ms
+  2026-07-31 16:28:27 /api/v1/vehicle-masters/colours ...................................................... ~ 1.89ms
+  2026-07-31 16:28:27 /api/v1/customers .................................................................... ~ 2.32ms
+  2026-07-31 16:28:27 /api/v1/vehicle-masters/manufacturers .............................................. ~ 511.38ms
+  2026-07-31 16:28:27 /api/v1/vehicle-masters/models ..................................................... ~ 510.48ms
+  2026-07-31 16:28:28 /api/v1/vehicle-masters/colours ...................................................... ~ 2.59ms
+  2026-07-31 16:32:25 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 509.05ms
+  2026-07-31 16:32:26 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 513.80ms
+  2026-07-31 16:32:32 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.93ms
+  2026-07-31 16:32:32 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 505.64ms
+  2026-07-31 16:32:33 /api/v1/customers .................................................................... ~ 0.45ms
+  2026-07-31 16:32:33 /api/v1/vehicle-masters/colours ...................................................... ~ 3.35ms
+  2026-07-31 16:32:33 /api/v1/vehicle-masters/models ..................................................... ~ 512.07ms
+  2026-07-31 16:32:33 /api/v1/vehicle-masters/manufacturers .............................................. ~ 511.32ms
+  2026-07-31 16:32:33 /api/v1/customers .................................................................... ~ 3.37ms
+  2026-07-31 16:32:33 /api/v1/vehicle-masters/manufacturers ................................................ ~ 4.04ms
+  2026-07-31 16:32:33 /api/v1/vehicle-masters/models ....................................................... ~ 2.31ms
+  2026-07-31 16:32:33 /api/v1/vehicle-masters/colours ...................................................... ~ 2.39ms
+  2026-07-31 16:32:33 /api/v1/customers .................................................................. ~ 512.90ms
+  2026-07-31 16:32:33 /api/v1/vehicle-masters/colours .................................................... ~ 514.30ms
+  2026-07-31 16:32:34 /api/v1/vehicle-masters/models ....................................................... ~ 4.38ms
+  2026-07-31 16:32:34 /api/v1/vehicle-masters/manufacturers ................................................ ~ 4.25ms
+  2026-07-31 16:32:34 /api/v1/customers .................................................................. ~ 513.83ms
+  2026-07-31 16:32:34 /api/v1/vehicle-masters/manufacturers .............................................. ~ 514.13ms
+  2026-07-31 16:32:34 /api/v1/vehicle-masters/models ....................................................... ~ 3.05ms
+  2026-07-31 16:32:34 /api/v1/vehicle-masters/colours ...................................................... ~ 3.36ms
+  2026-07-31 16:34:40 /api/v1/customers .................................................................... ~ 0.62ms
+  2026-07-31 16:34:40 /api/v1/vehicle-masters/manufacturers .............................................. ~ 520.14ms
+  2026-07-31 16:34:40 /api/v1/vehicle-masters/models ..................................................... ~ 522.73ms
+  2026-07-31 16:34:40 /api/v1/vehicle-masters/colours ...................................................... ~ 3.85ms
+  2026-07-31 16:34:40 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 512.21ms
+  2026-07-31 16:34:41 /api/v1/vehicle-masters/body_types ................................................. ~ 511.19ms
+  2026-07-31 16:34:41 /api/v1/vehicle-masters/fuel_types ................................................... ~ 5.25ms
+  2026-07-31 16:34:41 /api/v1/customers .................................................................. ~ 522.96ms
+  2026-07-31 16:34:41 /api/v1/vehicle-masters/manufacturers .............................................. ~ 522.10ms
+  2026-07-31 16:34:41 /api/v1/vehicle-masters/models ....................................................... ~ 3.62ms
+  2026-07-31 16:34:42 /api/v1/vehicle-masters/colours .................................................... ~ 527.86ms
+  2026-07-31 16:34:42 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 526.85ms
+  2026-07-31 16:34:42 /api/v1/vehicle-masters/body_types ................................................. ~ 545.22ms
+  2026-07-31 16:34:42 /api/v1/vehicle-masters/fuel_types ................................................. ~ 582.65ms
+  2026-07-31 16:55:51 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 511.96ms
+  2026-07-31 16:55:52 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 510.49ms
+  2026-07-31 17:55:37 /api/v1/auth/login ................................................................... ~ 1.48ms
+  2026-07-31 17:55:38 /api/v1/auth/login ....................................................................... ~ 1s
+  2026-07-31 17:55:58 /api/v1/vehicle-masters/models ..................................................... ~ 516.54ms
+  2026-07-31 17:55:58 /api/v1/vehicle-masters/manufacturers ................................................ ~ 0.34ms
+  2026-07-31 17:55:58 /api/v1/vehicle-masters/models ....................................................... ~ 2.21ms
+  2026-07-31 17:55:58 /api/v1/vehicle-masters/manufacturers .............................................. ~ 518.80ms
+  2026-07-31 17:55:58 /api/v1/vehicle-masters/models ..................................................... ~ 518.96ms
+  2026-07-31 17:55:58 /api/v1/vehicle-masters/manufacturers ................................................ ~ 3.64ms
+  2026-07-31 17:55:59 /api/v1/vehicle-masters/models ..................................................... ~ 520.45ms
+  2026-07-31 17:55:59 /api/v1/vehicle-masters/manufacturers .............................................. ~ 520.58ms
+  2026-07-31 17:56:23 /api/v1/vehicle-masters/body_types ................................................... ~ 0.73ms
+  2026-07-31 17:56:23 /api/v1/vehicle-masters/body_types ................................................. ~ 508.67ms
+  2026-07-31 17:56:23 /api/v1/vehicle-masters/body_types ................................................. ~ 511.05ms
+  2026-07-31 17:56:23 /api/v1/vehicle-masters/body_types ................................................... ~ 2.72ms
+  2026-07-31 17:56:46 /api/v1/vehicles ..................................................................... ~ 0.71ms
+  2026-07-31 17:56:46 /api/v1/vehicles ..................................................................... ~ 0.60ms
+  2026-07-31 17:56:46 /api/v1/vehicles ................................................................... ~ 512.00ms
+  2026-07-31 17:56:46 /api/v1/vehicles ................................................................... ~ 512.51ms
+  2026-07-31 17:56:56 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 512.06ms
+  2026-07-31 17:56:56 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.36ms
+  2026-07-31 17:57:02 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.84ms
+  2026-07-31 17:57:03 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 512.30ms
+  2026-07-31 17:57:03 /api/v1/customers .................................................................... ~ 0.82ms
+  2026-07-31 17:57:03 /api/v1/vehicle-masters/models ..................................................... ~ 513.65ms
+  2026-07-31 17:57:03 /api/v1/vehicle-masters/manufacturers .............................................. ~ 513.06ms
+  2026-07-31 17:57:03 /api/v1/vehicle-masters/colours ...................................................... ~ 3.67ms
+  2026-07-31 17:57:03 /api/v1/vehicle-masters/vehicle_classes .............................................. ~ 2.97ms
+  2026-07-31 17:57:04 /api/v1/vehicle-masters/body_types ................................................. ~ 508.32ms
+  2026-07-31 17:57:04 /api/v1/vehicle-masters/fuel_types ................................................. ~ 508.92ms
+  2026-07-31 17:57:04 /api/v1/customers .................................................................... ~ 2.42ms
+  2026-07-31 17:57:04 /api/v1/vehicle-masters/manufacturers ................................................ ~ 2.80ms
+  2026-07-31 17:57:04 /api/v1/vehicle-masters/models ....................................................... ~ 2.62ms
+  2026-07-31 17:57:04 /api/v1/vehicle-masters/colours ...................................................... ~ 2.72ms
+  2026-07-31 17:57:04 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 506.94ms
+  2026-07-31 17:57:04 /api/v1/vehicle-masters/body_types ................................................. ~ 505.55ms
+  2026-07-31 17:57:04 /api/v1/vehicle-masters/fuel_types ................................................... ~ 2.97ms
+  2026-07-31 17:57:05 /api/v1/customers .................................................................... ~ 2.94ms
+  2026-07-31 17:57:05 /api/v1/vehicle-masters/models ..................................................... ~ 513.10ms
+  2026-07-31 17:57:05 /api/v1/vehicle-masters/manufacturers .............................................. ~ 512.94ms
+  2026-07-31 17:57:05 /api/v1/vehicle-masters/colours ...................................................... ~ 2.64ms
+  2026-07-31 17:57:05 /api/v1/vehicle-masters/vehicle_classes .............................................. ~ 2.70ms
+  2026-07-31 17:57:05 /api/v1/vehicle-masters/body_types ................................................... ~ 2.46ms
+  2026-07-31 17:57:05 /api/v1/vehicle-masters/fuel_types ................................................. ~ 507.67ms
+  2026-07-31 17:57:05 /api/v1/customers .................................................................. ~ 508.24ms
+  2026-07-31 17:57:05 /api/v1/vehicle-masters/manufacturers ................................................ ~ 2.69ms
+  2026-07-31 17:57:06 /api/v1/vehicle-masters/models ....................................................... ~ 1.38ms
+  2026-07-31 17:57:06 /api/v1/vehicle-masters/colours .................................................... ~ 513.34ms
+  2026-07-31 17:57:06 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 514.20ms
+  2026-07-31 17:57:06 /api/v1/vehicle-masters/body_types ................................................... ~ 2.47ms
+  2026-07-31 17:57:06 /api/v1/vehicle-masters/fuel_types ................................................. ~ 513.96ms
+  2026-07-31 18:10:54 /api/v1/customers .................................................................. ~ 511.83ms
+  2026-07-31 18:10:55 /api/v1/vehicle-masters/manufacturers ................................................ ~ 0.54ms
+  2026-07-31 18:10:55 /api/v1/vehicle-masters/colours ...................................................... ~ 3.89ms
+  2026-07-31 18:10:55 /api/v1/vehicle-masters/vehicle_classes .............................................. ~ 4.51ms
+  2026-07-31 18:10:55 /api/v1/vehicle-masters/body_types ................................................. ~ 507.51ms
+  2026-07-31 18:10:55 /api/v1/customers ........................................................................ ~ 1s
+  2026-07-31 18:10:55 /api/v1/vehicle-masters/manufacturers .............................................. ~ 514.69ms
+  2026-07-31 18:10:56 /api/v1/vehicle-masters/colours .................................................... ~ 514.94ms
+  2026-07-31 18:10:56 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 515.27ms
+  2026-07-31 18:10:56 /api/v1/vehicle-masters/body_types ................................................... ~ 3.01ms
+  2026-07-31 18:10:57 /api/v1/vehicle-masters/fuel_types ................................................. ~ 525.64ms
+  2026-07-31 18:10:58 /api/v1/vehicle-masters/fuel_types ................................................... ~ 0.42ms
+  2026-07-31 18:30:01 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 522.57ms
+  2026-07-31 18:30:02 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 508.02ms
+  2026-07-31 18:30:02 /api/v1/customers .................................................................. ~ 509.91ms
+  2026-07-31 18:30:02 /api/v1/vehicle-masters/colours .................................................... ~ 512.96ms
+  2026-07-31 18:30:02 /api/v1/vehicle-masters/manufacturers ................................................ ~ 2.79ms
+  2026-07-31 18:30:03 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 517.11ms
+  2026-07-31 18:30:03 /api/v1/vehicle-masters/body_types ................................................. ~ 517.33ms
+  2026-07-31 18:30:03 /api/v1/vehicle-masters/fuel_types ................................................... ~ 3.80ms
+  2026-07-31 18:30:03 /api/v1/customers .................................................................... ~ 3.79ms
+  2026-07-31 18:30:03 /api/v1/vehicle-masters/manufacturers .............................................. ~ 506.48ms
+  2026-07-31 18:30:03 /api/v1/vehicle-masters/colours .................................................... ~ 506.03ms
+  2026-07-31 18:30:03 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 509.37ms
+  2026-07-31 18:30:04 /api/v1/vehicle-masters/body_types ................................................. ~ 510.30ms
+  2026-07-31 18:30:04 /api/v1/vehicle-masters/fuel_types ................................................... ~ 4.70ms
+  2026-07-31 18:30:04 /api/v1/customers .................................................................... ~ 3.94ms
+  2026-07-31 18:30:04 /api/v1/vehicle-masters/colours .................................................... ~ 520.64ms
+  2026-07-31 18:30:04 /api/v1/vehicle-masters/manufacturers .............................................. ~ 518.99ms
+  2026-07-31 18:30:04 /api/v1/vehicle-masters/vehicle_classes .............................................. ~ 2.97ms
+  2026-07-31 18:30:05 /api/v1/vehicle-masters/body_types ................................................... ~ 3.05ms
+  2026-07-31 18:30:05 /api/v1/vehicle-masters/fuel_types ................................................. ~ 510.09ms
+  2026-07-31 18:30:05 /api/v1/customers .................................................................. ~ 509.64ms
+  2026-07-31 18:30:05 /api/v1/vehicle-masters/manufacturers ................................................ ~ 3.97ms
+  2026-07-31 18:30:05 /api/v1/vehicle-masters/colours .................................................... ~ 506.65ms
+  2026-07-31 18:30:05 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 507.22ms
+  2026-07-31 18:30:06 /api/v1/vehicle-masters/body_types ................................................. ~ 513.44ms
+  2026-07-31 18:30:06 /api/v1/vehicle-masters/fuel_types ................................................. ~ 512.69ms
+  2026-07-31 18:30:29 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.59ms
+  2026-07-31 18:30:29 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.42ms
+  2026-07-31 18:30:29 /api/v1/customers .................................................................... ~ 0.59ms
+  2026-07-31 18:30:29 /api/v1/vehicle-masters/manufacturers ................................................ ~ 4.39ms
+  2026-07-31 18:30:29 /api/v1/vehicle-masters/colours ...................................................... ~ 2.82ms
+  2026-07-31 18:30:30 /api/v1/vehicle-masters/body_types ................................................. ~ 509.73ms
+  2026-07-31 18:30:30 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 507.72ms
+  2026-07-31 18:30:30 /api/v1/vehicle-masters/fuel_types ................................................... ~ 3.01ms
+  2026-07-31 18:30:30 /api/v1/customers .................................................................. ~ 509.88ms
+  2026-07-31 18:30:30 /api/v1/vehicle-masters/manufacturers .............................................. ~ 510.37ms
+  2026-07-31 18:30:30 /api/v1/vehicle-masters/colours ...................................................... ~ 4.08ms
+  2026-07-31 18:30:30 /api/v1/vehicle-masters/vehicle_classes .............................................. ~ 4.29ms
+  2026-07-31 18:30:31 /api/v1/vehicle-masters/body_types ................................................... ~ 3.66ms
+  2026-07-31 18:30:31 /api/v1/vehicle-masters/fuel_types ................................................. ~ 513.96ms
+  2026-07-31 18:30:31 /api/v1/customers .................................................................. ~ 512.38ms
+  2026-07-31 18:30:31 /api/v1/vehicle-masters/manufacturers ................................................ ~ 3.06ms
+  2026-07-31 18:30:31 /api/v1/vehicle-masters/colours .................................................... ~ 516.63ms
+  2026-07-31 18:30:31 /api/v1/vehicle-masters/body_types ................................................. ~ 517.36ms
+  2026-07-31 18:30:31 /api/v1/vehicle-masters/vehicle_classes .............................................. ~ 2.94ms
+  2026-07-31 18:30:32 /api/v1/vehicle-masters/fuel_types ................................................. ~ 512.91ms
+  2026-07-31 18:30:32 /api/v1/customers .................................................................. ~ 512.05ms
+  2026-07-31 18:30:32 /api/v1/vehicle-masters/manufacturers ................................................ ~ 3.13ms
+  2026-07-31 18:30:32 /api/v1/vehicle-masters/colours .................................................... ~ 509.27ms
+  2026-07-31 18:30:32 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 512.08ms
+  2026-07-31 18:30:32 /api/v1/vehicle-masters/body_types ................................................... ~ 3.70ms
+  2026-07-31 18:30:33 /api/v1/vehicle-masters/fuel_types ................................................. ~ 505.72ms
+  2026-07-31 18:30:55 /api/v1/vehicle-masters/models ..................................................... ~ 502.34ms
+  2026-07-31 18:30:55 /api/v1/vehicle-masters/models ....................................................... ~ 0.46ms
+  2026-07-31 20:45:37 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .................................... ~ 1s
+  2026-07-31 20:45:38 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 513.24ms
+  2026-07-31 20:46:12 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 501.51ms
+  2026-07-31 20:46:13 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.47ms
+  2026-07-31 20:46:18 /api/v1/vehicles ................................................................... ~ 516.30ms
+  2026-07-31 20:46:19 /api/v1/vehicles ..................................................................... ~ 0.40ms
+  2026-07-31 20:46:24 /api/v1/auth/login ................................................................... ~ 0.91ms
+  2026-07-31 20:46:25 /api/v1/auth/login ....................................................................... ~ 2s
+  2026-07-31 20:46:36 /api/v1/vehicles ..................................................................... ~ 3.93ms
+  2026-07-31 20:46:37 /api/v1/vehicles ................................................................... ~ 513.62ms
+  2026-07-31 20:46:37 /api/v1/vehicles ................................................................... ~ 516.54ms
+  2026-07-31 20:46:37 /api/v1/vehicles ................................................................... ~ 516.20ms
+  2026-07-31 20:46:43 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 502.46ms
+  2026-07-31 20:46:43 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.36ms
+  2026-07-31 20:48:05 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .................................... ~ 1s
+  2026-07-31 20:48:05 /api/v1/insurance-accounting/companies ................................................... ~ 1s
+  2026-07-31 20:48:06 /api/v1/insurance-accounting/purchase-sources ...................................... ~ 517.94ms
+  2026-07-31 20:48:06 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ..................... ~ 2.97ms
+  2026-07-31 20:48:06 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 509.34ms
+  2026-07-31 20:48:06 /api/v1/insurance-accounting/companies ................................................... ~ 1s
+  2026-07-31 20:48:07 /api/v1/insurance-accounting/purchase-sources ...................................... ~ 513.01ms
+  2026-07-31 20:48:07 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 517.82ms
+  2026-07-31 20:48:08 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation ........ ~ 517.37ms
+  2026-07-31 20:48:08 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation ........ ~ 513.27ms
+  2026-07-31 20:48:15 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation .......... ~ 0.61ms
+  2026-07-31 20:48:15 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation .......... ~ 0.38ms
+  2026-07-31 20:48:21 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation ........ ~ 513.61ms
+  2026-07-31 20:48:21 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation .......... ~ 0.42ms
+  2026-07-31 20:48:27 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation .......... ~ 0.62ms
+  2026-07-31 20:48:27 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation .......... ~ 0.79ms
+  2026-07-31 20:48:40 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation .......... ~ 1.56ms
+  2026-07-31 20:48:40 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation ........ ~ 511.91ms
+  2026-07-31 20:48:43 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation .......... ~ 1.06ms
+  2026-07-31 20:48:43 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation ........ ~ 513.37ms
+  2026-07-31 20:48:47 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation .............. ~ 6s
+  2026-07-31 20:48:54 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation ........ ~ 503.46ms
+  2026-07-31 20:48:54 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation ........ ~ 505.16ms
+  2026-07-31 20:48:54 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation ........ ~ 515.80ms
+  2026-07-31 20:49:03 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 509.63ms
+  2026-07-31 20:49:03 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.89ms
+  2026-07-31 20:49:06 /api/v1/vehicles ................................................................... ~ 502.60ms
+  2026-07-31 20:49:06 /api/v1/vehicles ..................................................................... ~ 0.91ms
+  2026-07-31 20:49:22 /api/v1/customers .................................................................... ~ 0.85ms
+  2026-07-31 20:49:23 /api/v1/customers .................................................................. ~ 510.17ms
+  2026-07-31 20:49:23 /api/v1/customers .................................................................. ~ 512.79ms
+  2026-07-31 20:49:23 /api/v1/customers .................................................................. ~ 514.62ms
+  2026-07-31 20:49:45 /api/v1/customers .................................................................... ~ 0.48ms
+  2026-07-31 20:49:45 /api/v1/customers .................................................................... ~ 0.34ms
+  2026-07-31 20:50:07 /api/v1/vehicles ..................................................................... ~ 1.07ms
+  2026-07-31 20:50:07 /api/v1/vehicles ..................................................................... ~ 4.53ms
+  2026-07-31 20:50:08 /api/v1/vehicles ................................................................... ~ 507.89ms
+  2026-07-31 20:50:08 /api/v1/vehicles ..................................................................... ~ 0.35ms
+  2026-07-31 20:50:14 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.84ms
+  2026-07-31 20:50:14 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 0.34ms
+  2026-07-31 20:50:21 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 502.56ms
+  2026-07-31 20:50:21 /api/v1/insurance-accounting/companies ............................................. ~ 504.29ms
+  2026-07-31 20:50:21 /api/v1/insurance-accounting/purchase-sources ........................................ ~ 2.11ms
+  2026-07-31 20:50:21 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 514.27ms
+  2026-07-31 20:50:21 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 514.69ms
+  2026-07-31 20:50:21 /api/v1/insurance-accounting/companies ............................................... ~ 3.00ms
+  2026-07-31 20:50:22 /api/v1/insurance-accounting/purchase-sources ...................................... ~ 511.75ms
+  2026-07-31 20:50:22 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurances ................... ~ 510.63ms
+  2026-07-31 20:50:22 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation .......... ~ 0.55ms
+  2026-07-31 20:50:22 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation ........ ~ 512.67ms
+  2026-07-31 20:50:28 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation .......... ~ 0.53ms
+  2026-07-31 20:50:28 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation ........ ~ 502.85ms
+  2026-07-31 20:50:30 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation .......... ~ 1.17ms
+  2026-07-31 20:50:30 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation .......... ~ 0.63ms
+  2026-07-31 20:50:32 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation .......... ~ 1.60ms
+  2026-07-31 20:50:32 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8/insurance-calculation .......... ~ 0.76ms
+  2026-07-31 20:50:38 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 ................................ ~ 1.96ms
+  2026-07-31 20:50:38 /api/v1/vehicles/019fb2ab-2d8a-734a-8a7d-e1f15aa3b6b8 .............................. ~ 515.62ms
+  2026-07-31 20:50:41 /api/v1/vehicles ................................................................... ~ 514.63ms
+  2026-07-31 20:50:41 /api/v1/vehicles ..................................................................... ~ 0.56ms
+  2026-07-31 22:08:50 ....................................................................................... ~ 4m 3s
+  2026-07-31 22:08:50 ....................................................................................... ~ 4m 3s
+  2026-07-31 22:13:16 /api/v1/vehicles ................................................................... ~ 505.63ms
+  2026-07-31 22:13:16 /api/v1/vehicles ................................................................... ~ 512.97ms
+  2026-07-31 22:13:16 /api/v1/vehicles ..................................................................... ~ 8.33ms
+  2026-07-31 22:13:17 /api/v1/vehicles ................................................................... ~ 509.94ms
+  2026-07-31 22:25:35 /api/v1/vehicle-masters/body_types ................................................. ~ 512.01ms
+  2026-07-31 22:25:36 /api/v1/vehicle-masters/body_types ................................................. ~ 513.54ms
+  2026-07-31 22:25:36 /api/v1/vehicle-masters/body_types ................................................... ~ 0.51ms
+  2026-07-31 22:25:36 /api/v1/vehicle-masters/body_types ................................................... ~ 0.50ms
+  2026-07-31 22:45:43 /api/v1/dashboard/summary ................................................................ ~ 1s
+  2026-07-31 22:49:02 /api/v1/dashboard/summary .......................................................... ~ 510.24ms
+  2026-07-31 22:49:04 /api/v1/dashboard/summary ............................................................ ~ 1.96ms
+  2026-07-31 22:49:04 /api/v1/dashboard/summary .......................................................... ~ 511.28ms
+  2026-07-31 22:49:36 /api/v1/dashboard/summary .......................................................... ~ 512.75ms
+  2026-07-31 22:49:37 /api/v1/dashboard/summary ............................................................ ~ 0.56ms
+  2026-07-31 22:50:37 /api/v1/dashboard/summary .......................................................... ~ 511.56ms
+  2026-07-31 22:50:37 /api/v1/dashboard/summary ............................................................ ~ 1.18ms
+  2026-07-31 22:50:37 /api/v1/dashboard/summary .......................................................... ~ 512.79ms
+  2026-07-31 22:50:37 /api/v1/dashboard/summary .......................................................... ~ 512.44ms
+  2026-07-31 22:50:56 /api/v1/dashboard/summary ............................................................ ~ 0.65ms
+  2026-07-31 22:50:56 /api/v1/dashboard/summary ............................................................ ~ 0.43ms
+  2026-07-31 22:50:56 /api/v1/dashboard/summary .......................................................... ~ 507.29ms
+  2026-07-31 22:50:57 /api/v1/dashboard/summary .......................................................... ~ 508.00ms
+  2026-07-31 22:51:56 /api/v1/customers .................................................................. ~ 513.56ms
+  2026-07-31 22:51:57 /api/v1/customers .................................................................... ~ 0.45ms
+  2026-07-31 22:51:57 /api/v1/vehicle-masters/manufacturers ................................................ ~ 0.52ms
+  2026-07-31 22:51:57 /api/v1/vehicle-masters/manufacturers ................................................ ~ 0.37ms
+  2026-07-31 22:51:57 /api/v1/vehicle-masters/colours .................................................... ~ 509.75ms
+  2026-07-31 22:51:57 /api/v1/vehicle-masters/colours ...................................................... ~ 0.44ms
+  2026-07-31 22:51:58 /api/v1/vehicle-masters/vehicle_classes .............................................. ~ 0.34ms
+  2026-07-31 22:51:58 /api/v1/vehicle-masters/body_types ................................................... ~ 0.80ms
+  2026-07-31 22:51:58 /api/v1/vehicle-masters/fuel_types ................................................. ~ 517.31ms
+  2026-07-31 22:51:58 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 517.20ms
+  2026-07-31 22:51:58 /api/v1/vehicle-masters/body_types ................................................... ~ 3.49ms
+  2026-07-31 22:51:58 /api/v1/vehicle-masters/fuel_types ................................................... ~ 3.64ms
+  2026-07-31 22:51:58 /api/v1/customers .................................................................... ~ 0.61ms
+  2026-07-31 22:51:59 /api/v1/customers .................................................................... ~ 0.44ms
+  2026-07-31 22:51:59 /api/v1/vehicle-masters/manufacturers .............................................. ~ 514.07ms
+  2026-07-31 22:51:59 /api/v1/vehicle-masters/colours ...................................................... ~ 0.49ms
+  2026-07-31 22:51:59 /api/v1/vehicle-masters/vehicle_classes .............................................. ~ 3.61ms
+  2026-07-31 22:51:59 /api/v1/vehicle-masters/body_types ................................................... ~ 3.77ms
+  2026-07-31 22:51:59 /api/v1/vehicle-masters/fuel_types ................................................. ~ 516.86ms
+  2026-07-31 22:51:59 /api/v1/vehicle-masters/manufacturers .............................................. ~ 517.27ms
+  2026-07-31 22:52:00 /api/v1/vehicle-masters/colours ...................................................... ~ 3.30ms
+  2026-07-31 22:52:00 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 510.44ms
+  2026-07-31 22:52:00 /api/v1/vehicle-masters/body_types ................................................. ~ 511.65ms
+  2026-07-31 22:52:00 /api/v1/vehicle-masters/fuel_types ................................................... ~ 4.14ms
+  2026-07-31 22:52:44 /api/v1/dashboard/summary .......................................................... ~ 521.34ms
+  2026-07-31 22:52:44 /api/v1/dashboard/summary ............................................................ ~ 0.52ms
+  2026-07-31 22:52:44 /api/v1/dashboard/summary ............................................................ ~ 7.86ms
+  2026-07-31 22:52:44 /api/v1/dashboard/summary .......................................................... ~ 521.01ms
+  2026-07-31 23:01:51 /api/v1/auth/login ................................................................. ~ 525.84ms
+  2026-07-31 23:01:52 /api/v1/auth/login ....................................................................... ~ 1s
+  2026-07-31 23:02:06 /api/v1/dashboard/summary .......................................................... ~ 509.94ms
+  2026-07-31 23:02:06 /api/v1/dashboard/summary .......................................................... ~ 511.78ms
+  2026-07-31 23:03:10 /api/v1/dashboard/summary ............................................................ ~ 0.73ms
+  2026-07-31 23:03:10 /api/v1/dashboard/summary ............................................................ ~ 0.82ms
+  2026-07-31 23:03:10 /api/v1/dashboard/summary .......................................................... ~ 512.32ms
+  2026-07-31 23:03:11 /api/v1/dashboard/summary .......................................................... ~ 514.02ms
+  2026-07-31 23:07:38 /api/v1/dashboard/summary ............................................................ ~ 0.74ms
+  2026-07-31 23:07:38 /api/v1/dashboard/summary .......................................................... ~ 512.87ms
+  2026-07-31 23:07:43 /api/v1/dashboard/summary .......................................................... ~ 501.54ms
+  2026-07-31 23:07:44 /api/v1/dashboard/summary ............................................................ ~ 0.38ms
+  2026-07-31 23:07:44 /api/v1/dashboard/summary .......................................................... ~ 519.76ms
+  2026-07-31 23:07:44 /api/v1/dashboard/summary .......................................................... ~ 516.10ms
+  2026-07-31 23:08:21 /api/v1/dashboard/summary ............................................................ ~ 0.81ms
+  2026-07-31 23:08:21 /api/v1/dashboard/summary ............................................................ ~ 0.50ms
+  2026-07-31 23:08:21 /api/v1/dashboard/summary ............................................................ ~ 3.60ms
+  2026-07-31 23:08:21 /api/v1/dashboard/summary .......................................................... ~ 518.08ms
+  2026-07-31 23:08:25 /api/v1/customers .................................................................. ~ 514.70ms
+  2026-07-31 23:08:25 /api/v1/vehicle-masters/manufacturers ................................................ ~ 0.40ms
+  2026-07-31 23:08:25 /api/v1/vehicle-masters/colours ...................................................... ~ 2.53ms
+  2026-07-31 23:08:25 /api/v1/vehicle-masters/vehicle_classes .............................................. ~ 2.39ms
+  2026-07-31 23:08:25 /api/v1/vehicle-masters/body_types ................................................. ~ 511.03ms
+  2026-07-31 23:08:25 /api/v1/vehicle-masters/fuel_types ................................................. ~ 512.94ms
+  2026-07-31 23:08:25 /api/v1/customers .................................................................... ~ 4.29ms
+  2026-07-31 23:08:25 /api/v1/vehicle-masters/manufacturers ................................................ ~ 2.64ms
+  2026-07-31 23:08:25 /api/v1/vehicle-masters/colours ...................................................... ~ 2.85ms
+  2026-07-31 23:08:25 /api/v1/vehicle-masters/vehicle_classes .............................................. ~ 1.38ms
+  2026-07-31 23:08:26 /api/v1/vehicle-masters/body_types ................................................... ~ 1.22ms
+  2026-07-31 23:08:26 /api/v1/vehicle-masters/fuel_types ................................................. ~ 511.73ms
+  2026-07-31 23:08:26 /api/v1/customers .................................................................. ~ 512.86ms
+  2026-07-31 23:08:26 /api/v1/vehicle-masters/manufacturers ................................................ ~ 2.58ms
+  2026-07-31 23:08:26 /api/v1/vehicle-masters/colours ...................................................... ~ 4.57ms
+  2026-07-31 23:08:26 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 509.54ms
+  2026-07-31 23:08:26 /api/v1/vehicle-masters/body_types ................................................. ~ 508.81ms
+  2026-07-31 23:08:26 /api/v1/vehicle-masters/fuel_types ................................................... ~ 1.89ms
+  2026-07-31 23:08:26 /api/v1/customers .................................................................. ~ 511.03ms
+  2026-07-31 23:08:27 /api/v1/vehicle-masters/manufacturers .............................................. ~ 513.02ms
+  2026-07-31 23:08:27 /api/v1/vehicle-masters/colours ...................................................... ~ 4.51ms
+  2026-07-31 23:08:27 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 508.13ms
+  2026-07-31 23:08:27 /api/v1/vehicle-masters/body_types ................................................. ~ 507.07ms
+  2026-07-31 23:08:27 /api/v1/vehicle-masters/fuel_types ................................................... ~ 3.93ms
+  2026-07-31 23:08:32 /api/v1/dashboard/summary .......................................................... ~ 510.88ms
+  2026-07-31 23:08:33 /api/v1/dashboard/summary ............................................................ ~ 0.45ms
+  2026-07-31 23:08:33 /api/v1/dashboard/summary .......................................................... ~ 518.14ms
+  2026-07-31 23:08:33 /api/v1/dashboard/summary ................................................................ ~ 1s
+  2026-07-31 23:11:17 /api/v1/dashboard/summary .......................................................... ~ 511.52ms
+  2026-07-31 23:11:17 /api/v1/dashboard/summary ............................................................ ~ 0.24ms
+  2026-07-31 23:11:37 /api/v1/dashboard/summary .......................................................... ~ 501.09ms
+  2026-07-31 23:11:38 /api/v1/dashboard/summary ............................................................ ~ 0.37ms
+  2026-07-31 23:11:38 /api/v1/dashboard/summary ............................................................ ~ 2.80ms
+  2026-07-31 23:11:38 /api/v1/dashboard/summary .......................................................... ~ 507.92ms
+  2026-07-31 23:12:10 /api/v1/dashboard/summary ............................................................ ~ 0.88ms
+  2026-07-31 23:12:10 /api/v1/dashboard/summary ............................................................ ~ 0.60ms
+  2026-07-31 23:12:10 /api/v1/dashboard/summary .......................................................... ~ 508.80ms
+  2026-07-31 23:12:10 /api/v1/dashboard/summary .......................................................... ~ 507.47ms
+  2026-07-31 23:12:14 /api/v1/customers .................................................................. ~ 514.54ms
+  2026-07-31 23:12:14 /api/v1/customers .................................................................... ~ 0.46ms
+  2026-07-31 23:12:14 /api/v1/customers .................................................................... ~ 3.09ms
+  2026-07-31 23:12:14 /api/v1/customers .................................................................... ~ 0.40ms
+  2026-07-31 23:43:44 /api/v1/customers ........................................................................ ~ 1s
+  2026-07-31 23:43:46 /api/v1/customers .................................................................. ~ 511.85ms
+  2026-07-31 23:44:29 /api/v1/customers .................................................................. ~ 509.64ms
+  2026-07-31 23:44:30 /api/v1/customers .................................................................. ~ 512.04ms
+  2026-07-31 23:44:56 /api/v1/customers .................................................................... ~ 0.80ms
+  2026-07-31 23:44:56 /api/v1/customers .................................................................. ~ 513.41ms
+  2026-07-31 23:45:53 /api/v1/customers/019fb224-ab4c-7029-883a-4249af313e40 ................................... ~ 1s
+  2026-07-31 23:56:56 /api/v1/customers/019fb224-ab4c-7029-883a-4249af313e40 ................................... ~ 4s
+  2026-07-31 23:58:13 /api/v1/customers/019fb224-ab4c-7029-883a-4249af313e40 ................................... ~ 1s
+  2026-07-31 23:59:11 /api/v1/customers/019fb224-ab4c-7029-883a-4249af313e40 ............................... ~ 0.75ms
+  2026-07-31 23:59:12 /api/v1/customers/019fb224-ab4c-7029-883a-4249af313e40 ............................. ~ 504.74ms
+  2026-07-31 23:59:56 /api/v1/auth/login ................................................................... ~ 0.70ms
+  2026-07-31 23:59:56 /api/v1/auth/login ....................................................................... ~ 1s
+  2026-08-01 00:00:01 /api/v1/dashboard/summary .......................................................... ~ 513.72ms
+  2026-08-01 00:00:01 /api/v1/dashboard/summary ............................................................ ~ 0.57ms
+  2026-08-01 00:00:01 /api/v1/dashboard/summary .......................................................... ~ 508.23ms
+  2026-08-01 00:00:02 /api/v1/dashboard/summary ................................................................ ~ 1s
+  2026-08-01 00:00:11 /api/v1/customers .................................................................. ~ 507.27ms
+  2026-08-01 00:00:12 /api/v1/customers .................................................................... ~ 0.72ms
+  2026-08-01 00:00:12 /api/v1/customers .................................................................. ~ 520.44ms
+  2026-08-01 00:00:12 /api/v1/customers ........................................................................ ~ 1s
+  2026-08-01 00:00:36 /api/v1/customers/019fb21c-2077-7324-b8b5-02734a0050f5 ............................. ~ 511.88ms
+  2026-08-01 00:00:37 /api/v1/customers/019fb21c-2077-7324-b8b5-02734a0050f5 ............................. ~ 513.61ms
+  2026-08-01 00:00:37 /api/v1/customers/019fb21c-2077-7324-b8b5-02734a0050f5 ............................. ~ 516.53ms
+  2026-08-01 00:00:37 /api/v1/customers/019fb21c-2077-7324-b8b5-02734a0050f5 ............................. ~ 515.58ms
+  2026-08-01 00:00:48 /api/v1/customers .................................................................. ~ 511.46ms
+  2026-08-01 00:00:48 /api/v1/customers ........................................................................ ~ 1s
+  2026-08-01 00:00:49 /api/v1/customers ........................................................................ ~ 1s
+  2026-08-01 00:00:49 /api/v1/customers ........................................................................ ~ 1s
+  2026-08-01 00:01:04 /api/v1/ledgers ...................................................................... ~ 1.21ms
+  2026-08-01 00:01:04 /api/v1/ledgers .................................................................... ~ 512.49ms
+  2026-08-01 00:01:04 /api/v1/ledgers .................................................................... ~ 516.11ms
+  2026-08-01 00:01:04 /api/v1/ledgers .................................................................... ~ 513.72ms
+  2026-08-01 00:02:06 /api/v1/customers .................................................................. ~ 513.22ms
+  2026-08-01 00:02:06 /api/v1/customers .................................................................. ~ 515.31ms
+  2026-08-01 00:02:06 /api/v1/customers .................................................................. ~ 519.34ms
+  2026-08-01 00:02:06 /api/v1/customers .................................................................. ~ 519.81ms
+  2026-08-01 00:02:22 /api/v1/customers .................................................................... ~ 0.73ms
+  2026-08-01 00:02:22 /api/v1/customers .................................................................. ~ 514.01ms
+  2026-08-01 00:02:22 /api/v1/customers ........................................................................ ~ 1s
+  2026-08-01 00:02:23 /api/v1/customers .................................................................. ~ 514.39ms
+  2026-08-01 00:10:32 /api/v1/dashboard/summary ................................................................ ~ 3s
+  2026-08-01 00:10:35 /api/v1/dashboard/summary ................................................................ ~ 1s
+  2026-08-01 00:10:35 /api/v1/dashboard/summary ................................................................ ~ 2s
+  2026-08-01 00:10:37 /api/v1/dashboard/summary ................................................................ ~ 3s
+  2026-08-01 00:11:45 /api/v1/dashboard/summary .......................................................... ~ 515.22ms
+  2026-08-01 00:11:46 /api/v1/dashboard/summary ............................................................ ~ 1.15ms
+  2026-08-01 00:11:46 /api/v1/dashboard/summary ................................................................ ~ 1s
+  2026-08-01 00:11:46 /api/v1/dashboard/summary ................................................................ ~ 1s
+  2026-08-01 00:12:10 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 518.62ms
+  2026-08-01 00:12:11 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 512.31ms
+  2026-08-01 00:12:11 /api/v1/vehicle-masters/vehicle_classes .................................................. ~ 1s
+  2026-08-01 00:12:12 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 507.38ms
+  2026-08-01 00:12:17 /api/v1/dashboard/summary .......................................................... ~ 517.24ms
+  2026-08-01 00:12:17 /api/v1/dashboard/summary .......................................................... ~ 513.38ms
+  2026-08-01 00:12:17 /api/v1/dashboard/summary ................................................................ ~ 1s
+  2026-08-01 00:12:17 /api/v1/dashboard/summary ................................................................ ~ 1s
+  2026-08-01 00:12:19 /api/v1/dashboard/summary .......................................................... ~ 516.32ms
+  2026-08-01 00:12:20 /api/v1/dashboard/summary .......................................................... ~ 514.14ms
+  2026-08-01 00:12:20 /api/v1/dashboard/summary ................................................................ ~ 1s
+  2026-08-01 00:12:20 /api/v1/dashboard/summary ................................................................ ~ 2s
+  2026-08-01 00:22:55 /api/v1/vehicles ................................................................... ~ 513.93ms
+  2026-08-01 00:22:55 /api/v1/vehicles .................................................................... ~ 32.70ms
+  2026-08-01 00:23:47 /api/v1/dashboard/summary .......................................................... ~ 513.96ms
+  2026-08-01 00:23:47 /api/v1/dashboard/summary .......................................................... ~ 508.11ms
+  2026-08-01 00:23:58 /api/v1/dashboard/summary ................................................................ ~ 1s
+  2026-08-01 00:23:58 /api/v1/dashboard/summary ............................................................ ~ 1.01ms
+  2026-08-01 00:23:58 /api/v1/dashboard/summary .......................................................... ~ 517.60ms
+  2026-08-01 00:23:58 /api/v1/dashboard/summary ................................................................ ~ 1s
+  2026-08-01 00:24:03 /api/v1/customers .................................................................. ~ 610.97ms
+  2026-08-01 00:24:04 /api/v1/customers .................................................................. ~ 506.23ms
+  2026-08-01 00:24:04 /api/v1/customers .................................................................. ~ 538.75ms
+  2026-08-01 00:24:04 /api/v1/customers .................................................................... ~ 4.88ms
+  2026-08-01 00:24:25 /api/v1/dashboard/summary ............................................................... ~ 28s
+  2026-08-01 00:24:53 /api/v1/dashboard/summary ............................................................... ~ 12s
+  2026-08-01 00:24:53 /api/v1/dashboard/summary ............................................................... ~ 13s
+  2026-08-01 00:25:09 /api/v1/dashboard/summary ................................................................ ~ 1s
+  2026-08-01 00:25:14 /api/v1/customers .................................................................. ~ 513.62ms
+  2026-08-01 00:25:14 /api/v1/customers .................................................................... ~ 0.60ms
+  2026-08-01 00:25:14 /api/v1/customers .................................................................. ~ 511.18ms
+  2026-08-01 00:25:14 /api/v1/customers .................................................................. ~ 511.34ms
+  2026-08-01 00:25:17 /api/v1/ledgers .................................................................... ~ 510.23ms
+  2026-08-01 00:25:17 /api/v1/ledgers ...................................................................... ~ 0.57ms
+  2026-08-01 00:25:17 /api/v1/ledgers ...................................................................... ~ 3.88ms
+  2026-08-01 00:25:17 /api/v1/ledgers .................................................................... ~ 507.49ms
+  2026-08-01 06:17:43 /api/v1/ledgers .................................................................... ~ 519.67ms
+  2026-08-01 06:17:43 /api/v1/ledgers .................................................................... ~ 505.86ms
+  2026-08-01 06:17:54 /api/v1/auth/login ................................................................. ~ 522.51ms
+  2026-08-01 06:17:54 /api/v1/auth/login ....................................................................... ~ 1s
+  2026-08-01 06:17:56 /api/v1/dashboard/summary .......................................................... ~ 504.32ms
+  2026-08-01 06:17:56 /api/v1/dashboard/summary .......................................................... ~ 509.34ms
+  2026-08-01 06:18:10 /api/v1/customers .................................................................... ~ 0.96ms
+  2026-08-01 06:18:10 /api/v1/customers .................................................................... ~ 3.44ms
+  2026-08-01 06:18:10 /api/v1/customers .................................................................. ~ 508.60ms
+  2026-08-01 06:18:11 /api/v1/customers .................................................................... ~ 0.26ms
+  2026-08-01 06:18:13 /api/v1/ledgers .................................................................... ~ 505.50ms
+  2026-08-01 06:18:14 /api/v1/ledgers ...................................................................... ~ 0.38ms
+  2026-08-01 06:18:14 /api/v1/ledgers ...................................................................... ~ 0.80ms
+  2026-08-01 06:18:14 /api/v1/ledgers .................................................................... ~ 521.21ms
+  2026-08-01 06:39:05 /api/v1/ledgers .......................................................................... ~ 1s
+  2026-08-01 06:39:06 /api/v1/ledgers ...................................................................... ~ 0.58ms
+  2026-08-01 06:40:17 /api/v1/dashboard/summary .......................................................... ~ 503.86ms
+  2026-08-01 06:40:17 /api/v1/dashboard/summary ............................................................ ~ 0.49ms
+  2026-08-01 06:41:14 /api/v1/customers .................................................................... ~ 1.11ms
+  2026-08-01 06:41:14 /api/v1/vehicle-masters/manufacturers .............................................. ~ 514.72ms
+  2026-08-01 06:41:14 /api/v1/vehicle-masters/colours .................................................... ~ 517.22ms
+  2026-08-01 06:41:14 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 513.41ms
+  2026-08-01 06:41:14 /api/v1/vehicle-masters/body_types ................................................... ~ 1.46ms
+  2026-08-01 06:41:14 /api/v1/vehicle-masters/fuel_types ................................................... ~ 2.20ms
+  2026-08-01 06:41:15 /api/v1/customers .................................................................... ~ 1.71ms
+  2026-08-01 06:41:15 /api/v1/vehicle-masters/manufacturers .............................................. ~ 506.95ms
+  2026-08-01 06:41:15 /api/v1/vehicle-masters/colours .................................................... ~ 508.24ms
+  2026-08-01 06:41:15 /api/v1/vehicle-masters/vehicle_classes .............................................. ~ 3.64ms
+  2026-08-01 06:41:15 /api/v1/vehicle-masters/body_types ................................................... ~ 3.92ms
+  2026-08-01 06:41:15 /api/v1/vehicle-masters/fuel_types ................................................... ~ 3.89ms
+  2026-08-01 06:41:15 /api/v1/customers .................................................................. ~ 520.23ms
+  2026-08-01 06:41:15 /api/v1/vehicle-masters/manufacturers .............................................. ~ 519.83ms
+  2026-08-01 06:41:15 /api/v1/vehicle-masters/colours ...................................................... ~ 3.53ms
+  2026-08-01 06:41:16 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 520.14ms
+  2026-08-01 06:41:16 /api/v1/vehicle-masters/body_types ................................................. ~ 565.66ms
+  2026-08-01 06:41:16 /api/v1/vehicle-masters/fuel_types ....................................................... ~ 2s
+  2026-08-01 06:41:16 /api/v1/customers ........................................................................ ~ 9s
+  2026-08-01 06:41:19 /api/v1/vehicle-masters/manufacturers .................................................... ~ 8s
+  2026-08-01 06:41:26 /api/v1/vehicle-masters/colours .......................................................... ~ 2s
+  2026-08-01 06:41:28 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 523.00ms
+  2026-08-01 06:41:28 /api/v1/vehicle-masters/body_types ................................................. ~ 523.60ms
+  2026-08-01 06:41:28 /api/v1/vehicle-masters/fuel_types ................................................... ~ 2.80ms
+  PHP Fatal error:  Maximum execution time of 30 seconds exceeded in C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Connectors\Connector.php on line 67
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Connectors\Connector.php(67): PDO::connect()
+  #1 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Connectors\Connector.php(44): Illuminate\Database\Connectors\Connector->createPdoConnection()
+  #2 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Connectors\PostgresConnector.php(35): Illuminate\Database\Connectors\Connector->createConnection()
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Connectors\ConnectionFactory.php(186): Illuminate\Database\Connectors\PostgresConnector->connect()
+  #4 [internal function]: Illuminate\Database\Connectors\ConnectionFactory->{closure:Illuminate\Database\Connectors\ConnectionFactory::createPdoResolverWithHosts():181}()
+  #5 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Connection.php(1257): call_user_func()
+  #6 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Connection.php(1295): Illuminate\Database\Connection->getPdo()
+  #7 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Connection.php(525): Illuminate\Database\Connection->getReadPdo()
+  #8 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Connection.php(420): Illuminate\Database\Connection->getPdoForSelect()
+  #9 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Connection.php(827): Illuminate\Database\Connection->{closure:Illuminate\Database\Connection::select():411}()
+  #10 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Connection.php(794): Illuminate\Database\Connection->runQueryCallback()
+  #11 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Connection.php(411): Illuminate\Database\Connection->run()
+  #12 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Connection.php(357): Illuminate\Database\Connection->select()
+  #13 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Connection.php(374): Illuminate\Database\Connection->selectOne()
+  #14 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Database\Schema\Builder.php(176): Illuminate\Database\Connection->scalar()
+  #15 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php(363): Illuminate\Database\Schema\Builder->hasTable()
+  #16 C:\Projects\raj-erp\backend\app\Providers\AppServiceProvider.php(21): Illuminate\Support\Facades\Facade::__callStatic()
+  #17 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php(36): App\Providers\AppServiceProvider->boot()
+  #18 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Container\Util.php(43): Illuminate\Container\BoundMethod::{closure:Illuminate\Container\BoundMethod::call():35}()
+  #19 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php(96): Illuminate\Container\Util::unwrapIfClosure()
+  #20 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php(35): Illuminate\Container\BoundMethod::callBoundMethod()
+  #21 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Container\Container.php(799): Illuminate\Container\BoundMethod::call()
+  #22 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Application.php(1151): Illuminate\Container\Container->call()
+  #23 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Application.php(1132): Illuminate\Foundation\Application->bootProvider()
+  #24 [internal function]: Illuminate\Foundation\Application->{closure:Illuminate\Foundation\Application::boot():1131}()
+  #25 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Application.php(1131): array_walk()
+  #26 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Bootstrap\BootProviders.php(17): Illuminate\Foundation\Application->boot()
+  #27 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Application.php(342): Illuminate\Foundation\Bootstrap\BootProviders->bootstrap()
+  #28 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(186): Illuminate\Foundation\Application->bootstrapWith()
+  #29 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(170): Illuminate\Foundation\Http\Kernel->bootstrap()
+  #30 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Http\Kernel.php(144): Illuminate\Foundation\Http\Kernel->sendRequestThroughRouter()
+  #31 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\Application.php(1220): Illuminate\Foundation\Http\Kernel->handle()
+  #32 C:\Projects\raj-erp\backend\public\index.php(6): Illuminate\Foundation\Application->handleRequest()
+  #33 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #34 {main}
+  2026-08-01 06:45:54 /api/v1/dashboard/summary ............................................................. ~ 1m 1s
+  2026-08-01 06:45:54 /api/v1/dashboard/summary ............................................................. ~ 1m 2s
+  2026-08-01 06:46:56 /api/v1/auth/login ....................................................................... ~ 1s
+  2026-08-01 06:46:57 /api/v1/auth/login ....................................................................... ~ 2s
+  2026-08-01 06:47:20 /api/v1/dashboard/summary ............................................................ ~ 1.42ms
+  2026-08-01 06:47:20 /api/v1/dashboard/summary .......................................................... ~ 508.89ms
+  2026-08-01 06:49:45 /api/v1/vehicles ................................................................... ~ 519.40ms
+  2026-08-01 06:49:46 /api/v1/vehicles ..................................................................... ~ 0.39ms
+  2026-08-01 06:49:46 /api/v1/vehicles ................................................................... ~ 522.71ms
+  2026-08-01 06:49:46 /api/v1/vehicles ......................................................................... ~ 1s
+  2026-08-01 06:49:56 /api/v1/customers .................................................................. ~ 522.30ms
+  2026-08-01 06:49:56 /api/v1/vehicle-masters/manufacturers .................................................... ~ 1s
+  2026-08-01 06:49:56 /api/v1/vehicle-masters/colours .................................................... ~ 511.79ms
+  2026-08-01 06:49:57 /api/v1/vehicle-masters/body_types ................................................. ~ 510.86ms
+  2026-08-01 06:49:57 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 510.88ms
+  2026-08-01 06:49:57 /api/v1/vehicle-masters/fuel_types ................................................. ~ 515.14ms
+  2026-08-01 06:49:57 /api/v1/customers .................................................................. ~ 515.80ms
+  2026-08-01 06:49:57 /api/v1/vehicle-masters/manufacturers .............................................. ~ 507.41ms
+  2026-08-01 06:49:58 /api/v1/vehicle-masters/colours .................................................... ~ 507.24ms
+  2026-08-01 06:49:58 /api/v1/vehicle-masters/body_types ................................................... ~ 3.80ms
+  2026-08-01 06:49:58 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 521.08ms
+  2026-08-01 06:49:58 /api/v1/vehicle-masters/fuel_types ................................................. ~ 521.93ms
+  2026-08-01 06:53:14 /api/v1/customers .................................................................. ~ 511.50ms
+  2026-08-01 06:53:15 /api/v1/vehicle-masters/colours ...................................................... ~ 0.58ms
+  2026-08-01 06:53:15 /api/v1/vehicle-masters/manufacturers ................................................ ~ 5.19ms
+  2026-08-01 06:53:15 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 510.77ms
+  2026-08-01 06:53:15 /api/v1/vehicle-masters/fuel_types ................................................. ~ 512.71ms
+  2026-08-01 06:53:15 /api/v1/vehicle-masters/body_types ................................................. ~ 515.87ms
+  2026-08-01 06:53:15 /api/v1/customers ........................................................................ ~ 1s
+  2026-08-01 06:53:16 /api/v1/vehicle-masters/colours .......................................................... ~ 1s
+  2026-08-01 06:53:16 /api/v1/vehicle-masters/manufacturers .............................................. ~ 519.43ms
+  2026-08-01 06:53:17 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 513.99ms
+  2026-08-01 06:53:17 /api/v1/vehicle-masters/fuel_types ....................................................... ~ 1s
+  2026-08-01 06:53:17 /api/v1/vehicle-masters/body_types ................................................. ~ 520.16ms
+  2026-08-01 06:57:08 /api/v1/customers .................................................................. ~ 507.85ms
+  2026-08-01 06:57:08 /api/v1/vehicle-masters/manufacturers ................................................ ~ 0.49ms
+  2026-08-01 06:57:08 /api/v1/vehicle-masters/colours .................................................... ~ 534.50ms
+  2026-08-01 06:57:08 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 535.48ms
+  2026-08-01 06:57:08 /api/v1/customers .................................................................. ~ 517.88ms
+  2026-08-01 06:57:09 /api/v1/vehicle-masters/manufacturers .............................................. ~ 517.78ms
+  2026-08-01 06:57:09 /api/v1/vehicle-masters/colours ...................................................... ~ 3.19ms
+  2026-08-01 06:57:09 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 523.80ms
+  2026-08-01 06:57:09 /api/v1/vehicle-masters/body_types ................................................. ~ 519.51ms
+  2026-08-01 06:57:09 /api/v1/vehicle-masters/fuel_types ................................................... ~ 3.08ms
+  2026-08-01 06:57:10 /api/v1/vehicle-masters/body_types ................................................... ~ 0.35ms
+  2026-08-01 06:57:10 /api/v1/vehicle-masters/fuel_types ................................................. ~ 506.13ms
+  2026-08-01 10:48:10 /api/v1/customers .................................................................. ~ 512.70ms
+  2026-08-01 10:48:10 /api/v1/vehicle-masters/manufacturers .................................................... ~ 1s
+  2026-08-01 10:48:10 /api/v1/vehicle-masters/colours .......................................................... ~ 1s
+  2026-08-01 10:48:11 /api/v1/vehicle-masters/vehicle_classes .................................................. ~ 1s
+  2026-08-01 10:48:11 /api/v1/vehicle-masters/body_types ................................................. ~ 525.04ms
+  2026-08-01 10:48:11 /api/v1/vehicle-masters/fuel_types ................................................... ~ 3.09ms
+  2026-08-01 10:48:12 /api/v1/customers .................................................................. ~ 509.16ms
+  2026-08-01 10:48:12 /api/v1/vehicle-masters/manufacturers .............................................. ~ 510.17ms
+  2026-08-01 10:48:12 /api/v1/vehicle-masters/colours .................................................... ~ 509.97ms
+  2026-08-01 10:48:12 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 508.56ms
+  2026-08-01 10:48:13 /api/v1/vehicle-masters/body_types ................................................. ~ 531.51ms
+  2026-08-01 10:48:13 /api/v1/vehicle-masters/fuel_types ................................................. ~ 531.42ms
+  2026-08-01 10:48:26 /api/v1/customers .................................................................. ~ 508.53ms
+  2026-08-01 10:48:26 /api/v1/vehicle-masters/manufacturers .............................................. ~ 511.18ms
+  2026-08-01 10:48:26 /api/v1/vehicle-masters/colours ...................................................... ~ 2.59ms
+  2026-08-01 10:48:26 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 508.74ms
+  2026-08-01 10:48:26 /api/v1/vehicle-masters/body_types ................................................. ~ 508.83ms
+  2026-08-01 10:48:26 /api/v1/vehicle-masters/fuel_types ................................................... ~ 3.84ms
+  2026-08-01 10:48:27 /api/v1/customers .................................................................. ~ 515.71ms
+  2026-08-01 10:48:27 /api/v1/vehicle-masters/manufacturers .............................................. ~ 514.93ms
+  2026-08-01 10:48:27 /api/v1/vehicle-masters/colours ...................................................... ~ 2.62ms
+  2026-08-01 10:48:27 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 513.38ms
+  2026-08-01 10:48:27 /api/v1/vehicle-masters/body_types ................................................. ~ 513.89ms
+  2026-08-01 10:48:27 /api/v1/vehicle-masters/fuel_types ................................................... ~ 3.05ms
+  2026-08-01 10:58:59 /api/v1/vehicles ................................................................... ~ 515.40ms
+  2026-08-01 10:59:00 /api/v1/vehicles ................................................................... ~ 508.36ms
+  2026-08-01 10:59:07 /api/v1/auth/login ................................................................. ~ 513.14ms
+  2026-08-01 10:59:08 /api/v1/auth/login ....................................................................... ~ 1s
+  2026-08-01 10:59:17 /api/v1/dashboard/summary ............................................................ ~ 0.80ms
+  2026-08-01 10:59:17 /api/v1/dashboard/summary .......................................................... ~ 513.50ms
+  2026-08-01 11:12:30 /api/v1/dashboard/summary ................................................................ ~ 1s
+  2026-08-01 11:12:31 /api/v1/dashboard/summary .......................................................... ~ 526.39ms
+  2026-08-01 11:19:29 /api/v1/customers ........................................................................ ~ 1s
+  2026-08-01 11:19:31 /api/v1/vehicle-masters/colours .................................................... ~ 519.07ms
+  2026-08-01 11:19:31 /api/v1/vehicle-masters/manufacturers .............................................. ~ 522.22ms
+  2026-08-01 11:19:31 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 531.85ms
+  2026-08-01 11:19:31 /api/v1/vehicle-masters/body_types ................................................. ~ 531.73ms
+  2026-08-01 11:19:31 /api/v1/vehicle-masters/fuel_types ................................................. ~ 531.33ms
+  2026-08-01 11:19:31 /api/v1/customers ........................................................................ ~ 1s
+  2026-08-01 11:19:32 /api/v1/vehicle-masters/manufacturers .................................................... ~ 1s
+  2026-08-01 11:19:32 /api/v1/vehicle-masters/colours .................................................... ~ 537.66ms
+  2026-08-01 11:19:33 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 511.37ms
+  2026-08-01 11:19:33 /api/v1/vehicle-masters/body_types ....................................................... ~ 1s
+  2026-08-01 11:19:33 /api/v1/vehicle-masters/fuel_types ................................................. ~ 513.04ms
+  2026-08-01 11:19:34 /api/v1/customers ........................................................................ ~ 1s
+  2026-08-01 11:19:34 /api/v1/vehicle-masters/colours .......................................................... ~ 1s
+  2026-08-01 11:19:35 /api/v1/vehicle-masters/manufacturers .............................................. ~ 508.67ms
+  2026-08-01 11:19:35 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 518.68ms
+  2026-08-01 11:19:36 /api/v1/vehicle-masters/body_types ................................................. ~ 519.63ms
+  2026-08-01 11:19:36 /api/v1/vehicle-masters/fuel_types ................................................. ~ 509.00ms
+  2026-08-01 11:19:36 /api/v1/customers ........................................................................ ~ 1s
+  2026-08-01 11:19:37 /api/v1/vehicle-masters/colours .................................................... ~ 517.24ms
+  2026-08-01 11:19:37 /api/v1/vehicle-masters/manufacturers .............................................. ~ 523.68ms
+  2026-08-01 11:19:37 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 522.91ms
+  2026-08-01 11:19:37 /api/v1/vehicle-masters/body_types ................................................. ~ 518.24ms
+  2026-08-01 11:19:38 /api/v1/vehicle-masters/fuel_types ................................................. ~ 518.09ms
+  2026-08-01 11:32:47 /api/v1/customers ........................................................................ ~ 2s
+  2026-08-01 11:32:48 /api/v1/vehicle-masters/manufacturers .................................................... ~ 3s
+  2026-08-01 11:32:50 /api/v1/vehicle-masters/colours .......................................................... ~ 2s
+  2026-08-01 11:32:51 /api/v1/vehicle-masters/vehicle_classes .................................................. ~ 3s
+  2026-08-01 11:32:53 /api/v1/vehicle-masters/body_types ....................................................... ~ 2s
+  2026-08-01 11:32:54 /api/v1/vehicle-masters/fuel_types ....................................................... ~ 1s
+  2026-08-01 11:32:55 /api/v1/customers ........................................................................ ~ 2s
+  2026-08-01 11:32:56 /api/v1/vehicle-masters/manufacturers .................................................... ~ 2s
+  2026-08-01 11:32:57 /api/v1/vehicle-masters/colours .......................................................... ~ 1s
+  2026-08-01 11:32:58 /api/v1/vehicle-masters/vehicle_classes .................................................. ~ 1s
+  2026-08-01 11:32:58 /api/v1/vehicle-masters/body_types ....................................................... ~ 2s
+  2026-08-01 11:32:59 /api/v1/vehicle-masters/fuel_types ....................................................... ~ 2s
+  2026-08-01 11:33:24 /api/v1/customers .................................................................... ~ 0.72ms
+  2026-08-01 11:33:24 /api/v1/vehicle-masters/colours ...................................................... ~ 5.87ms
+  2026-08-01 11:33:24 /api/v1/vehicle-masters/manufacturers .............................................. ~ 511.22ms
+  2026-08-01 11:33:25 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 512.59ms
+  2026-08-01 11:33:25 /api/v1/vehicle-masters/body_types ................................................. ~ 511.88ms
+  2026-08-01 11:33:25 /api/v1/vehicle-masters/fuel_types ................................................. ~ 511.17ms
+  2026-08-01 11:33:25 /api/v1/customers .................................................................. ~ 506.31ms
+  2026-08-01 11:33:26 /api/v1/vehicle-masters/colours .................................................... ~ 506.38ms
+  2026-08-01 11:33:26 /api/v1/vehicle-masters/manufacturers .............................................. ~ 513.72ms
+  2026-08-01 11:33:26 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 513.84ms
+  2026-08-01 11:33:26 /api/v1/vehicle-masters/body_types ................................................. ~ 514.83ms
+  2026-08-01 11:33:27 /api/v1/vehicle-masters/fuel_types ................................................. ~ 513.89ms
+  2026-08-01 13:24:33 /api/v1/auth/login ................................................................. ~ 506.93ms
+  2026-08-01 13:24:34 /api/v1/auth/login ....................................................................... ~ 1s
+  2026-08-01 13:24:37 /api/v1/dashboard/summary ............................................................ ~ 0.89ms
+  2026-08-01 13:24:37 /api/v1/dashboard/summary .......................................................... ~ 504.06ms
+  2026-08-01 13:38:12 /api/v1/dashboard/summary ............................................................ ~ 2.01ms
+  2026-08-01 13:38:12 /api/v1/dashboard/summary .......................................................... ~ 507.73ms
+  2026-08-01 13:38:49 /api/v1/ledgers ...................................................................... ~ 0.80ms
+  2026-08-01 13:38:49 /api/v1/accounting/vouchers ........................................................ ~ 511.65ms
+  2026-08-01 13:38:49 /api/v1/accounting/trial-balance ................................................... ~ 515.68ms
+  2026-08-01 13:38:49 /api/v1/accounting/profit-loss ....................................................... ~ 2.38ms
+  2026-08-01 13:38:49 /api/v1/accounting/balance-sheet ..................................................... ~ 3.03ms
+  2026-08-01 13:38:49 /api/v1/ledgers ...................................................................... ~ 3.33ms
+  2026-08-01 13:38:49 /api/v1/accounting/vouchers ........................................................ ~ 517.40ms
+  2026-08-01 13:38:50 /api/v1/accounting/trial-balance ................................................... ~ 516.23ms
+  2026-08-01 13:38:50 /api/v1/accounting/profit-loss ....................................................... ~ 2.45ms
+  2026-08-01 13:38:50 /api/v1/accounting/balance-sheet ................................................... ~ 510.02ms
+  2026-08-01 13:38:33 ...................................................................................... ~ 2m 34s
+  2026-08-01 13:38:33 ...................................................................................... ~ 2m 34s
+  2026-08-01 13:45:52 ...................................................................................... ~ 1m 15s
+  2026-08-01 13:45:52 ...................................................................................... ~ 1m 15s
+  2026-08-01 13:47:25 ...................................................................................... ~ 1m 40s
+  2026-08-01 13:47:25 ...................................................................................... ~ 1m 40s
+  2026-08-01 13:52:55 /api/v1/auth/login ................................................................. ~ 516.14ms
+  2026-08-01 13:52:55 /api/v1/auth/login ................................................................. ~ 511.25ms
+  2026-08-01 13:52:57 /api/v1/dashboard/summary ............................................................ ~ 1.82ms
+  2026-08-01 13:52:58 /api/v1/dashboard/summary .......................................................... ~ 509.17ms
+  2026-08-01 14:06:00 /api/v1/ledgers ...................................................................... ~ 1.03ms
+  2026-08-01 14:06:00 /api/v1/accounting/vouchers ........................................................ ~ 515.46ms
+  2026-08-01 14:06:00 /api/v1/accounting/trial-balance ................................................... ~ 519.37ms
+  2026-08-01 14:06:00 /api/v1/accounting/profit-loss ....................................................... ~ 3.09ms
+  2026-08-01 14:06:00 /api/v1/accounting/balance-sheet ..................................................... ~ 3.59ms
+  2026-08-01 14:06:01 /api/v1/ledgers .................................................................... ~ 519.17ms
+  2026-08-01 14:06:01 /api/v1/accounting/vouchers ........................................................ ~ 519.68ms
+  2026-08-01 14:06:01 /api/v1/accounting/trial-balance ..................................................... ~ 4.92ms
+  2026-08-01 14:06:01 /api/v1/accounting/profit-loss ....................................................... ~ 5.25ms
+  2026-08-01 14:06:01 /api/v1/accounting/balance-sheet ................................................... ~ 506.05ms
+  2026-08-01 14:23:56 /api/v1/dashboard/summary .......................................................... ~ 515.36ms
+  2026-08-01 14:23:56 /api/v1/dashboard/summary .......................................................... ~ 516.21ms
+  2026-08-01 14:23:56 /api/v1/dashboard/summary ................................................................ ~ 1s
+  2026-08-01 14:23:56 /api/v1/dashboard/summary ................................................................ ~ 1s
+  2026-08-01 14:23:59 /api/v1/customers .................................................................. ~ 517.42ms
+  2026-08-01 14:23:59 /api/v1/vehicle-masters/manufacturers ................................................ ~ 0.79ms
+  2026-08-01 14:23:59 /api/v1/vehicle-masters/colours ...................................................... ~ 4.63ms
+  2026-08-01 14:23:59 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 508.37ms
+  2026-08-01 14:23:59 /api/v1/vehicle-masters/body_types ................................................. ~ 507.94ms
+  2026-08-01 14:23:59 /api/v1/vehicle-masters/fuel_types ................................................. ~ 511.17ms
+  2026-08-01 14:24:00 /api/v1/customers .................................................................. ~ 511.23ms
+  2026-08-01 14:24:00 /api/v1/vehicle-masters/manufacturers ................................................ ~ 3.49ms
+  2026-08-01 14:24:00 /api/v1/vehicle-masters/colours .................................................... ~ 513.26ms
+  2026-08-01 14:24:00 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 513.82ms
+  2026-08-01 14:24:00 /api/v1/vehicle-masters/body_types ................................................... ~ 2.99ms
+  2026-08-01 14:24:01 /api/v1/vehicle-masters/fuel_types ................................................. ~ 508.56ms
+  2026-08-01 14:24:01 /api/v1/customers ........................................................................ ~ 1s
+  2026-08-01 14:24:01 /api/v1/vehicle-masters/manufacturers .............................................. ~ 513.15ms
+  2026-08-01 14:24:01 /api/v1/vehicle-masters/colours .................................................... ~ 508.17ms
+  2026-08-01 14:24:02 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 508.51ms
+  2026-08-01 14:24:02 /api/v1/vehicle-masters/body_types ................................................... ~ 4.15ms
+  2026-08-01 14:24:02 /api/v1/vehicle-masters/fuel_types ................................................. ~ 511.68ms
+  2026-08-01 14:24:02 /api/v1/customers ........................................................................ ~ 1s
+  2026-08-01 14:24:03 /api/v1/vehicle-masters/manufacturers .............................................. ~ 512.41ms
+  2026-08-01 14:24:03 /api/v1/vehicle-masters/colours ...................................................... ~ 3.98ms
+  2026-08-01 14:24:03 /api/v1/vehicle-masters/vehicle_classes ............................................ ~ 521.71ms
+  2026-08-01 14:24:03 /api/v1/vehicle-masters/body_types ................................................. ~ 520.72ms
+  2026-08-01 14:24:04 /api/v1/vehicle-masters/fuel_types ................................................. ~ 515.64ms
+  2026-08-01 14:24:04 /api/v1/dashboard/summary ............................................................ ~ 1.26ms
+  2026-08-01 14:24:04 /api/v1/dashboard/summary .......................................................... ~ 515.22ms
+  2026-08-01 14:24:05 /api/v1/dashboard/summary .......................................................... ~ 507.01ms
+  2026-08-01 14:24:05 /api/v1/dashboard/summary ................................................................ ~ 1s
+  2026-08-01 14:24:08 /api/v1/ledgers .................................................................... ~ 510.25ms
+  2026-08-01 14:24:08 /api/v1/accounting/vouchers ........................................................ ~ 514.25ms
+  2026-08-01 14:24:08 /api/v1/accounting/trial-balance ..................................................... ~ 3.30ms
+  2026-08-01 14:24:08 /api/v1/accounting/profit-loss ..................................................... ~ 513.99ms
+  2026-08-01 14:24:09 /api/v1/accounting/balance-sheet ................................................... ~ 513.61ms
+  2026-08-01 14:24:09 /api/v1/ledgers .................................................................... ~ 509.97ms
+  2026-08-01 14:24:09 /api/v1/accounting/vouchers ........................................................ ~ 512.11ms
+  2026-08-01 14:24:09 /api/v1/accounting/trial-balance ................................................... ~ 512.00ms
+  2026-08-01 14:24:09 /api/v1/accounting/profit-loss ..................................................... ~ 511.01ms
+  2026-08-01 14:24:10 /api/v1/accounting/balance-sheet ..................................................... ~ 2.80ms
+  2026-08-01 14:24:10 /api/v1/ledgers .................................................................... ~ 520.92ms
+  2026-08-01 14:24:10 /api/v1/accounting/vouchers ........................................................ ~ 521.03ms
+  2026-08-01 14:24:10 /api/v1/accounting/trial-balance ................................................... ~ 511.65ms
+  2026-08-01 14:24:11 /api/v1/accounting/profit-loss ..................................................... ~ 512.91ms
+  2026-08-01 14:24:11 /api/v1/accounting/balance-sheet ................................................... ~ 535.87ms
+  2026-08-01 14:24:11 /api/v1/ledgers .................................................................... ~ 530.16ms
+  2026-08-01 14:24:11 /api/v1/accounting/vouchers ........................................................ ~ 520.57ms
+  2026-08-01 14:24:12 /api/v1/accounting/trial-balance ................................................... ~ 520.67ms
+  2026-08-01 14:24:12 /api/v1/accounting/profit-loss ..................................................... ~ 532.82ms
+  2026-08-01 14:24:12 /api/v1/accounting/balance-sheet ................................................... ~ 538.35ms
+  2026-08-01 14:24:39 /favicon.ico ............................................................................ ~ 21s
+  2026-08-01 14:24:39 ...................................................................................... ~ 1m 28s
+  2026-08-01 14:39:46 /api/v1/ledgers .......................................................................... ~ 1s
+  2026-08-01 14:39:46 /api/v1/accounting/vouchers .............................................................. ~ 2s
+  2026-08-01 14:39:48 /api/v1/accounting/trial-balance ................................................... ~ 511.56ms
+  2026-08-01 14:39:48 /api/v1/accounting/profit-loss ....................................................... ~ 3.37ms
+  2026-08-01 14:39:48 /api/v1/accounting/balance-sheet ................................................... ~ 509.85ms
+  2026-08-01 14:39:48 /api/v1/ledgers .................................................................... ~ 509.06ms
+  2026-08-01 14:39:48 /api/v1/accounting/vouchers ........................................................ ~ 516.11ms
+  2026-08-01 14:39:49 /api/v1/accounting/trial-balance ................................................... ~ 514.90ms
+  2026-08-01 14:39:49 /api/v1/accounting/profit-loss ..................................................... ~ 511.97ms
+  2026-08-01 14:39:49 /api/v1/accounting/balance-sheet ................................................... ~ 512.01ms
+  2026-08-01 16:04:13 /favicon.ico ....................................................................... ~ 512.36ms
+  2026-08-01 16:04:13 ...................................................................................... ~ 1m 13s

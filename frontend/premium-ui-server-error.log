@@ -1,0 +1,10 @@
+ ⨯ ./components/customers/CustomerTable.tsx
+Error: 
+
+Caused by:
+    0: Failed to read source code from C:\Projects\raj-erp\frontend\components\customers\CustomerTable.tsx
+    1: The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./components/customers/CustomerTable.tsx
+./app/customers/page.tsx
