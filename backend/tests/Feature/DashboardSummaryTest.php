@@ -66,7 +66,8 @@ class DashboardSummaryTest extends TestCase
             ->assertJsonPath('data.kpis.net_result.value', 700)
             ->assertJsonPath('data.period.key', 'today')
             ->assertJsonPath('data.period.timezone', 'Asia/Kolkata')
-            ->assertJsonPath('data.revenue.current', 1058.67);
+            ->assertJsonPath('data.revenue.current', 1200)
+            ->assertJsonPath('data.revenue.gross_commission', 1058.67);
 
         DB::table('vehicle_insurances')->where('id', $policyA)->update(['gross_commission' => 1200, 'updated_at' => now()]);
         $this->actingAs($user)->getJson('/api/v1/dashboard/summary')->assertOk()
@@ -82,14 +83,15 @@ class DashboardSummaryTest extends TestCase
                 ->assertOk()->assertJsonPath('data.period.key', $period)
                 ->assertJsonPath('data.period.timezone', 'Asia/Kolkata');
             if (in_array($period, ['today', 'this_week', 'this_month', 'this_year', 'all_time'], true)) {
-                $response->assertJsonPath('data.kpis.revenue.value', 1200);
+                $response->assertJsonPath('data.kpis.revenue.value', 1200)
+                    ->assertJsonPath('data.kpis.gross_commission.value', 1200);
             }
         }
         $this->actingAs($user)->getJson('/api/v1/dashboard/summary?period=this_month')
-            ->assertJsonPath('data.kpis.revenue.value', 1200);
+            ->assertJsonPath('data.kpis.revenue.value', 1200)->assertJsonPath('data.kpis.gross_commission.value', 1200);
         $this->actingAs($user)->getJson('/api/v1/dashboard/summary?period=all_time')
-            ->assertJsonPath('data.kpis.revenue.value', 1200);
+            ->assertJsonPath('data.kpis.revenue.value', 1200)->assertJsonPath('data.kpis.gross_commission.value', 1200);
         $this->actingAs($user)->getJson('/api/v1/dashboard/summary?period=custom&date_from='.$now->toDateString().'&date_to='.$now->toDateString())
-            ->assertOk()->assertJsonPath('data.period.key', 'custom')->assertJsonPath('data.kpis.revenue.value', 1200);
+            ->assertOk()->assertJsonPath('data.period.key', 'custom')->assertJsonPath('data.kpis.revenue.value', 1200)->assertJsonPath('data.kpis.gross_commission.value', 1200);
     }
 }

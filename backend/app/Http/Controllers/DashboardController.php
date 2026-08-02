@@ -66,7 +66,7 @@ class DashboardController extends Controller
 
         $trend = collect([[
             'month' => $period === 'today' ? 'Today' : ($period === 'all_time' ? 'All time' : $from?->format('d M').' – '.$to->format('d M')),
-            'revenue' => $commissionRevenue,
+            'revenue' => $received,
             'expenses' => $expenses,
         ]]);
         $byVehicle = fn (array $types) => $dateTimePeriod(DB::table('vehicle_insurances')
@@ -87,7 +87,8 @@ class DashboardController extends Controller
                 'expiring_policies' => ['value' => $expiring, 'growth' => null],
                 'payments_received' => ['value' => $received, 'growth' => $comparison($received, $previousReceived)],
                 'outstanding_amount' => ['value' => $outstanding, 'growth' => null],
-                'revenue' => ['value' => $commissionRevenue, 'growth' => $comparison($commissionRevenue, $previousCommissionRevenue)],
+                'revenue' => ['value' => $received, 'growth' => $comparison($received, $previousReceived)],
+                'gross_commission' => ['value' => $commissionRevenue, 'growth' => $comparison($commissionRevenue, $previousCommissionRevenue)],
                 'company_cost' => ['value' => $companyCost, 'growth' => null],
                 'gross_profit' => ['value' => $grossProfit, 'growth' => null],
                 'monthly_revenue' => ['value' => $commissionRevenue, 'growth' => $comparison($commissionRevenue, $previousCommissionRevenue)],
@@ -98,7 +99,7 @@ class DashboardController extends Controller
                 'net_result' => ['value' => $netProfit, 'growth' => null],
                 'renewal_count' => ['value' => $renewals, 'growth' => null],
             ],
-            'revenue' => ['current' => $commissionRevenue, 'previous' => $previousCommissionRevenue, 'company_cost' => $companyCost, 'gross_profit' => $grossProfit, 'tds' => $tds, 'agent_commission' => $agentCommission, 'expenses' => $expenses, 'net_result' => $netProfit, 'outstanding' => $outstanding, 'trend' => $trend],
+            'revenue' => ['current' => $received, 'previous' => $previousReceived, 'gross_commission' => $commissionRevenue, 'company_cost' => $companyCost, 'gross_profit' => $grossProfit, 'tds' => $tds, 'agent_commission' => $agentCommission, 'expenses' => $expenses, 'net_result' => $netProfit, 'outstanding' => $outstanding, 'trend' => $trend],
             'policies' => ['new' => $newPolicies, 'renewals' => $renewals, 'comprehensive' => $periodPolicies()->whereIn('insurance_type', ['comprehensive', 'package'])->count(), 'third_party' => $periodPolicies()->whereIn('insurance_type', ['third_party', 'standalone_tp'])->count(), 'two_wheeler' => $byVehicle(['two_wheeler']), 'private_car' => $byVehicle(['private_car']), 'commercial' => $byVehicle(['lgv', 'hgv', 'taxi'])],
             'renewals' => ['7' => (clone $policies)->whereBetween('expiry_date', [$now->toDateString(), $now->addDays(7)->toDateString()])->count(), '15' => (clone $policies)->whereBetween('expiry_date', [$now->toDateString(), $now->addDays(15)->toDateString()])->count(), '30' => (clone $policies)->whereBetween('expiry_date', [$now->toDateString(), $now->addDays(30)->toDateString()])->count(), 'expired' => (clone $policies)->whereDate('expiry_date', '<', $now->toDateString())->count(), 'renewed' => $renewals],
             'work' => ['puc_due' => (clone $vehicles)->whereIn('puc_status', ['not_added', 'due', 'expired'])->count(), 'fitness_due' => (clone $vehicles)->whereIn('fitness_status', ['not_added', 'due', 'expired'])->count(), 'permit_due' => (clone $vehicles)->whereIn('permit_status', ['not_added', 'due', 'expired'])->count(), 'payment_follow_up' => (clone $vehicles)->where('payment_due', '>', 0)->count()],

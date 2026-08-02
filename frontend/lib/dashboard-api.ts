@@ -7,7 +7,7 @@ export type Metric={value:number;growth:number|null};
 export type DashboardSummary={
   kpis:Record<string,Metric>;
   period:{key:DashboardPeriod;from:string|null;to:string;timezone:string};
-  revenue:{current:number;previous:number;company_cost:number;gross_profit:number;tds:number;agent_commission:number;expenses:number;net_result:number;outstanding:number;trend:{month:string;revenue:number;expenses:number}[]};
+  revenue:{current:number;previous:number;gross_commission:number;company_cost:number;gross_profit:number;tds:number;agent_commission:number;expenses:number;net_result:number;outstanding:number;trend:{month:string;revenue:number;expenses:number}[]};
   policies:Record<string,number>; renewals:Record<string,number>; work:Record<string,number>;
   master_counts:Record<string,{total:number;active:number}>;
 };

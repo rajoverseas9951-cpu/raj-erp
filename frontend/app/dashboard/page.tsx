@@ -59,6 +59,13 @@ const kpis = [
     "from-blue-400 to-indigo-700",
   ],
   [
+    "gross_commission",
+    "Gross Commission Earned",
+    "reports",
+    true,
+    "from-cyan-400 to-blue-700",
+  ],
+  [
     "company_cost",
     "Company Cost",
     "wallet",
