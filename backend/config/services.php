@@ -6,4 +6,8 @@ return [
         'url' => env('OCR_SPACE_API_URL', 'https://api.ocr.space/parse/image'),
         'ca_bundle' => env('OCR_SPACE_CA_BUNDLE'),
     ],
+    'paddleocr' => [
+        'url' => env('PADDLEOCR_URL', 'http://127.0.0.1:8081'),
+        'timeout' => (int) env('PADDLEOCR_TIMEOUT', 100),
+    ],
 ];

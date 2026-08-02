@@ -517,7 +517,8 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
               x.lastModified === f.lastModified,
           ) === i,
       );
-      const extracted = (await scanDocument("rc", unique)).fields;
+      const result = await scanDocument("rc", unique);
+      const extracted = result.fields;
       setProgress(100);
       setValues((old) => {
         const cleared = { ...old };
@@ -532,7 +533,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
       const count = Object.keys(extracted).length;
       setSuccess(
         count
-          ? `RC se ${count} details fill hui. Save se pehle verify kar lena.`
+          ? `RC se ${count} details fill hui. Save se pehle verify kar lena.${result.warnings?.length ? ` ${result.warnings[0]}` : ""}`
           : "RC se reliable detail nahi mili. Manual entry use karo.",
       );
     } catch (e) {

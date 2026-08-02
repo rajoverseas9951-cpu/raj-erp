@@ -1,0 +1,31 @@
+name: raj-erp-ocr
+
+services:
+  ocr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: vimawallah-ocr:phase1
+    container_name: vimawallah-ocr
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      OCR_HOST: 0.0.0.0
+      OCR_PORT: 8001
+      OCR_MODEL_CACHE_DIR: /models
+      OCR_CORS_ALLOWED_ORIGINS: ""
+      OCR_CORS_ALLOW_CREDENTIALS: "false"
+    ports:
+      - "127.0.0.1:8001:8001"
+    volumes:
+      - paddle-models:/models
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    stop_grace_period: 30s
+
+volumes:
+  paddle-models:
+    name: vimawallah-ocr-models

@@ -6,6 +6,7 @@ use App\Features\Ocr\Services\OcrService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
 class OcrController
@@ -19,6 +20,22 @@ class OcrController
             'images' => ['required', 'array', 'between:1,2'],
             'images.*' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:15360'],
         ]);
+
+        if ($validated['document_type'] === 'rc') {
+            $totalBytes = array_sum(array_map(
+                fn ($image) => (int) ($image->getSize() ?: 0),
+                $validated['images']
+            ));
+            $containsPdf = collect($validated['images'])->contains(
+                fn ($image) => strtolower($image->getClientOriginalExtension()) === 'pdf'
+            );
+            if ($totalBytes > 15 * 1024 * 1024) {
+                throw ValidationException::withMessages(['images' => 'RC images may not exceed 15 MB in total.']);
+            }
+            if ($containsPdf) {
+                throw ValidationException::withMessages(['images' => 'RC OCR accepts JPG, JPEG, PNG, or WEBP images only.']);
+            }
+        }
 
         try {
             $data = $this->ocr->scan($validated['images'], $validated['document_type']);

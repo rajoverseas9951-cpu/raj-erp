@@ -2,7 +2,8 @@
 
 Self-hosted, CPU-only FastAPI service for extracting candidate fields from Indian
 vehicle registration certificate (RC) images. It is intentionally isolated from
-the Laravel backend and Next.js frontend during Phase 1.
+the Laravel and Next.js processes; Laravel reaches it over an internal-only HTTP
+endpoint.
 
 OCR output is probabilistic. **A user must review and confirm every extracted
 field before any value is saved to the ERP.** Missing or low-confidence values
@@ -123,6 +124,21 @@ docker run --rm \
   vimawallah-ocr:phase1
 ```
 
+Production uses the checked-in Compose definition and binds PaddleOCR only to
+the VPS loopback interface:
+
+```bash
+cp .env.example .env
+docker compose -f compose.production.yml up -d --build
+docker compose -f compose.production.yml ps
+curl --fail http://127.0.0.1:8001/health
+```
+
+The Nginx template in `deploy/nginx-ocr-internal.conf` adds a second loopback-only
+listener on port 8081. Configure Laravel with
+`PADDLEOCR_URL=http://127.0.0.1:8081`; no PaddleOCR route is exposed by the public
+ERP virtual host.
+
 The image runs as non-root UID/GID `10001`, exposes port 8001, uses one Uvicorn
 worker, force-installs the headless OpenCV binary after PaddleX dependency
 resolution, and includes an HTTP healthcheck. A host bind mount used instead of a
@@ -168,4 +184,5 @@ recommended on the deployment server after the model cache is populated.
   concurrency guard until that inference returns.
 - The API has no authentication or rate limiting in Phase 1. Keep it on a trusted
   private network until the Laravel integration adds those controls.
-- This phase does not save values, modify the vehicle form, or deploy production.
+- Laravel returns OCR candidates to the existing editable vehicle form. OCR does
+  not save a vehicle; the user must still review the fields and submit Save.

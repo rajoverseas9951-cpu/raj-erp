@@ -11,10 +11,14 @@ class OcrService
 {
     /**
      * @param  array<int, UploadedFile>  $images
-     * @return array{text:string,texts:array<int,string>,fields:array<string,string>}
+     * @return array{text:string,texts:array<int,string>,fields:array<string,string>,field_confidence?:array<string,float>,overall_confidence?:float,warnings?:array<int,string>}
      */
     public function scan(array $images, string $documentType): array
     {
+        if ($documentType === 'rc') {
+            return $this->scanRcWithPaddle($images);
+        }
+
         $key = trim((string) config('services.ocr_space.key'));
 
         if ($key === '') {
@@ -32,11 +36,149 @@ class OcrService
             'text' => $text,
             'texts' => $texts,
             'fields' => match ($documentType) {
-                'rc' => $this->parseRc($text),
                 'insurance_policy' => $this->parsePolicy($text),
                 default => [],
             },
         ];
+    }
+
+    /**
+     * @param  array<int, UploadedFile>  $images
+     * @return array{text:string,texts:array<int,string>,fields:array<string,string>,field_confidence:array<string,float>,overall_confidence:float,warnings:array<int,string>}
+     */
+    private function scanRcWithPaddle(array $images): array
+    {
+        $baseUrl = rtrim(trim((string) config('services.paddleocr.url')), '/');
+        if ($baseUrl === '') {
+            throw new RuntimeException('PaddleOCR is not configured. Set PADDLEOCR_URL.');
+        }
+
+        $request = Http::acceptJson()
+            ->connectTimeout(5)
+            ->timeout((int) config('services.paddleocr.timeout', 100));
+        $streams = [];
+
+        try {
+            foreach (array_values($images) as $index => $image) {
+                $field = count($images) === 1 ? 'combined' : ($index === 0 ? 'front' : 'back');
+                $stream = fopen($image->getRealPath(), 'r');
+                if ($stream === false) {
+                    throw new RuntimeException('The uploaded RC image could not be read.');
+                }
+                $streams[] = $stream;
+                $request = $request->attach(
+                    $field,
+                    $stream,
+                    $image->getClientOriginalName(),
+                    ['Content-Type' => $image->getMimeType() ?: 'application/octet-stream']
+                );
+            }
+
+            $response = $request->post($baseUrl.'/v1/ocr/rc');
+        } catch (ConnectionException $exception) {
+            throw new RuntimeException('The internal PaddleOCR service could not be reached. Please try again.', previous: $exception);
+        } finally {
+            foreach ($streams as $stream) {
+                if (is_resource($stream)) fclose($stream);
+            }
+        }
+
+        $payload = $response->json();
+        if (! $response->successful()) {
+            $detail = is_array($payload) && is_string($payload['detail'] ?? null)
+                ? trim($payload['detail'])
+                : '';
+            throw new RuntimeException($detail !== ''
+                ? 'PaddleOCR could not process the RC: '.$detail
+                : "PaddleOCR request failed with status {$response->status()}.");
+        }
+        if (! is_array($payload) || ($payload['success'] ?? false) !== true || ! is_array($payload['fields'] ?? null)) {
+            throw new RuntimeException('PaddleOCR returned an invalid response.');
+        }
+
+        $text = is_string($payload['raw_text'] ?? null) ? trim($payload['raw_text']) : '';
+        $textsBySource = [];
+        foreach (is_array($payload['ocr_lines'] ?? null) ? $payload['ocr_lines'] : [] as $line) {
+            if (! is_array($line) || ! is_string($line['text'] ?? null)) continue;
+            $source = is_string($line['source'] ?? null) ? $line['source'] : 'combined';
+            $textsBySource[$source][] = trim($line['text']);
+        }
+        $texts = array_values(array_map(
+            fn (array $lines) => trim(implode("\n", array_filter($lines))),
+            $textsBySource
+        ));
+        if ($texts === [] && $text !== '') $texts = [$text];
+
+        return [
+            'text' => $text,
+            'texts' => $texts,
+            'fields' => $this->mapPaddleRcFields($payload['fields']),
+            'field_confidence' => is_array($payload['field_confidence'] ?? null) ? $payload['field_confidence'] : [],
+            'overall_confidence' => is_numeric($payload['overall_confidence'] ?? null) ? (float) $payload['overall_confidence'] : 0.0,
+            'warnings' => array_values(array_filter(
+                is_array($payload['warnings'] ?? null) ? $payload['warnings'] : [],
+                fn ($warning) => is_string($warning) && trim($warning) !== ''
+            )),
+        ];
+    }
+
+    /** @param array<string, mixed> $source @return array<string, string> */
+    private function mapPaddleRcFields(array $source): array
+    {
+        $fields = [];
+        foreach ([
+            'vehicle_number', 'registration_authority', 'chassis_number', 'engine_number',
+            'manufacturer', 'model', 'vehicle_class', 'colour', 'financier',
+        ] as $key) {
+            $value = $source[$key] ?? null;
+            if (is_string($value) && trim($value) !== '') $fields[$key] = trim($value);
+        }
+
+        if (isset($fields['vehicle_number'])) $fields['vehicle_number'] = $this->identifier($fields['vehicle_number']);
+        foreach (['chassis_number', 'engine_number'] as $key) {
+            if (isset($fields[$key])) $fields[$key] = $this->identifier($fields[$key]);
+        }
+        foreach (['manufacturer', 'model', 'vehicle_class', 'colour', 'registration_authority', 'financier'] as $key) {
+            if (isset($fields[$key])) $fields[$key] = strtoupper($this->clean($fields[$key]));
+        }
+        if (isset($fields['registration_authority'])) $fields['district'] = $fields['registration_authority'];
+
+        $registrationDate = $source['registration_date'] ?? null;
+        if (is_string($registrationDate) && ($date = $this->normaliseDate($registrationDate))) {
+            $fields['registration_date'] = $date;
+        }
+
+        $fuel = $source['fuel_type'] ?? null;
+        if (is_string($fuel) && trim($fuel) !== '') {
+            $fuel = strtolower(trim($fuel));
+            $fields['fuel_type'] = preg_match('/electric|battery|\bev\b/i', $fuel) ? 'electric' : $fuel;
+        }
+
+        foreach ([
+            'seating_capacity' => 'seating_capacity',
+            'cubic_capacity' => 'cubic_capacity',
+            'unladen_weight' => 'unladen_weight',
+            'gross_vehicle_weight' => 'gross_weight',
+        ] as $sourceKey => $targetKey) {
+            $value = $source[$sourceKey] ?? null;
+            if (is_string($value) && preg_match('/\d+(?:\.\d+)?/', $value, $match)) {
+                $fields[$targetKey] = $match[0];
+            }
+        }
+
+        $manufactured = $source['manufacturing_month_year'] ?? null;
+        if (is_string($manufactured) && preg_match('/\b(?:19|20)\d{2}\b/', $manufactured, $match)) {
+            $fields['manufacturing_year'] = $match[0];
+        }
+
+        $class = strtolower($fields['vehicle_class'] ?? '');
+        if (preg_match('/m-?cycle|motor\s*cycle|scooter|2wn|two\s*wheeler/', $class)) $fields['vehicle_type'] = 'two_wheeler';
+        elseif (preg_match('/hgv|heavy\s*goods|truck|trailer/', $class)) $fields['vehicle_type'] = 'hgv';
+        elseif (preg_match('/lgv|light\s*goods|pickup/', $class)) $fields['vehicle_type'] = 'lgv';
+        elseif (preg_match('/taxi|cab|maxi|passenger/', $class)) $fields['vehicle_type'] = 'taxi';
+        elseif (preg_match('/motor\s*car|private\s*car|\blmv\b/', $class)) $fields['vehicle_type'] = 'private_car';
+
+        return array_filter($fields, fn ($value) => $value !== '');
     }
 
     private function readImage(UploadedFile $image, string $key): string

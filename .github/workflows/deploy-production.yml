@@ -14,7 +14,7 @@ jobs:
   deploy:
     name: Deploy to Vimawallah production
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
       - name: Deploy over SSH
@@ -24,7 +24,7 @@ jobs:
           username: ${{ secrets.PRODUCTION_SSH_USER }}
           password: ${{ secrets.PRODUCTION_SSH_PASSWORD }}
           port: ${{ secrets.PRODUCTION_SSH_PORT || '22' }}
-          command_timeout: 25m
+          command_timeout: 55m
           script: |
             set -Eeuo pipefail
 
@@ -44,7 +44,38 @@ jobs:
             test "$ACTUAL_COMMIT" = "$EXPECTED_COMMIT"
             echo "Server checked out commit: $ACTUAL_COMMIT"
 
+            cd "$APP_DIR/ocr-service"
+            test -f .env || cp .env.example .env
+            docker compose -f compose.production.yml config --quiet
+            docker compose -f compose.production.yml build
+            docker compose -f compose.production.yml up -d
+
+            OCR_READY=0
+            for attempt in $(seq 1 60); do
+              if curl --fail --silent --show-error http://127.0.0.1:8001/health >/dev/null; then
+                OCR_READY=1
+                break
+              fi
+              sleep 10
+            done
+            test "$OCR_READY" = "1"
+
+            sudo -n install -m 0644 deploy/nginx-ocr-internal.conf /etc/nginx/conf.d/ocr-internal.conf
+            sudo -n nginx -t
+            sudo -n systemctl reload nginx
+            curl --fail --silent --show-error http://127.0.0.1:8081/health
+
             cd "$APP_DIR/backend"
+            if grep -q '^PADDLEOCR_URL=' .env; then
+              sed -i 's#^PADDLEOCR_URL=.*#PADDLEOCR_URL=http://127.0.0.1:8081#' .env
+            else
+              printf '\nPADDLEOCR_URL=http://127.0.0.1:8081\n' >> .env
+            fi
+            if grep -q '^PADDLEOCR_TIMEOUT=' .env; then
+              sed -i 's#^PADDLEOCR_TIMEOUT=.*#PADDLEOCR_TIMEOUT=100#' .env
+            else
+              printf 'PADDLEOCR_TIMEOUT=100\n' >> .env
+            fi
             composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
             php artisan migrate --force
             php artisan optimize:clear
@@ -65,6 +96,8 @@ jobs:
             pm2 describe "$BACKEND_PM2" >/dev/null
             pm2 describe "$FRONTEND_PM2" >/dev/null
 
+            docker compose -f "$APP_DIR/ocr-service/compose.production.yml" ps
+            curl --fail --silent --show-error http://127.0.0.1:8081/health
             curl --fail --silent --show-error https://erp.vimawallah.com/api/health
             LOGIN_HTML="$(curl --fail --silent --show-error https://erp.vimawallah.com/login)"
 

@@ -2,6 +2,9 @@ export type OcrResult = {
   text: string;
   texts: string[];
   fields: Record<string, string>;
+  field_confidence?: Record<string, number>;
+  overall_confidence?: number;
+  warnings?: string[];
 };
 
 export async function scanDocument(
