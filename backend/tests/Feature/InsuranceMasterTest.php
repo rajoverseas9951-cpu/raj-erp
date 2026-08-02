@@ -59,4 +59,17 @@ class InsuranceMasterTest extends TestCase
             'is_active' => false,
         ])->assertOk()->assertJsonPath('data.is_active', 0);
     }
+
+    public function test_purchase_source_cannot_link_to_another_tenants_company(): void
+    {
+        $user = User::factory()->create(['is_admin' => true]);
+        $other = User::factory()->create(['is_admin' => true]);
+        $companyId = $this->actingAs($other)->postJson('/api/v1/insurance-accounting/companies', [
+            'company_name' => 'Other Tenant Insurance', 'default_commission_percent' => 0, 'tds_percent' => 0, 'settlement_days' => 30,
+        ])->assertCreated()->json('data.id');
+
+        $this->actingAs($user)->postJson('/api/v1/insurance-accounting/purchase-sources', [
+            'name' => 'Invalid Cross Tenant Source', 'source_type' => 'agency', 'linked_company_id' => $companyId,
+        ])->assertUnprocessable()->assertJsonValidationErrors(['linked_company_id']);
+    }
 }

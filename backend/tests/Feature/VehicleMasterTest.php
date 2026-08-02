@@ -56,6 +56,18 @@ class VehicleMasterTest extends TestCase
         ])->assertUnprocessable()->assertJsonValidationErrors(['parent_id']);
     }
 
+    public function test_unused_master_can_be_deleted_but_a_manufacturer_with_models_cannot(): void
+    {
+        $user = User::factory()->create(['is_admin' => true]);
+        $colour = $this->actingAs($user)->postJson('/api/v1/vehicle-masters/colours', ['name' => 'Temporary Colour'])->assertCreated()->json('data.id');
+        $this->actingAs($user)->deleteJson("/api/v1/vehicle-masters/colours/{$colour}")->assertOk();
+        $this->actingAs($user)->getJson('/api/v1/vehicle-masters/colours')->assertOk()->assertJsonCount(0, 'data');
+
+        $make = $this->actingAs($user)->postJson('/api/v1/vehicle-masters/manufacturers', ['name' => 'Protected Make'])->assertCreated()->json('data.id');
+        $this->actingAs($user)->postJson('/api/v1/vehicle-masters/models', ['name' => 'Protected Model', 'parent_id' => $make])->assertCreated();
+        $this->actingAs($user)->deleteJson("/api/v1/vehicle-masters/manufacturers/{$make}")->assertStatus(409);
+    }
+
     public function test_default_vehicle_classes_body_types_and_fuel_types_are_seeded(): void
     {
         $user = User::factory()->create(['is_admin' => true]);

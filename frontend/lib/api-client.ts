@@ -9,6 +9,7 @@ type ApiEnvelope<T> = {
   error?: { message?: string };
   errors?: Record<string, string[]>;
 };
+let authenticationRedirectStarted = false;
 
 export class AuthenticationRedirectError extends Error {
   constructor() {
@@ -20,6 +21,11 @@ export class AuthenticationRedirectError extends Error {
 function redirectToLogin(): never {
   if (typeof window !== "undefined") {
     sessionStorage.removeItem("raj_erp_token");
+    sessionStorage.removeItem("vimawallah_user");
+    if (authenticationRedirectStarted || window.location.pathname === "/login") {
+      throw new AuthenticationRedirectError();
+    }
+    authenticationRedirectStarted = true;
     const returnTo = `${window.location.pathname}${window.location.search}`;
     window.location.replace(`/login?returnTo=${encodeURIComponent(returnTo)}`);
   }
@@ -52,16 +58,21 @@ async function authenticatedFetch<T>(
   if (!token) redirectToLogin();
 
   const isFormData = init.body instanceof FormData;
-  const response = await fetch(apiUrl(path), {
-    ...init,
-    headers: {
-      Accept: "application/json",
-      ...(!isFormData ? { "Content-Type": "application/json" } : {}),
-      Authorization: `Bearer ${token}`,
-      ...(init.headers ?? {}),
-    },
-    cache: "no-store",
-  });
+  let response: Response;
+  try {
+    response = await fetch(apiUrl(path), {
+      ...init,
+      headers: {
+        Accept: "application/json",
+        ...(!isFormData ? { "Content-Type": "application/json" } : {}),
+        Authorization: `Bearer ${token}`,
+        ...(init.headers ?? {}),
+      },
+      cache: "no-store",
+    });
+  } catch {
+    throw new Error("Unable to reach the server. Check your network connection and try again.");
+  }
 
   const payload = (await response.json().catch(() => ({}))) as ApiEnvelope<T>;
   if (

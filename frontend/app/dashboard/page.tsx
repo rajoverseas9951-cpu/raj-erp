@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/dashboard/Icon";
-import { DashboardSummary, getDashboardSummary } from "@/lib/dashboard-api";
+import { DashboardPeriod, DashboardSummary, getDashboardSummary } from "@/lib/dashboard-api";
 import { dashboardSession } from "@/lib/dashboard";
 import { BRAND } from "@/config/brand";
 import { DASHBOARD_REFRESH_EVENT } from "@/lib/dashboard-refresh";
@@ -52,7 +52,7 @@ const kpis = [
   ],
   [
     "monthly_revenue",
-    "Monthly Revenue",
+    "Gross Commission / Revenue",
     "reports",
     true,
     "from-blue-400 to-indigo-700",
@@ -70,6 +70,13 @@ const kpis = [
     "building",
     true,
     "from-sky-400 to-cyan-700",
+  ],
+  [
+    "agent_commission",
+    "Agent Commission",
+    "customers",
+    true,
+    "from-teal-400 to-emerald-700",
   ],
   [
     "renewal_count",
@@ -96,18 +103,29 @@ const money = (value: number) =>
     notation: value >= 100000 ? "compact" : "standard",
   }).format(value);
 export default function DashboardPage() {
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
   const [data, setData] = useState<DashboardSummary>();
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>();
-  const requestRef = useRef<Promise<void> | null>(null);
+  const [period, setPeriod] = useState<DashboardPeriod>("today");
+  const [dateFrom, setDateFrom] = useState(today);
+  const [dateTo, setDateTo] = useState(today);
+  const requestRef = useRef<AbortController | null>(null);
   const refresh = useCallback(() => {
-    if (requestRef.current) return requestRef.current;
+    if (period === "custom" && (!dateFrom || !dateTo || dateFrom > dateTo)) {
+      setError("Select a valid inclusive custom date range.");
+      return Promise.resolve();
+    }
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
     setRefreshing(true);
     setError("");
-    const request = getDashboardSummary()
+    return getDashboardSummary({ period, dateFrom, dateTo }, controller.signal)
       .then((summary) => { setData(summary); setLastUpdated(new Date()); })
       .catch((e) => {
+        if (e instanceof DOMException && e.name === "AbortError") return;
         if (e instanceof Error && e.message === "AUTH_REQUIRED") {
           sessionStorage.removeItem("raj_erp_token");
           location.replace("/login?next=/dashboard");
@@ -115,10 +133,8 @@ export default function DashboardPage() {
         }
         setError(e instanceof Error ? e.message : "Dashboard could not refresh.");
       })
-      .finally(() => { setRefreshing(false); requestRef.current = null; });
-    requestRef.current = request;
-    return request;
-  }, []);
+      .finally(() => { if (requestRef.current === controller) { setRefreshing(false); requestRef.current = null; } });
+  }, [period, dateFrom, dateTo]);
   useEffect(() => {
     void refresh();
     const onFocus = () => void refresh();
@@ -127,7 +143,7 @@ export default function DashboardPage() {
     window.addEventListener("pageshow", onFocus);
     window.addEventListener(DASHBOARD_REFRESH_EVENT, onFocus);
     document.addEventListener("visibilitychange", onVisible);
-    return () => { window.removeEventListener("focus", onFocus); window.removeEventListener("pageshow", onFocus); window.removeEventListener(DASHBOARD_REFRESH_EVENT, onFocus); document.removeEventListener("visibilitychange", onVisible); };
+    return () => { requestRef.current?.abort(); window.removeEventListener("focus", onFocus); window.removeEventListener("pageshow", onFocus); window.removeEventListener(DASHBOARD_REFRESH_EVENT, onFocus); document.removeEventListener("visibilitychange", onVisible); };
   }, [refresh]);
   const date = new Intl.DateTimeFormat("en-IN", {
     weekday: "long",
@@ -157,6 +173,11 @@ export default function DashboardPage() {
           </div>
           <div className="flex flex-wrap items-center gap-3"><div className="text-right text-xs text-blue-100/70"><span className="block font-bold text-white">{refreshing?"Refreshing…":"Live data"}</span><span>{lastUpdated?`Last updated ${lastUpdated.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}`:"Waiting for first update"}</span></div><button type="button" disabled={refreshing} onClick={()=>void refresh()} className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-bold shadow-inner backdrop-blur-xl transition hover:bg-white/20 disabled:opacity-60">{refreshing?"Refreshing…":"Refresh"}</button></div>
         </div>
+      </section>
+      <section className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="Dashboard period filters">
+        <label className="text-xs font-bold uppercase tracking-wide text-slate-500">Period<select value={period} onChange={event=>setPeriod(event.target.value as DashboardPeriod)} className="mt-1 block min-w-44 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900"><option value="today">Today</option><option value="yesterday">Yesterday</option><option value="this_week">This Week</option><option value="this_month">This Month</option><option value="last_month">Last Month</option><option value="custom">Custom Date Range</option><option value="all_time">All Time</option></select></label>
+        {period==="custom"&&<><label className="text-xs font-bold uppercase tracking-wide text-slate-500">From<input type="date" value={dateFrom} max={dateTo} onChange={event=>setDateFrom(event.target.value)} className="mt-1 block rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900"/></label><label className="text-xs font-bold uppercase tracking-wide text-slate-500">To<input type="date" value={dateTo} min={dateFrom} onChange={event=>setDateTo(event.target.value)} className="mt-1 block rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900"/></label></>}
+        <p className="ml-auto text-xs text-slate-500">Timezone: <strong>Asia/Kolkata</strong>{data?.period.from&&<> · {data.period.from} to {data.period.to}</>}</p>
       </section>
       <QuickActions />
       {error && <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-800"><span>{error} Existing dashboard values are retained.</span><button type="button" onClick={()=>void refresh()} className="rounded-lg bg-amber-700 px-3 py-2 text-xs font-bold text-white">Retry</button></div>}

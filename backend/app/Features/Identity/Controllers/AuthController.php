@@ -1,11 +1,78 @@
 <?php
+
 namespace App\Features\Identity\Controllers;
-use App\Features\Identity\Requests\ForgotPasswordRequest; use App\Features\Identity\Requests\LoginRequest; use App\Features\Identity\Requests\ResetPasswordRequest; use App\Features\Identity\Resources\UserResource; use App\Features\Identity\Services\AuditService; use App\Features\Identity\Services\AuthService; use App\Http\Controllers\Controller; use Illuminate\Http\JsonResponse; use Illuminate\Http\Request; use Illuminate\Support\Facades\Hash; use Illuminate\Validation\Rules\Password;
-class AuthController extends Controller { public function __construct(private AuthService $auth,private AuditService $audit){} private function response(mixed $data,string $message,int $status=200):JsonResponse{return response()->json(['success'=>true,'message'=>$message,'data'=>$data,'meta'=>['timestamp'=>now()->toISOString()]],$status);}
- public function login(LoginRequest $request):JsonResponse{$result=$this->auth->login($request->validated(),$request);return $this->response(['user'=>new UserResource($result['user']->load('roles.permissions')),'token'=>$result['token'],'token_type'=>'Bearer'],'Authenticated.');}
- public function logout(Request $request):JsonResponse{$this->audit->record('auth.logout',$request->user(),$request->user(),$request);$request->user()->currentAccessToken()?->delete();return $this->response(null,'Logged out.');}
- public function refresh(Request $request):JsonResponse{return $this->response(['token'=>$this->auth->refresh($request->user(),$request),'token_type'=>'Bearer'],'Session refreshed.');}
- public function forgot(ForgotPasswordRequest $request):JsonResponse{$this->auth->forgot($request->validated());return $this->response(null,'If an active account matches, a reset link has been sent.');}
- public function reset(ResetPasswordRequest $request):JsonResponse{$this->auth->reset($request->validated(),$request);return $this->response(null,'Password reset successfully.');}
- public function change(Request $request):JsonResponse{$data=$request->validate(['current_password'=>['required',function($attribute,$value,$fail)use($request){if(!Hash::check($value,$request->user()->password))$fail('The current password is incorrect.');}],'password'=>['required','confirmed',Password::min(10)->mixedCase()->numbers()->symbols()]]);$user=$request->user();$user->update(['password'=>Hash::make($data['password'])]);$current=$user->currentAccessToken();$user->tokens()->when($current,fn($query)=>$query->where('id','!=',$current->id))->delete();if(config('session.driver')==='database'&&$request->hasSession()){\Illuminate\Support\Facades\DB::table('sessions')->where('user_id',$user->id)->where('id','!=',$request->session()->getId())->delete();}$this->audit->record('auth.password_changed',$user,$user,$request);return $this->response(null,'Password changed successfully.');}
+
+use App\Features\Identity\Requests\ForgotPasswordRequest;
+use App\Features\Identity\Requests\LoginRequest;
+use App\Features\Identity\Requests\ResetPasswordRequest;
+use App\Features\Identity\Resources\UserResource;
+use App\Features\Identity\Services\AuditService;
+use App\Features\Identity\Services\AuthService;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
+use Laravel\Sanctum\PersonalAccessToken;
+
+class AuthController extends Controller
+{
+    public function __construct(private AuthService $auth, private AuditService $audit) {}
+
+    private function response(mixed $data, string $message, int $status = 200): JsonResponse
+    {
+        return response()->json(['success' => true, 'message' => $message, 'data' => $data, 'meta' => ['timestamp' => now()->toISOString()]], $status);
+    }
+
+    public function login(LoginRequest $request): JsonResponse
+    {
+        $result = $this->auth->login($request->validated(), $request);
+        return $this->response(['user' => new UserResource($result['user']->load('roles.permissions')), 'token' => $result['token'], 'token_type' => 'Bearer'], 'Authenticated.');
+    }
+
+    public function logout(Request $request): JsonResponse
+    {
+        $this->audit->record('auth.logout', $request->user(), $request->user(), $request);
+        $request->user()->currentAccessToken()?->delete();
+        return $this->response(null, 'Logged out.');
+    }
+
+    public function refresh(Request $request): JsonResponse
+    {
+        return $this->response(['token' => $this->auth->refresh($request->user(), $request), 'token_type' => 'Bearer'], 'Session refreshed.');
+    }
+
+    public function forgot(ForgotPasswordRequest $request): JsonResponse
+    {
+        $this->auth->forgot($request->validated());
+        return $this->response(null, 'If an active account matches, a reset link has been sent.');
+    }
+
+    public function reset(ResetPasswordRequest $request): JsonResponse
+    {
+        $this->auth->reset($request->validated(), $request);
+        return $this->response(null, 'Password reset successfully.');
+    }
+
+    public function change(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'current_password' => ['required', function ($attribute, $value, $fail) use ($request) {
+                if (! Hash::check($value, $request->user()->password)) $fail('The current password is incorrect.');
+            }],
+            'password' => ['required', 'confirmed', Password::min(10)->mixedCase()->numbers()->symbols()],
+        ]);
+        $user = $request->user();
+        $user->update(['password' => Hash::make($data['password'])]);
+        $current = $user->currentAccessToken();
+        if ($current instanceof PersonalAccessToken) {
+            $user->tokens()->where('id', '!=', $current->getKey())->delete();
+        }
+        if (config('session.driver') === 'database' && $request->hasSession()) {
+            DB::table('sessions')->where('user_id', $user->id)->where('id', '!=', $request->session()->getId())->delete();
+        }
+        $this->audit->record('auth.password_changed', $user, $user, $request);
+        return $this->response(null, 'Password changed successfully.');
+    }
 }

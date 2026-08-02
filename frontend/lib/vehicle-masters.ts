@@ -40,4 +40,8 @@ export const vehicleMasterApi = {
       method: "PUT",
       body: JSON.stringify(body),
     }),
+  remove: (type: VehicleMasterType, id: string) =>
+    authenticatedRequest<null>(`/vehicle-masters/${type}/${id}`, {
+      method: "DELETE",
+    }),
 };

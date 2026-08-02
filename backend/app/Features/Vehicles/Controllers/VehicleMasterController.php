@@ -78,6 +78,24 @@ class VehicleMasterController
         return response()->json(['success' => true, 'data' => $this->find($request, $type, $id)]);
     }
 
+    public function destroy(Request $request, string $type, string $id): JsonResponse
+    {
+        $type = $this->type($type);
+        $this->authorize($request, 'vehicle.delete');
+        $this->find($request, $type, $id);
+        $column = [
+            'manufacturers' => 'manufacturer_id', 'models' => 'model_id', 'colours' => 'colour_id',
+            'vehicle_classes' => 'vehicle_class_id', 'body_types' => 'vehicle_category_id', 'fuel_types' => 'fuel_type_id',
+        ][$type];
+        $inUse = DB::table('vehicles')->where('tenant_id', $this->tenant($request))->whereNull('deleted_at')->where($column, $id)->exists();
+        $hasModels = $type === 'manufacturers' && $this->query($request, 'models')->where('parent_id', $id)->exists();
+        if ($inUse || $hasModels) {
+            return response()->json(['success' => false, 'message' => 'This master is in use and cannot be deleted. Deactivate it instead.'], 409);
+        }
+        $this->query($request, $type)->where('id', $id)->update(['deleted_at' => now(), 'updated_by' => $request->user()?->id, 'updated_at' => now()]);
+        return response()->json(['success' => true, 'message' => 'Master deleted safely.', 'data' => null]);
+    }
+
     private function validated(Request $request, string $type, bool $updating = false): array
     {
         return $request->validate([

@@ -27,6 +27,7 @@ class DashboardSummaryTest extends TestCase
 
     public function test_policy_commission_is_live_tenant_scoped_revenue_and_updates_profit(): void
     {
+        config(['app.timezone' => 'Asia/Kolkata']);
         $tenantA = (string) Str::uuid();
         $tenantB = (string) Str::uuid();
         $user = User::factory()->create(['tenant_id' => $tenantA, 'is_admin' => true]);
@@ -44,8 +45,8 @@ class DashboardSummaryTest extends TestCase
         }
         $policyA = (string) Str::uuid();
         DB::table('vehicle_insurances')->insert([
-            ['id' => $policyA, 'tenant_id' => $tenantA, 'vehicle_id' => $vehicleA, 'company_name' => 'Test Insurance', 'purchase_from' => 'direct_company', 'policy_number' => 'POLICY-A', 'issue_date' => $now->toDateString(), 'expiry_date' => $now->copy()->addYear()->toDateString(), 'status' => 'running', 'insurance_type' => 'comprehensive', 'gross_premium' => 4626.78, 'gross_commission' => 1058.67, 'created_at' => $now, 'updated_at' => $now],
-            ['id' => (string) Str::uuid(), 'tenant_id' => $tenantB, 'vehicle_id' => $vehicleB, 'company_name' => 'Other Insurance', 'purchase_from' => 'direct_company', 'policy_number' => 'POLICY-B', 'issue_date' => $now->toDateString(), 'expiry_date' => $now->copy()->addYear()->toDateString(), 'status' => 'running', 'insurance_type' => 'third_party', 'gross_premium' => 9999, 'gross_commission' => 9999, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => $policyA, 'tenant_id' => $tenantA, 'vehicle_id' => $vehicleA, 'company_name' => 'Test Insurance', 'purchase_from' => 'direct_company', 'policy_number' => 'POLICY-A', 'issue_date' => $now->toDateString(), 'expiry_date' => $now->copy()->addYear()->toDateString(), 'status' => 'running', 'insurance_type' => 'comprehensive', 'gross_premium' => 4626.78, 'gross_commission' => 1058.67, 'agent_commission' => 58.67, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => (string) Str::uuid(), 'tenant_id' => $tenantB, 'vehicle_id' => $vehicleB, 'company_name' => 'Other Insurance', 'purchase_from' => 'direct_company', 'policy_number' => 'POLICY-B', 'issue_date' => $now->toDateString(), 'expiry_date' => $now->copy()->addYear()->toDateString(), 'status' => 'running', 'insurance_type' => 'third_party', 'gross_premium' => 9999, 'gross_commission' => 9999, 'agent_commission' => 0, 'created_at' => $now, 'updated_at' => $now],
         ]);
         DB::table('accounting_vouchers')->insert([
             ['id' => (string) Str::uuid(), 'tenant_id' => $tenantA, 'voucher_number' => 'REC-A', 'voucher_type' => 'receipt', 'voucher_date' => $now->toDateString(), 'total_debit' => 1200, 'total_credit' => 1200, 'status' => 'posted', 'created_at' => $now, 'updated_at' => $now],
@@ -56,13 +57,19 @@ class DashboardSummaryTest extends TestCase
             ->assertJsonPath('data.kpis.customers.value', 1)
             ->assertJsonPath('data.kpis.payments_received.value', 1200)
             ->assertJsonPath('data.kpis.monthly_revenue.value', 1058.67)
+            ->assertJsonPath('data.kpis.agent_commission.value', 58.67)
             ->assertJsonPath('data.kpis.monthly_expenses.value', 200)
-            ->assertJsonPath('data.kpis.net_result.value', 858.67)
+            ->assertJsonPath('data.kpis.net_result.value', 800)
+            ->assertJsonPath('data.period.key', 'today')
+            ->assertJsonPath('data.period.timezone', 'Asia/Kolkata')
             ->assertJsonPath('data.revenue.current', 1058.67);
 
         DB::table('vehicle_insurances')->where('id', $policyA)->update(['gross_commission' => 1200, 'updated_at' => now()]);
         $this->actingAs($user)->getJson('/api/v1/dashboard/summary')->assertOk()
             ->assertJsonPath('data.kpis.monthly_revenue.value', 1200)
-            ->assertJsonPath('data.kpis.net_result.value', 1000);
+            ->assertJsonPath('data.kpis.net_result.value', 941.33);
+
+        $this->actingAs($user)->getJson('/api/v1/dashboard/summary?period=custom&date_from='.$now->toDateString().'&date_to='.$now->toDateString())
+            ->assertOk()->assertJsonPath('data.kpis.monthly_revenue.value', 1200);
     }
 }

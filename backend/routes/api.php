@@ -62,6 +62,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('vehicle-masters/{type}', [VehicleMasterController::class, 'index']);
     Route::post('vehicle-masters/{type}', [VehicleMasterController::class, 'store']);
     Route::put('vehicle-masters/{type}/{id}', [VehicleMasterController::class, 'update']);
+    Route::delete('vehicle-masters/{type}/{id}', [VehicleMasterController::class, 'destroy']);
     Route::post('vehicles/bulk-delete', [VehicleController::class, 'bulkDelete']);
     Route::post('vehicles/bulk-update', [VehicleController::class, 'bulkUpdate']);
     Route::get('vehicles/{vehicle}/timeline', [VehicleController::class, 'timeline']);

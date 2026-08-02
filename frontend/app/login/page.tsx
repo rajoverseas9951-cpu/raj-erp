@@ -9,8 +9,10 @@ export default function Login() {
     [success, setSuccess] = useState("");
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
     setError("");
+    setSuccess("");
     const f = new FormData(e.currentTarget);
     try {
       const data = await authRequest<{ token: string; user: unknown }>("login", {

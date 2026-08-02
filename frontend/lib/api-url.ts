@@ -6,13 +6,22 @@ function resolveApiOrigin(): string {
       .replace(/\/+$/, "")
       .replace(/\/api\/v1$/i, "")
       .replace(/\/api$/i, "");
+    let parsed: URL;
+    try {
+      parsed = new URL(apiOrigin);
+    } catch {
+      throw new Error("NEXT_PUBLIC_API_URL must be a valid absolute URL.");
+    }
 
     if (
       process.env.NODE_ENV === "production" &&
-      /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(apiOrigin)
+      (parsed.protocol !== "https:" ||
+        parsed.hostname === "localhost" ||
+        /^127(?:\.\d{1,3}){3}$/.test(parsed.hostname) ||
+        /^\d{1,3}(?:\.\d{1,3}){3}$/.test(parsed.hostname))
     ) {
       throw new Error(
-        "NEXT_PUBLIC_API_URL must not use a localhost address in production.",
+        "NEXT_PUBLIC_API_URL must be a public HTTPS origin in production.",
       );
     }
 
