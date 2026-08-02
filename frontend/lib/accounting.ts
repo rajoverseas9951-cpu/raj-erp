@@ -1,10 +1,10 @@
 'use client';
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? '';
+import { apiUrl } from '@/lib/api-url';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = sessionStorage.getItem('raj_erp_token');
-  const response = await fetch(`${API}/api/v1${path}`, {
+  const response = await fetch(apiUrl(path), {
     ...init,
     headers: {
       Accept: 'application/json',

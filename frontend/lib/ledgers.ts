@@ -1,5 +1,7 @@
 'use client';
 
+import { apiUrl } from '@/lib/api-url';
+
 export type Ledger = {
   id: string;
   ledger_name: string;
@@ -33,11 +35,9 @@ export type LedgerStatement = {
   closing_type: 'debit' | 'credit';
 };
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? '';
-
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = sessionStorage.getItem('raj_erp_token');
-  const response = await fetch(`${API}/api/v1${path}`, {
+  const response = await fetch(apiUrl(path), {
     ...init,
     headers: {
       Accept: 'application/json',

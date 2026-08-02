@@ -1,4 +1,4 @@
-const API = process.env.NEXT_PUBLIC_API_URL ?? "";
+import { apiUrl } from "@/lib/api-url";
 
 export type ApiError = {
   message?: string;
@@ -9,7 +9,7 @@ export async function authRequest<T>(
   path: string,
   body: Record<string, string>
 ): Promise<T> {
-  const response = await fetch(`${API}/api/v1/auth/${path}`, {
+  const response = await fetch(apiUrl(`/auth/${path}`), {
     method: "POST",
     headers: {
       Accept: "application/json",

@@ -1,3 +1,5 @@
+import { apiUrl } from '@/lib/api-url';
+
 export type VehicleInsurancePolicy = {
   id: string;
   vehicle_id: string;
@@ -70,7 +72,7 @@ export type InsuranceCalculation = {
 
 async function multipart<T>(path: string, body: FormData): Promise<T> {
   const token = sessionStorage.getItem('raj_erp_token');
-  const response = await fetch(`${API}/api/v1${path}`, {
+  const response = await fetch(apiUrl(path), {
     method: 'POST',
     headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     body,
@@ -80,11 +82,9 @@ async function multipart<T>(path: string, body: FormData): Promise<T> {
   return payload.data as T;
 }
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? '';
-
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = sessionStorage.getItem('raj_erp_token');
-  const response = await fetch(`${API}/api/v1${path}`, {
+  const response = await fetch(apiUrl(path), {
     ...init,
     headers: {
       Accept: 'application/json',

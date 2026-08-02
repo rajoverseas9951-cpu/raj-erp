@@ -1,7 +1,7 @@
 "use client";
 import { invalidateDashboard } from "@/lib/dashboard-refresh";
+import { apiUrl } from "@/lib/api-url";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 type ApiEnvelope<T> = {
   data?: T;
@@ -52,7 +52,7 @@ async function authenticatedFetch<T>(
   if (!token) redirectToLogin();
 
   const isFormData = init.body instanceof FormData;
-  const response = await fetch(`${API}/api/v1${path}`, {
+  const response = await fetch(apiUrl(path), {
     ...init,
     headers: {
       Accept: "application/json",

@@ -1,3 +1,6 @@
+import { apiUrl } from "@/lib/api-url";
+import { authenticatedRequest } from "@/lib/api-client";
+
 export type Customer = {
   id: string;
   customer_code: string;
@@ -32,8 +35,6 @@ export type Customer = {
   insurance_policies_count: number;
   rto_files_count: number;
 };
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return authenticatedRequest<T>(path, init);
@@ -125,7 +126,7 @@ export const customerApi = {
     if (!token) throw new Error("Unauthenticated.");
     const params = new URLSearchParams(query);
     if (format === "pdf") params.set("format", "pdf");
-    const response = await fetch(`${API}/api/v1/customers/export?${params}`, {
+    const response = await fetch(apiUrl(`/customers/export?${params}`), {
       headers: {
         Accept: format === "pdf" ? "application/pdf" : "text/csv",
         Authorization: `Bearer ${token}`,
@@ -155,4 +156,3 @@ export type TimelineEvent = {
   created_at: string;
   metadata?: Record<string, unknown>;
 };
-import { authenticatedRequest } from "@/lib/api-client";

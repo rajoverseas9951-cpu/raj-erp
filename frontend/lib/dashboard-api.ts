@@ -1,5 +1,7 @@
 'use client';
 
+import { apiUrl } from '@/lib/api-url';
+
 export type Metric={value:number;growth:number|null};
 export type DashboardSummary={
   kpis:Record<string,Metric>;
@@ -7,11 +9,10 @@ export type DashboardSummary={
   policies:Record<string,number>; renewals:Record<string,number>; work:Record<string,number>;
   master_counts:Record<string,{total:number;active:number}>;
 };
-const API=process.env.NEXT_PUBLIC_API_URL??'';
 export async function getDashboardSummary():Promise<DashboardSummary>{
   const token=sessionStorage.getItem('raj_erp_token');
   if(!token)throw new Error('AUTH_REQUIRED');
-  const response=await fetch(`${API}/api/v1/dashboard/summary`,{headers:{Accept:'application/json',Authorization:`Bearer ${token}`,'Cache-Control':'no-cache'},cache:'no-store'});
+  const response=await fetch(apiUrl('/dashboard/summary'),{headers:{Accept:'application/json',Authorization:`Bearer ${token}`,'Cache-Control':'no-cache'},cache:'no-store'});
   const payload=await response.json().catch(()=>({})) as {data?:DashboardSummary;message?:string};
   if(response.status===401)throw new Error('AUTH_REQUIRED');
   if(!response.ok||!payload.data){
