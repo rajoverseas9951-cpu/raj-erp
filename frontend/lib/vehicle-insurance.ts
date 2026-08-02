@@ -1,4 +1,5 @@
 import { apiUrl } from '@/lib/api-url';
+import { invalidateDashboard } from '@/lib/dashboard-refresh';
 
 export type VehicleInsurancePolicy = {
   id: string;
@@ -79,10 +80,11 @@ async function multipart<T>(path: string, body: FormData): Promise<T> {
   });
   const payload = await response.json().catch(() => ({})) as { data?: T; message?: string; errors?: Record<string,string[]> };
   if (!response.ok) throw new Error(payload.errors ? Object.values(payload.errors)[0]?.[0] : payload.message ?? `Policy request failed: ${response.status}`);
+  invalidateDashboard();
   return payload.data as T;
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T>(path: string, init?: RequestInit, invalidate = false): Promise<T> {
   const token = sessionStorage.getItem('raj_erp_token');
   const response = await fetch(apiUrl(path), {
     ...init,
@@ -104,6 +106,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(validationError ?? payload.message ?? `Policy request failed: ${response.status}`);
   }
 
+  if (invalidate) invalidateDashboard();
   return payload.data as T;
 }
 
@@ -116,7 +119,7 @@ export const vehicleInsuranceApi = {
   create: (vehicleId: string, body: unknown) => request<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances`, {
     method: 'POST',
     body: JSON.stringify(body),
-  }),
+  }, true),
   saveForm: (vehicleId: string, body: FormData, policyId?: string) => {
     if (policyId) body.append('_method', 'PUT');
     return multipart<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances${policyId ? `/${policyId}` : ''}`, body);
@@ -124,8 +127,8 @@ export const vehicleInsuranceApi = {
   update: (vehicleId: string, policyId: string, body: unknown) => request<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances/${policyId}`, {
     method: 'PUT',
     body: JSON.stringify(body),
-  }),
+  }, true),
   remove: (vehicleId: string, policyId: string) => request<null>(`/vehicles/${vehicleId}/insurances/${policyId}`, {
     method: 'DELETE',
-  }),
+  }, true),
 };

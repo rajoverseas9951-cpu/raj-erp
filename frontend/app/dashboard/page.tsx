@@ -66,9 +66,9 @@ const kpis = [
   ],
   [
     "net_result",
-    "Net Result",
+    "Net Profit",
     "building",
-    false,
+    true,
     "from-sky-400 to-cyan-700",
   ],
   [
@@ -92,7 +92,7 @@ const money = (value: number) =>
   new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 2,
     notation: value >= 100000 ? "compact" : "standard",
   }).format(value);
 export default function DashboardPage() {

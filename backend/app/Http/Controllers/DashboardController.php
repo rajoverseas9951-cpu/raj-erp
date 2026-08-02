@@ -38,17 +38,22 @@ class DashboardController extends Controller
         $previousReceived = (float) (clone $vouchers)->where('voucher_type', 'receipt')->whereBetween('voucher_date', [$previousStart, $monthStart])->sum('total_credit');
         $expenses = (float) (clone $vouchers)->where('voucher_type', 'payment')->whereBetween('voucher_date', [$monthStart, $now])->sum('total_debit');
         $previousExpenses = (float) (clone $vouchers)->where('voucher_type', 'payment')->whereBetween('voucher_date', [$previousStart, $monthStart])->sum('total_debit');
+        $commissionRevenue = (float) (clone $policies)->where('vehicle_insurances.created_at', '>=', $monthStart)
+            ->where(fn ($query) => $query->whereNull('status')->orWhere('status', '!=', 'cancelled'))->sum('gross_commission');
+        $previousCommissionRevenue = (float) (clone $policies)->where('vehicle_insurances.created_at', '>=', $previousStart)
+            ->where('vehicle_insurances.created_at', '<', $monthStart)
+            ->where(fn ($query) => $query->whereNull('status')->orWhere('status', '!=', 'cancelled'))->sum('gross_commission');
         $outstanding = (float) (clone $vehicles)->sum('payment_due');
         $activePolicies = (clone $policies)->whereDate('expiry_date', '>=', $now->toDateString())->whereNotIn('status', ['cancelled', 'expired'])->count();
         $expiring = (clone $policies)->whereBetween('expiry_date', [$now->toDateString(), $now->copy()->addDays(30)->toDateString()])->count();
         $renewals = (clone $policies)->where('created_at', '>=', $monthStart)->where('status', 'renewed')->count();
 
-        $trend = collect(range(5, 0))->map(function ($ago) use ($vouchers, $now) {
+        $trend = collect(range(5, 0))->map(function ($ago) use ($policies, $vouchers, $now) {
             $from = $now->copy()->subMonths($ago)->startOfMonth();
             $to = $from->copy()->endOfMonth();
             return [
                 'month' => $from->format('M'),
-                'revenue' => (float) (clone $vouchers)->where('voucher_type', 'receipt')->whereBetween('voucher_date', [$from, $to])->sum('total_credit'),
+                'revenue' => (float) (clone $policies)->where(fn ($query) => $query->whereNull('status')->orWhere('status', '!=', 'cancelled'))->whereBetween('vehicle_insurances.created_at', [$from, $to])->sum('gross_commission'),
                 'expenses' => (float) (clone $vouchers)->where('voucher_type', 'payment')->whereBetween('voucher_date', [$from, $to])->sum('total_debit'),
             ];
         })->filter(fn ($row) => $row['revenue'] > 0 || $row['expenses'] > 0)->values();
@@ -67,12 +72,12 @@ class DashboardController extends Controller
                 'expiring_policies' => ['value' => $expiring, 'growth' => null],
                 'payments_received' => ['value' => $received, 'growth' => $comparison($received, $previousReceived)],
                 'outstanding_amount' => ['value' => $outstanding, 'growth' => null],
-                'monthly_revenue' => ['value' => $received, 'growth' => $comparison($received, $previousReceived)],
+                'monthly_revenue' => ['value' => $commissionRevenue, 'growth' => $comparison($commissionRevenue, $previousCommissionRevenue)],
                 'monthly_expenses' => ['value' => $expenses, 'growth' => $comparison($expenses, $previousExpenses)],
-                'net_result' => ['value' => $received - $expenses, 'growth' => null],
+                'net_result' => ['value' => $commissionRevenue - $expenses, 'growth' => null],
                 'renewal_count' => ['value' => $renewals, 'growth' => null],
             ],
-            'revenue' => ['current' => $received, 'previous' => $previousReceived, 'expenses' => $expenses, 'net_result' => $received - $expenses, 'outstanding' => $outstanding, 'trend' => $trend],
+            'revenue' => ['current' => $commissionRevenue, 'previous' => $previousCommissionRevenue, 'expenses' => $expenses, 'net_result' => $commissionRevenue - $expenses, 'outstanding' => $outstanding, 'trend' => $trend],
             'policies' => ['new' => $newPolicies, 'renewals' => $renewals, 'comprehensive' => (clone $policies)->whereIn('insurance_type', ['comprehensive', 'package'])->count(), 'third_party' => (clone $policies)->whereIn('insurance_type', ['third_party', 'standalone_tp'])->count(), 'two_wheeler' => $byVehicle(['two_wheeler']), 'private_car' => $byVehicle(['private_car']), 'commercial' => $byVehicle(['lgv', 'hgv', 'taxi'])],
             'renewals' => ['7' => (clone $policies)->whereBetween('expiry_date', [$now, $now->copy()->addDays(7)])->count(), '15' => (clone $policies)->whereBetween('expiry_date', [$now, $now->copy()->addDays(15)])->count(), '30' => $expiring, 'expired' => (clone $policies)->whereDate('expiry_date', '<', $now)->count(), 'renewed' => $renewals],
             'work' => ['puc_due' => (clone $vehicles)->whereIn('puc_status', ['not_added', 'due', 'expired'])->count(), 'fitness_due' => (clone $vehicles)->whereIn('fitness_status', ['not_added', 'due', 'expired'])->count(), 'permit_due' => (clone $vehicles)->whereIn('permit_status', ['not_added', 'due', 'expired'])->count(), 'payment_follow_up' => (clone $vehicles)->where('payment_due', '>', 0)->count()],
