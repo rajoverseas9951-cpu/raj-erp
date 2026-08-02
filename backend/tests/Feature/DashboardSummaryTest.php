@@ -77,5 +77,19 @@ class DashboardSummaryTest extends TestCase
             ->assertOk()->assertJsonPath('data.kpis.monthly_revenue.value', 1200);
         $this->actingAs($user)->getJson('/api/v1/dashboard/summary?period=this_year')
             ->assertOk()->assertJsonPath('data.period.key', 'this_year')->assertJsonPath('data.kpis.monthly_revenue.value', 1200);
+        foreach (['today', 'yesterday', 'this_week', 'this_month', 'last_month', 'this_year', 'all_time'] as $period) {
+            $response = $this->actingAs($user)->getJson('/api/v1/dashboard/summary?period='.$period)
+                ->assertOk()->assertJsonPath('data.period.key', $period)
+                ->assertJsonPath('data.period.timezone', 'Asia/Kolkata');
+            if (in_array($period, ['today', 'this_week', 'this_month', 'this_year', 'all_time'], true)) {
+                $response->assertJsonPath('data.kpis.revenue.value', 1200);
+            }
+        }
+        $this->actingAs($user)->getJson('/api/v1/dashboard/summary?period=this_month')
+            ->assertJsonPath('data.kpis.revenue.value', 1200);
+        $this->actingAs($user)->getJson('/api/v1/dashboard/summary?period=all_time')
+            ->assertJsonPath('data.kpis.revenue.value', 1200);
+        $this->actingAs($user)->getJson('/api/v1/dashboard/summary?period=custom&date_from='.$now->toDateString().'&date_to='.$now->toDateString())
+            ->assertOk()->assertJsonPath('data.period.key', 'custom')->assertJsonPath('data.kpis.revenue.value', 1200);
     }
 }

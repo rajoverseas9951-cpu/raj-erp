@@ -55,8 +55,10 @@ class DashboardController extends Controller
             $scoped('insurance_commissions')->where('status', '!=', 'cancelled'),
             'statement_date'
         )->sum('tds_amount'), 2);
-        $netProfit = round($commissionRevenue - $tds - $agentCommission - $expenses, 2);
-        $outstanding = (float) (clone $vehicles)->sum('payment_due');
+        $companyCost = round($tds + $agentCommission, 2);
+        $grossProfit = round($commissionRevenue - $companyCost, 2);
+        $netProfit = round($grossProfit - $expenses, 2);
+        $outstanding = round((float) $dateTimePeriod((clone $vehicles), 'vehicles.created_at')->sum('payment_due'), 2);
         $activePolicies = (clone $policies)->whereDate('expiry_date', '>=', $now->toDateString())
             ->where(fn ($query) => $query->whereNull('status')->orWhereNotIn('status', ['cancelled', 'expired']))->count();
         $expiring = $datePeriod($validPolicies(), 'expiry_date')->count();
@@ -85,14 +87,18 @@ class DashboardController extends Controller
                 'expiring_policies' => ['value' => $expiring, 'growth' => null],
                 'payments_received' => ['value' => $received, 'growth' => $comparison($received, $previousReceived)],
                 'outstanding_amount' => ['value' => $outstanding, 'growth' => null],
+                'revenue' => ['value' => $commissionRevenue, 'growth' => $comparison($commissionRevenue, $previousCommissionRevenue)],
+                'company_cost' => ['value' => $companyCost, 'growth' => null],
+                'gross_profit' => ['value' => $grossProfit, 'growth' => null],
                 'monthly_revenue' => ['value' => $commissionRevenue, 'growth' => $comparison($commissionRevenue, $previousCommissionRevenue)],
                 'tds' => ['value' => $tds, 'growth' => null],
                 'agent_commission' => ['value' => $agentCommission, 'growth' => null],
+                'expenses' => ['value' => $expenses, 'growth' => $comparison($expenses, $previousExpenses)],
                 'monthly_expenses' => ['value' => $expenses, 'growth' => $comparison($expenses, $previousExpenses)],
                 'net_result' => ['value' => $netProfit, 'growth' => null],
                 'renewal_count' => ['value' => $renewals, 'growth' => null],
             ],
-            'revenue' => ['current' => $commissionRevenue, 'previous' => $previousCommissionRevenue, 'tds' => $tds, 'agent_commission' => $agentCommission, 'expenses' => $expenses, 'net_result' => $netProfit, 'outstanding' => $outstanding, 'trend' => $trend],
+            'revenue' => ['current' => $commissionRevenue, 'previous' => $previousCommissionRevenue, 'company_cost' => $companyCost, 'gross_profit' => $grossProfit, 'tds' => $tds, 'agent_commission' => $agentCommission, 'expenses' => $expenses, 'net_result' => $netProfit, 'outstanding' => $outstanding, 'trend' => $trend],
             'policies' => ['new' => $newPolicies, 'renewals' => $renewals, 'comprehensive' => $periodPolicies()->whereIn('insurance_type', ['comprehensive', 'package'])->count(), 'third_party' => $periodPolicies()->whereIn('insurance_type', ['third_party', 'standalone_tp'])->count(), 'two_wheeler' => $byVehicle(['two_wheeler']), 'private_car' => $byVehicle(['private_car']), 'commercial' => $byVehicle(['lgv', 'hgv', 'taxi'])],
             'renewals' => ['7' => (clone $policies)->whereBetween('expiry_date', [$now->toDateString(), $now->addDays(7)->toDateString()])->count(), '15' => (clone $policies)->whereBetween('expiry_date', [$now->toDateString(), $now->addDays(15)->toDateString()])->count(), '30' => (clone $policies)->whereBetween('expiry_date', [$now->toDateString(), $now->addDays(30)->toDateString()])->count(), 'expired' => (clone $policies)->whereDate('expiry_date', '<', $now->toDateString())->count(), 'renewed' => $renewals],
             'work' => ['puc_due' => (clone $vehicles)->whereIn('puc_status', ['not_added', 'due', 'expired'])->count(), 'fitness_due' => (clone $vehicles)->whereIn('fitness_status', ['not_added', 'due', 'expired'])->count(), 'permit_due' => (clone $vehicles)->whereIn('permit_status', ['not_added', 'due', 'expired'])->count(), 'payment_follow_up' => (clone $vehicles)->where('payment_due', '>', 0)->count()],

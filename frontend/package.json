@@ -6,6 +6,7 @@
     "build": "next build",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "test:frontend": "node --experimental-strip-types --test tests/*.test.ts",
     "start": "next start"
   },
   "dependencies": {

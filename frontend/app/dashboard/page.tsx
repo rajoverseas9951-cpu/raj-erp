@@ -6,25 +6,26 @@ import { DashboardPeriod, DashboardSummary, getDashboardSummary } from "@/lib/da
 import { dashboardSession } from "@/lib/dashboard";
 import { BRAND } from "@/config/brand";
 import { DASHBOARD_REFRESH_EVENT } from "@/lib/dashboard-refresh";
+import { DASHBOARD_PERIODS, dashboardPeriodLabel } from "@/lib/dashboard-periods";
 
 const kpis = [
   [
     "customers",
-    "Total Customers",
+    "Total Customers (All Time)",
     "customers",
     false,
     "from-cyan-400 to-blue-600",
   ],
   [
     "vehicles",
-    "Active Vehicles",
+    "Current Active Vehicles",
     "vehicle",
     false,
     "from-violet-400 to-indigo-700",
   ],
   [
     "active_policies",
-    "Active Policies",
+    "Current Active Policies",
     "shield",
     false,
     "from-emerald-400 to-teal-700",
@@ -51,15 +52,29 @@ const kpis = [
     "from-orange-400 to-rose-600",
   ],
   [
-    "monthly_revenue",
-    "Gross Commission / Revenue",
+    "revenue",
+    "Revenue",
     "reports",
     true,
     "from-blue-400 to-indigo-700",
   ],
   [
-    "monthly_expenses",
-    "Monthly Expenses",
+    "company_cost",
+    "Company Cost",
+    "wallet",
+    true,
+    "from-fuchsia-400 to-purple-700",
+  ],
+  [
+    "gross_profit",
+    "Gross Profit",
+    "reports",
+    true,
+    "from-emerald-400 to-cyan-700",
+  ],
+  [
+    "expenses",
+    "Expenses",
     "wallet",
     true,
     "from-fuchsia-400 to-purple-700",
@@ -80,14 +95,14 @@ const kpis = [
   ],
   [
     "tds",
-    "TDS",
+    "TDS / Other Deductions",
     "payments",
     true,
     "from-amber-400 to-orange-700",
   ],
   [
     "renewal_count",
-    "Renewals This Month",
+    "Renewals",
     "clock",
     false,
     "from-indigo-400 to-violet-700",
@@ -158,6 +173,7 @@ export default function DashboardPage() {
     month: "long",
     year: "numeric",
   }).format(new Date());
+  const selectedPeriodLabel = dashboardPeriodLabel(period);
   return (
     <div className="mx-auto max-w-[1680px] space-y-6 p-4 sm:p-6 lg:p-8">
       <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_85%_15%,rgba(35,211,255,.28),transparent_26%),radial-gradient(circle_at_8%_90%,rgba(124,58,237,.25),transparent_30%),linear-gradient(135deg,#030712_0%,#0b153b_48%,#163da4_100%)] p-6 text-white shadow-[0_28px_80px_-32px_rgba(15,47,150,.8)] sm:p-8">
@@ -181,13 +197,16 @@ export default function DashboardPage() {
           <div className="flex flex-wrap items-center gap-3"><div className="text-right text-xs text-blue-100/70"><span className="block font-bold text-white">{refreshing?"Refreshing…":"Live data"}</span><span>{lastUpdated?`Last updated ${lastUpdated.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}`:"Waiting for first update"}</span></div><button type="button" disabled={refreshing} onClick={()=>void refresh()} className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-bold shadow-inner backdrop-blur-xl transition hover:bg-white/20 disabled:opacity-60">{refreshing?"Refreshing…":"Refresh"}</button></div>
         </div>
       </section>
-      <section className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="Dashboard period filters">
-        <label className="text-xs font-bold uppercase tracking-wide text-slate-500">Period<select value={period} onChange={event=>setPeriod(event.target.value as DashboardPeriod)} className="mt-1 block min-w-44 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900"><option value="today">Today</option><option value="this_month">This Month</option><option value="this_year">This Year</option><option value="all_time">All Time</option><option value="custom">Custom Date Range</option></select></label>
+      <section className="sticky top-3 z-20 flex flex-wrap items-end gap-3 rounded-2xl border border-blue-200 bg-white/95 p-4 shadow-lg shadow-blue-950/10 backdrop-blur" aria-label="Dashboard period filters">
+        <div className="mr-2"><p className="text-xs font-black uppercase tracking-[.16em] text-blue-600">Dashboard period</p><p className="mt-1 text-lg font-black text-slate-950">{selectedPeriodLabel}</p></div>
+        <label className="text-xs font-bold uppercase tracking-wide text-slate-500">Select Period<select aria-label="Select dashboard period" value={period} onChange={event=>setPeriod(event.target.value as DashboardPeriod)} className="mt-1 block min-w-52 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900">{DASHBOARD_PERIODS.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
         {period==="custom"&&<><label className="text-xs font-bold uppercase tracking-wide text-slate-500">From<input type="date" value={dateFrom} max={dateTo} onChange={event=>setDateFrom(event.target.value)} className="mt-1 block rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900"/></label><label className="text-xs font-bold uppercase tracking-wide text-slate-500">To<input type="date" value={dateTo} min={dateFrom} onChange={event=>setDateTo(event.target.value)} className="mt-1 block rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900"/></label></>}
         <p className="ml-auto text-xs text-slate-500">Timezone: <strong>Asia/Kolkata</strong>{data?.period.from&&<> · {data.period.from} to {data.period.to}</>}</p>
       </section>
       <QuickActions />
       {error && <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-800"><span>{error} Existing dashboard values are retained.</span><button type="button" onClick={()=>void refresh()} className="rounded-lg bg-amber-700 px-3 py-2 text-xs font-bold text-white">Retry</button></div>}
+      {!data && refreshing && <div role="status" className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-semibold text-blue-800">Loading {selectedPeriodLabel.toLowerCase()} dashboard data…</div>}
+      {data && !error && data.revenue.current === 0 && data.revenue.expenses === 0 && data.kpis.payments_received.value === 0 && <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No financial activity was found for {selectedPeriodLabel.toLowerCase()}.</div>}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map(([key, label, icon, isMoney, tone]) => {
           const item = data?.kpis[key];
@@ -214,7 +233,7 @@ export default function DashboardPage() {
                 )}
               </div>
               <p className="relative mt-5 text-xs font-bold uppercase tracking-wider text-slate-400">
-                {label}
+                {isMoney ? `${selectedPeriodLabel} ${label}` : label}
               </p>
               <p className="relative mt-1 text-2xl font-black tracking-tight">
                 {item ? (
@@ -232,10 +251,10 @@ export default function DashboardPage() {
         })}
       </section>
       <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-        <Panel title="Revenue overview" copy="Six-month customer-pay trend">
+        <Panel title={`${selectedPeriodLabel} financial overview`} copy="Gross commission and deductions for the selected period">
           <div className="mt-5 grid grid-cols-3 gap-3">
             {[
-              ["This month", data?.revenue.current],
+              [selectedPeriodLabel, data?.revenue.current],
               ["Previous", data?.revenue.previous],
               ["Outstanding", data?.revenue.outstanding],
             ].map(([l, v]) => (
