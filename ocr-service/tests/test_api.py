@@ -149,3 +149,70 @@ def test_requires_at_least_one_image() -> None:
         response = client.post("/v1/ocr/rc")
 
     assert response.status_code == 400
+
+
+def test_sequential_rc_requests_never_share_parsed_fields() -> None:
+    class SequentialEngine:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def recognize(self, image, source: str) -> list[OCRLine]:
+            self.calls += 1
+            texts = (
+                [
+                    "REGN NO: GJ08DH9235",
+                    "Financier: ROYAL FINANCE THARAD",
+                    "Cubic Capacity: 97.20",
+                    "Unladen Weight: 109",
+                    "Emission Norms: BHARAT STAGE VI",
+                ]
+                if self.calls == 1
+                else [
+                    "REGN NO: GJ08BB6056",
+                    "Date of Reg.: 06/12/2016",
+                    "Reg. Validity: 05/12/2031",
+                    "Fuel Used: DIESEL",
+                    "Maker's Name: ESCORTSLTD",
+                    "Model Name: FARMTRAC 45",
+                    "Cubic Capacity: 45",
+                    "Cylinder No: 3",
+                    "Month & Yr. of Mfg.: JANUARY 2016",
+                    "Financier Name: L AND T FINANCE LTD",
+                ]
+            )
+            return [
+                OCRLine(text=text, confidence=0.95, source=source) for text in texts
+            ]
+
+    engine = SequentialEngine()
+    app = create_app(Settings(), engine_factory=lambda settings: engine)
+    image = png_bytes()
+
+    with TestClient(app) as client:
+        motorcycle = client.post(
+            "/v1/ocr/rc",
+            files={"combined": ("motorcycle.png", image, "image/png")},
+        ).json()
+        tractor = client.post(
+            "/v1/ocr/rc",
+            files={"combined": ("tractor.png", image, "image/png")},
+        ).json()
+
+    assert motorcycle["fields"]["financier"] == "ROYAL FINANCE THARAD"
+    assert motorcycle["fields"]["cubic_capacity"] == "97.20"
+    assert motorcycle["fields"]["unladen_weight"] == "109"
+    assert tractor["fields"]["vehicle_number"] == "GJ08BB6056"
+    assert tractor["fields"]["fuel_type"] == "DIESEL"
+    assert tractor["fields"]["manufacturer"] == "ESCORTS LTD"
+    assert tractor["fields"]["manufacturing_month"] == "01"
+    assert tractor["fields"]["manufacturing_year"] == "2016"
+    assert tractor["fields"]["number_of_cylinders"] == "3"
+    assert tractor["fields"]["financier"] == "L AND T FINANCE LTD"
+    assert tractor["fields"]["cubic_capacity"] == "45"
+    assert tractor["fields"]["wheel_base"] is None
+    assert tractor["fields"]["horse_power"] is None
+    assert tractor["fields"]["unladen_weight"] is None
+    assert tractor["fields"]["emission_norms"] is None
+    assert "ROYAL FINANCE THARAD" not in tractor["raw_text"]
+    assert "97.20" not in tractor["raw_text"]
+    assert "109" not in tractor["raw_text"]

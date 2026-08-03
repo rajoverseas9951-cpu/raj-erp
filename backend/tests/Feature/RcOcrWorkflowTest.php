@@ -134,6 +134,72 @@ class RcOcrWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_tractor_request_cannot_inherit_motorcycle_fields_or_master_ids(): void
+    {
+        $user = User::factory()->create(['is_admin' => true]);
+        Http::fake([
+            'http://ocr.internal/v1/ocr/rc' => Http::sequence()
+                ->push($this->paddlePayload())
+                ->push($this->tractorPayload()),
+        ]);
+        config(['services.paddleocr.url' => 'http://ocr.internal']);
+
+        $motorcycle = $this->actingAs($user)->post('/api/v1/ocr', [
+            'document_type' => 'rc',
+            'images' => [UploadedFile::fake()->create('motorcycle.jpg', 100, 'image/jpeg')],
+        ])->assertOk();
+        $this->assertSame('ROYAL FINANCE THARAD', $motorcycle->json('data.fields.financier'));
+
+        $tractor = $this->actingAs($user)->post('/api/v1/ocr', [
+            'document_type' => 'rc',
+            'images' => [UploadedFile::fake()->create('tractor.jpg', 100, 'image/jpeg')],
+        ])->assertOk()
+            ->assertJsonPath('data.fields.vehicle_number', 'GJ08BB6056')
+            ->assertJsonPath('data.fields.registration_date', '2016-12-06')
+            ->assertJsonPath('data.fields.registration_valid_upto', '2031-12-05')
+            ->assertJsonPath('data.fields.chassis_number', 'T052358130')
+            ->assertJsonPath('data.fields.engine_number', 'E2363463')
+            ->assertJsonPath('data.fields.owner_name', 'KARSHANBHAI')
+            ->assertJsonPath('data.fields.father_or_spouse_name', 'GANESHBHAI KALA')
+            ->assertJsonPath('data.fields.address', 'AT-KHODA, TA-THARAD, BANASKANTHA, 385565')
+            ->assertJsonPath('data.fields.vehicle_class', 'TRACTOR (AGRI)')
+            ->assertJsonPath('data.fields.fuel_type', 'DIESEL')
+            ->assertJsonPath('data.fields.seating_capacity', '1')
+            ->assertJsonPath('data.fields.manufacturer', 'ESCORTS LTD')
+            ->assertJsonPath('data.fields.model', 'FARMTRAC 45')
+            ->assertJsonPath('data.fields.colour', 'BLUE')
+            ->assertJsonPath('data.fields.vehicle_category', 'TRACTOR (OPEN)')
+            ->assertJsonPath('data.fields.cubic_capacity', '45')
+            ->assertJsonPath('data.fields.number_of_cylinders', '3')
+            ->assertJsonPath('data.fields.manufacturing_month', '01')
+            ->assertJsonPath('data.fields.manufacturing_year', '2016')
+            ->assertJsonPath('data.fields.financier', 'L AND T FINANCE LTD')
+            ->assertJsonPath('data.fields.registration_authority', 'PALANPUR')
+            ->assertJsonMissingPath('data.fields.variant')
+            ->assertJsonMissingPath('data.fields.wheel_base')
+            ->assertJsonMissingPath('data.fields.horse_power')
+            ->assertJsonMissingPath('data.fields.unladen_weight')
+            ->assertJsonMissingPath('data.fields.emission_norms');
+
+        $tractorFields = json_encode($tractor->json('data.fields'), JSON_THROW_ON_ERROR);
+        $this->assertStringNotContainsString('ROYAL FINANCE THARAD', $tractorFields);
+        $this->assertStringNotContainsString('97.20', $tractorFields);
+        $this->assertStringNotContainsString('109', $tractorFields);
+        $this->assertDatabaseMissing('vehicle_masters', [
+            'tenant_id' => $user->tenant_id,
+            'type' => 'fuel_types',
+            'name' => 'USED',
+        ]);
+        $this->assertNotSame(
+            $motorcycle->json('data.fields.manufacturer_id'),
+            $tractor->json('data.fields.manufacturer_id')
+        );
+        $this->assertNotSame(
+            $motorcycle->json('data.fields.model_id'),
+            $tractor->json('data.fields.model_id')
+        );
+    }
+
     /** @return array<string, mixed> */
     private function paddlePayload(): array
     {
@@ -180,6 +246,45 @@ class RcOcrWorkflowTest extends TestCase
             'overall_confidence' => 0.93,
             'warnings' => [],
             'processing_ms' => 321,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function tractorPayload(): array
+    {
+        $fields = [
+            'vehicle_number' => 'GJ08BB6056',
+            'registration_date' => '06/12/2016',
+            'registration_valid_upto' => '05/12/2031',
+            'chassis_number' => 'T052358130',
+            'engine_number' => 'E2363463',
+            'owner_name' => 'KARSHANBHAI',
+            'father_or_spouse_name' => 'GANESHBHAI KALA',
+            'address' => 'AT-KHODA, TA-THARAD, BANASKANTHA, 385565',
+            'vehicle_class' => 'TRACTOR (AGRI)',
+            'fuel_type' => 'DIESEL',
+            'seating_capacity' => '1',
+            'manufacturer' => 'ESCORTSLTD',
+            'model' => 'FARMTRAC 45',
+            'colour' => 'BLUE',
+            'body_type' => 'TRACTOR (OPEN)',
+            'cubic_capacity' => '45',
+            'number_of_cylinders' => '3',
+            'manufacturing_month_year' => 'JANUARY 2016',
+            'financier' => 'L AND T FINANCE LTD',
+            'registration_authority' => 'PALANPUR',
+        ];
+
+        return [
+            'success' => true,
+            'document_type' => 'vehicle_rc',
+            'fields' => $fields,
+            'field_confidence' => array_fill_keys(array_keys($fields), 0.94),
+            'raw_text' => 'Tractor RC OCR text intentionally omitted from logs.',
+            'ocr_lines' => [],
+            'overall_confidence' => 0.94,
+            'warnings' => [],
+            'processing_ms' => 280,
         ];
     }
 }

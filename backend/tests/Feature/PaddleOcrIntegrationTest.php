@@ -110,4 +110,37 @@ class PaddleOcrIntegrationTest extends TestCase
             && str_contains((string) $request->header('Content-Type')[0], 'multipart/form-data')
         );
     }
+
+    public function test_invalid_fuel_is_dropped_and_textual_manufacturing_month_is_normalized(): void
+    {
+        Http::fake([
+            'http://ocr.internal/v1/ocr/rc' => Http::response([
+                'success' => true,
+                'fields' => [
+                    'vehicle_number' => 'GJ08BB6056',
+                    'manufacturer' => 'ESCORTSLTD',
+                    'fuel_type' => 'USED',
+                    'manufacturing_month_year' => 'JANUARY 2016',
+                ],
+                'field_confidence' => [
+                    'manufacturer' => 0.95,
+                    'fuel_type' => 0.93,
+                    'manufacturing_month_year' => 0.94,
+                ],
+                'raw_text' => '',
+                'ocr_lines' => [],
+                'overall_confidence' => 0.94,
+                'warnings' => [],
+            ]),
+        ]);
+
+        $result = (new OcrService)->scan([
+            UploadedFile::fake()->create('tractor.png', 100, 'image/png'),
+        ], 'rc');
+
+        $this->assertSame('ESCORTS LTD', $result['fields']['manufacturer']);
+        $this->assertSame('01', $result['fields']['manufacturing_month']);
+        $this->assertSame('2016', $result['fields']['manufacturing_year']);
+        $this->assertArrayNotHasKey('fuel_type', $result['fields']);
+    }
 }

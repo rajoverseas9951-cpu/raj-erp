@@ -23,6 +23,13 @@ class ParsedRC:
     rejected_fields: list[str]
 
 
+@dataclass(frozen=True)
+class FieldCandidate:
+    value: str
+    confidence: float
+    origin: str
+
+
 def _label(pattern: str) -> re.Pattern[str]:
     return re.compile(pattern, re.IGNORECASE)
 
@@ -41,7 +48,7 @@ FIELD_RULES: tuple[FieldRule, ...] = (
     FieldRule(
         "father_or_spouse_name",
         _label(
-            r"\b(?:SON(?:\s*/\s*WIFE\s*/\s*DAUGHTER)?|WIFE|DAUGHTER)"
+            r"\b(?:SON(?:\s*/\s*(?:WIFE|DAUGHTER)){0,2}|WIFE|DAUGHTER)"
             r"\s+OF(?:\s*\(.*?\))?|"
             r"\b(?:S\s*/\s*W\s*/\s*D|FATHER|HUSBAND)\s*(?:NAME|OF)?\b"
         ),
@@ -78,7 +85,7 @@ FIELD_RULES: tuple[FieldRule, ...] = (
     FieldRule(
         "manufacturer",
         _label(r"\b(?:MAKER(?:'?S)?(?:\s+NAME)?|MANUFACTURER)\b"),
-        "text",
+        "manufacturer",
     ),
     FieldRule("model", _label(r"\bMODEL(?:\s+NAME)?\b"), "text"),
     FieldRule("body_type", _label(r"\bBODY\s*TYPE\b"), "text"),
@@ -89,8 +96,8 @@ FIELD_RULES: tuple[FieldRule, ...] = (
     ),
     FieldRule(
         "fuel_type",
-        _label(r"\b(?:TYPE\s+OF\s+)?FUEL(?:\s+TYPE)?\b"),
-        "text",
+        _label(r"\b(?:TYPE\s+OF\s+)?FUEL(?:\s+(?:TYPE|USED))?\b"),
+        "fuel",
     ),
     FieldRule(
         "emission_norms",
@@ -101,7 +108,8 @@ FIELD_RULES: tuple[FieldRule, ...] = (
     FieldRule(
         "manufacturing_month_year",
         _label(
-            r"\b(?:MFG|MFD|MANUFACTURING|MONTH\s*[-&/]?\s*YEAR\s+OF\s+MFG)"
+            r"\b(?:MONTH\s*(?:&|AND|[-/])?\s*(?:YEAR|YR\.?)\s+OF\s+MFG\.?|"
+            r"MFG|MFD|MANUFACTURING)"
             r"\s*(?:DATE|DT\.?|MONTH\s*/?\s*YEAR)?\b"
         ),
         "month_year",
@@ -128,7 +136,10 @@ FIELD_RULES: tuple[FieldRule, ...] = (
     ),
     FieldRule(
         "number_of_cylinders",
-        _label(r"\b(?:NO\.?\s+OF\s+CYLINDERS?|NUMBER\s+OF\s+CYLINDERS?)\b"),
+        _label(
+            r"\b(?:NO\.?\s+OF\s+CYLINDERS?|NUMBER\s+OF\s+CYLINDERS?|"
+            r"CYLINDERS?\s*(?:NO\.?|NUMBER))\b"
+        ),
         "seats",
     ),
     FieldRule(
@@ -151,7 +162,10 @@ FIELD_RULES: tuple[FieldRule, ...] = (
     ),
     FieldRule(
         "financier",
-        _label(r"\b(?:FINANCIER|HYPOTHECATION|HYPOTHECATED\s+TO|FINANCED\s+BY)\b"),
+        _label(
+            r"\b(?:FINANC(?:I)?ER(?:\s+NAME)?|HYPOTHECATION|"
+            r"HYPOTHECATED\s+TO|FINANCED\s+BY)\b"
+        ),
         "text",
     ),
 )
@@ -183,6 +197,15 @@ _MONTH_YEAR = re.compile(
 _NUMBER_WITH_UNIT = re.compile(
     r"\b\d+(?:\.\d+)?\s*(?:CC|KG|KGS|SEATS?)\b|\b\d+(?:\.\d+)?\b",
     re.IGNORECASE,
+)
+_NUMERIC_VALUE_TYPES = {"seats", "number"}
+_KNOWN_FUELS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"\bDIESEL\b", re.IGNORECASE), "DIESEL"),
+    (re.compile(r"\bPETROL\b", re.IGNORECASE), "PETROL"),
+    (re.compile(r"\bCNG\b", re.IGNORECASE), "CNG"),
+    (re.compile(r"\bLPG\b", re.IGNORECASE), "LPG"),
+    (re.compile(r"\b(?:ELECTRIC|BATTERY|EV)\b", re.IGNORECASE), "ELECTRIC"),
+    (re.compile(r"\bHYBRID\b", re.IGNORECASE), "HYBRID"),
 )
 
 
@@ -219,15 +242,23 @@ def parse_rc(
     field_confidence: dict[str, float] = {}
     warnings: list[str] = []
     rejected_fields: list[str] = []
+    claimed_numeric_origins: set[str] = set()
 
     for rule in FIELD_RULES:
         candidates = _candidates_for_rule(rule, lines)
         if rule.field == "vehicle_number":
             candidates.extend(_unlabelled_vehicle_candidates(lines))
+        if rule.value_type in _NUMERIC_VALUE_TYPES:
+            candidates = [
+                candidate
+                for candidate in candidates
+                if candidate.origin not in claimed_numeric_origins
+            ]
         if not candidates:
             continue
 
-        value, confidence = max(candidates, key=lambda item: item[1])
+        selected = max(candidates, key=lambda item: item.confidence)
+        value, confidence = selected.value, selected.confidence
         if confidence < min_confidence:
             rejected_fields.append(rule.field)
             warnings.append(
@@ -237,6 +268,8 @@ def parse_rc(
 
         values[rule.field] = value
         field_confidence[rule.field] = round(min(confidence, 0.9999), 4)
+        if rule.value_type in _NUMERIC_VALUE_TYPES:
+            claimed_numeric_origins.add(selected.origin)
 
     _split_model_variant(values, field_confidence)
     _split_manufacturing_month_year(values, field_confidence)
@@ -256,7 +289,7 @@ def parse_rc(
 
 def _candidates_for_rule(
     rule: FieldRule, lines: Sequence[OCRLine]
-) -> list[tuple[str, float]]:
+) -> list[FieldCandidate]:
     candidates = _grouped_layout_candidates(rule, lines)
     for index, line in enumerate(lines):
         text = normalize_text(line.text)
@@ -268,15 +301,23 @@ def _candidates_for_rule(
         remainder = _truncate_at_another_label(remainder)
         value = _normalise_value(remainder, rule.value_type)
         if value:
-            candidates.append((value, line.confidence))
+            candidates.append(
+                FieldCandidate(value, line.confidence, f"line:{index}:{match.end()}")
+            )
             continue
+
+        if rule.field == "address":
+            multiline = _multiline_address_candidate(index, lines)
+            if multiline:
+                candidates.append(multiline)
+                continue
 
         spatial = _spatial_value_candidate(rule, index, lines)
         if spatial:
             candidates.append(spatial)
             continue
 
-        if index + 1 >= len(lines):
+        if line.bounding_box or index + 1 >= len(lines):
             continue
         next_line = lines[index + 1]
         if next_line.source != line.source or _contains_label(next_line.text):
@@ -284,13 +325,15 @@ def _candidates_for_rule(
         value = _normalise_value(next_line.text, rule.value_type)
         if value:
             confidence = (line.confidence + next_line.confidence) / 2
-            candidates.append((value, confidence))
+            candidates.append(
+                FieldCandidate(value, confidence, f"line:{index + 1}")
+            )
     return candidates
 
 
 def _spatial_value_candidate(
     rule: FieldRule, label_index: int, lines: Sequence[OCRLine]
-) -> tuple[str, float] | None:
+) -> FieldCandidate | None:
     label_line = lines[label_index]
     label_box = _box_bounds(label_line)
     if not label_box:
@@ -298,7 +341,7 @@ def _spatial_value_candidate(
     label_left, label_top, label_right, label_bottom = label_box
     label_height = max(1, label_bottom - label_top)
     label_width = max(1, label_right - label_left)
-    ranked: list[tuple[float, OCRLine]] = []
+    ranked: list[tuple[float, int, OCRLine]] = []
 
     for index, candidate in enumerate(lines):
         if index == label_index or candidate.source != label_line.source:
@@ -309,23 +352,111 @@ def _spatial_value_candidate(
         if not box:
             continue
         left, top, right, bottom = box
-        if top < label_top - label_height:
+        candidate_height = max(1, bottom - top)
+        vertical_overlap = min(label_bottom, bottom) - max(label_top, top)
+        same_row = (
+            vertical_overlap >= min(label_height, candidate_height) * 0.35
+            and left >= label_right - label_height
+            and left - label_right <= max(240, label_width * 2)
+        )
+        vertical_gap = top - label_bottom
+        directly_below = (
+            0 <= vertical_gap <= max(100, label_height * 4)
+            and abs(left - label_left) <= max(70, int(label_width * 0.6))
+        )
+        if not same_row and not directly_below:
             continue
-        vertical_gap = max(0, top - label_bottom)
-        if vertical_gap > max(260, label_height * 9):
+        if directly_below and _has_intervening_label(
+            label_index, box, lines
+        ):
             continue
-        horizontal_gap = abs(left - label_left)
-        overlaps = min(label_right, right) - max(label_left, left) > 0
-        if not overlaps and horizontal_gap > max(360, label_width * 3):
-            continue
-        same_row_penalty = 0 if top >= label_bottom - label_height // 2 else 120
-        ranked.append((vertical_gap * 4 + horizontal_gap + same_row_penalty, candidate))
+        score = (
+            max(0, left - label_right)
+            if same_row
+            else vertical_gap * 4 + abs(left - label_left)
+        )
+        ranked.append((score, index, candidate))
 
-    for _, candidate in sorted(ranked, key=lambda item: item[0]):
+    for _, candidate_index, candidate in sorted(ranked, key=lambda item: item[0]):
         value = _normalise_value(candidate.text, rule.value_type)
         if value:
-            return (value, (label_line.confidence + candidate.confidence) / 2)
+            return FieldCandidate(
+                value,
+                (label_line.confidence + candidate.confidence) / 2,
+                f"line:{candidate_index}",
+            )
     return None
+
+
+def _has_intervening_label(
+    label_index: int,
+    candidate_box: tuple[int, int, int, int],
+    lines: Sequence[OCRLine],
+) -> bool:
+    label_line = lines[label_index]
+    label_box = _box_bounds(label_line)
+    if not label_box:
+        return False
+    label_left, _, label_right, label_bottom = label_box
+    candidate_left, candidate_top, candidate_right, _ = candidate_box
+    column_left = min(label_left, candidate_left)
+    column_right = max(label_right, candidate_right)
+
+    for index, line in enumerate(lines):
+        if index == label_index or line.source != label_line.source:
+            continue
+        box = _box_bounds(line)
+        if not box or not _contains_label(line.text):
+            continue
+        left, top, right, _ = box
+        if top <= label_bottom or top >= candidate_top:
+            continue
+        horizontal_overlap = min(column_right, right) - max(column_left, left)
+        if horizontal_overlap > 0 or abs(left - label_left) <= 70:
+            return True
+    return False
+
+
+def _multiline_address_candidate(
+    label_index: int, lines: Sequence[OCRLine]
+) -> FieldCandidate | None:
+    label = lines[label_index]
+    label_box = _box_bounds(label)
+    pieces: list[tuple[int, OCRLine]] = []
+
+    if label_box:
+        label_left, _, _, label_bottom = label_box
+        label_height = max(1, label_box[3] - label_box[1])
+        for index, candidate in enumerate(lines):
+            if index == label_index or candidate.source != label.source:
+                continue
+            box = _box_bounds(candidate)
+            if not box or _contains_label(candidate.text):
+                continue
+            left, top, _, _ = box
+            if (
+                0 <= top - label_bottom <= max(180, label_height * 8)
+                and abs(left - label_left) <= max(90, (label_box[2] - label_left))
+            ):
+                pieces.append((index, candidate))
+        pieces.sort(key=lambda item: _box_bounds(item[1])[1])  # type: ignore[index]
+    else:
+        for index in range(label_index + 1, min(len(lines), label_index + 4)):
+            candidate = lines[index]
+            if candidate.source != label.source or _contains_label(candidate.text):
+                break
+            pieces.append((index, candidate))
+
+    if not pieces:
+        return None
+    value = _normalise_value(" ".join(line.text for _, line in pieces), "text")
+    if not value:
+        return None
+    confidence = (label.confidence + sum(line.confidence for _, line in pieces)) / (
+        len(pieces) + 1
+    )
+    origins = ",".join(str(index) for index, _ in pieces)
+    return FieldCandidate(value, confidence, f"address:{origins}")
 
 
 def _box_bounds(line: OCRLine) -> tuple[int, int, int, int] | None:
@@ -341,12 +472,12 @@ def _box_bounds(line: OCRLine) -> tuple[int, int, int, int] | None:
 
 def _unlabelled_vehicle_candidates(
     lines: Sequence[OCRLine],
-) -> list[tuple[str, float]]:
-    candidates: list[tuple[str, float]] = []
-    for line in lines:
+) -> list[FieldCandidate]:
+    candidates: list[FieldCandidate] = []
+    for index, line in enumerate(lines):
         value = normalize_vehicle_number(line.text)
         if value:
-            candidates.append((value, line.confidence))
+            candidates.append(FieldCandidate(value, line.confidence, f"line:{index}"))
     return candidates
 
 
@@ -356,8 +487,8 @@ def _clean_remainder(value: str) -> str:
 
 def _grouped_layout_candidates(
     rule: FieldRule, lines: Sequence[OCRLine]
-) -> list[tuple[str, float]]:
-    candidates: list[tuple[str, float]] = []
+) -> list[FieldCandidate]:
+    candidates: list[FieldCandidate] = []
     field_labels = {item.field: item.label for item in FIELD_RULES}
 
     for index, line in enumerate(lines[:-1]):
@@ -376,19 +507,25 @@ def _grouped_layout_candidates(
                 position = 0 if rule.field == "colour" else 1
                 value = _normalise_value(pieces[position], rule.value_type)
                 if value:
-                    candidates.append((value, confidence))
+                    candidates.append(
+                        FieldCandidate(value, confidence, f"group:{index}:{rule.field}")
+                    )
 
         technical_fields = ("cubic_capacity", "horse_power", "wheel_base")
         if rule.field in technical_fields and all(
             field_labels[field].search(current) for field in technical_fields
         ):
             numbers = re.findall(r"\d+(?:\.\d+)?", following)
-            if len(numbers) >= 3:
+            position = technical_fields.index(rule.field)
+            required_count = 3 if rule.field == "wheel_base" else position + 1
+            if len(numbers) >= required_count:
                 value = _normalise_value(
-                    numbers[technical_fields.index(rule.field)], rule.value_type
+                    numbers[position], rule.value_type
                 )
                 if value:
-                    candidates.append((value, confidence))
+                    candidates.append(
+                        FieldCandidate(value, confidence, f"group:{index}:{rule.field}")
+                    )
 
         registration_fields = (
             "vehicle_number",
@@ -406,7 +543,13 @@ def _grouped_layout_candidates(
                 "registration_valid_upto": dates[1] if len(dates) >= 2 else None,
             }
             if grouped[rule.field]:
-                candidates.append((str(grouped[rule.field]), confidence))
+                candidates.append(
+                    FieldCandidate(
+                        str(grouped[rule.field]),
+                        confidence,
+                        f"group:{index}:{rule.field}",
+                    )
+                )
 
     return candidates
 
@@ -452,6 +595,17 @@ def _normalise_value(value: str, value_type: str) -> str | None:
     if value_type == "month_year":
         match = _MONTH_YEAR.search(cleaned)
         return match.group(0).upper() if match else None
+    if value_type == "fuel":
+        for pattern, fuel in _KNOWN_FUELS:
+            if pattern.search(cleaned):
+                return fuel
+        return None
+    if value_type == "manufacturer":
+        cleaned = re.sub(
+            r"(?i)(?<!\s)(PVT\.?\s*LTD\.?|LTD\.?|LIMITED)$",
+            r" \1",
+            cleaned,
+        )
     if value_type in {"chassis", "engine"}:
         compact = re.sub(r"[^A-Z0-9]", "", cleaned.upper())
         minimum = 8 if value_type == "chassis" else 5

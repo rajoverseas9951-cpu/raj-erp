@@ -520,6 +520,11 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
     setProgress(20);
     setError("");
     setSuccess("");
+    savedModelId.current = "";
+    savedModelName.current = "";
+    setValues((current) => applyOcrPrefill(current, {}, editedFields.current));
+    setOwnerSuggestion("");
+    setOcrConfidence({});
     try {
       const files = [front, back].filter(Boolean) as File[];
       const unique = files.filter(

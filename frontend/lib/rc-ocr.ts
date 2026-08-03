@@ -47,6 +47,9 @@ export function applyOcrPrefill(
   editedFields: ReadonlySet<string>,
 ): VehicleFormValues {
   const next = { ...current };
+  for (const field of OCR_PREFILL_FIELDS) {
+    if (!editedFields.has(field)) next[field] = "";
+  }
   for (const [field, value] of Object.entries(extracted)) {
     if (!OCR_PREFILL_SET.has(field) || editedFields.has(field) || value === "") {
       continue;
@@ -54,6 +57,5 @@ export function applyOcrPrefill(
     next[field] = String(value);
   }
   next.customer_id = current.customer_id;
-  if (!editedFields.has("state") && !next.state) next.state = "Gujarat";
   return next;
 }

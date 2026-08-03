@@ -9,6 +9,8 @@ use RuntimeException;
 
 class VehicleMasterResolver
 {
+    private const MIN_OCR_MASTER_CONFIDENCE = 0.55;
+
     private const FIELD_MAP = [
         'rto_offices' => ['registration_authority', 'rto_office_id'],
         'vehicle_types' => ['vehicle_type', 'vehicle_type_id'],
@@ -43,6 +45,18 @@ class VehicleMasterResolver
             foreach (self::FIELD_MAP as $type => [$nameField, $idField]) {
                 $name = trim((string) ($resolvedFields[$nameField] ?? ''));
                 if ($name === '') {
+                    continue;
+                }
+                $fieldConfidence = isset($confidence[$nameField])
+                    ? (float) $confidence[$nameField]
+                    : null;
+                if (! $this->isValidOcrCandidate($type, $name, $fieldConfidence)) {
+                    unset($resolvedFields[$nameField], $resolvedFields[$idField]);
+                    Log::debug('ocr.rc.master_skipped', [
+                        'type' => $type,
+                        'reason' => 'invalid_candidate',
+                    ]);
+
                     continue;
                 }
 
@@ -136,6 +150,34 @@ class VehicleMasterResolver
             },
             default => $normalized,
         };
+    }
+
+    public function isValidOcrCandidate(
+        string $type,
+        string $value,
+        ?float $confidence = null
+    ): bool {
+        if ($confidence !== null && $confidence < self::MIN_OCR_MASTER_CONFIDENCE) {
+            return false;
+        }
+
+        $normalized = $this->matchingName($type, $value);
+        if (strlen($normalized) < 2 || in_array($normalized, [
+            'USED', 'NAME', 'TYPE', 'NUMBER', 'NO', 'NA', 'UNKNOWN',
+            'FINANCIER', 'FINANCIERNAME', 'MAKER', 'MAKERSNAME',
+            'MODEL', 'MODELNAME', 'BODYTYPE', 'VEHICLECLASS', 'FUELUSED',
+        ], true)) {
+            return false;
+        }
+
+        if ($type === 'fuel_types') {
+            return in_array($normalized, [
+                'PETROL', 'DIESEL', 'CNG', 'LPG', 'ELECTRIC', 'HYBRID',
+                'PETROLCNG', 'PETROLLPG', 'HYDROGEN', 'FLEXFUEL',
+            ], true);
+        }
+
+        return true;
     }
 
     public function normalizedKey(

@@ -161,6 +161,9 @@ class OcrService
         ] as $key) {
             if (isset($fields[$key])) $fields[$key] = strtoupper($this->clean($fields[$key]));
         }
+        if (isset($fields['manufacturer'])) {
+            $fields['manufacturer'] = $this->normaliseManufacturer($fields['manufacturer']);
+        }
         if (isset($fields['body_type'])) {
             $fields['vehicle_category'] = $fields['body_type'];
             unset($fields['body_type']);
@@ -181,7 +184,10 @@ class OcrService
 
         $fuel = $source['fuel_type'] ?? null;
         if (is_string($fuel) && trim($fuel) !== '') {
-            $fields['fuel_type'] = $this->normaliseFuel($fuel);
+            $normalisedFuel = $this->normaliseFuel($fuel);
+            if ($normalisedFuel !== null) {
+                $fields['fuel_type'] = $normalisedFuel;
+            }
         }
 
         foreach ([
@@ -213,6 +219,12 @@ class OcrService
             }
             if (is_string($manufactured) && preg_match('/\b(0?[1-9]|1[0-2])[.\/-](?:19|20)\d{2}\b/', $manufactured, $match)) {
                 $fields['manufacturing_month'] = str_pad($match[1], 2, '0', STR_PAD_LEFT);
+            }
+            if (is_string($manufactured) && ! isset($fields['manufacturing_month'])) {
+                $month = $this->normaliseMonthName($manufactured);
+                if ($month !== null) {
+                    $fields['manufacturing_month'] = $month;
+                }
             }
         }
 
@@ -250,7 +262,7 @@ class OcrService
         return $confidence;
     }
 
-    private function normaliseFuel(string $value): string
+    private function normaliseFuel(string $value): ?string
     {
         $value = strtoupper($this->clean($value));
         return match (true) {
@@ -262,8 +274,37 @@ class OcrService
             preg_match('/\bPETROL\b/', $value) === 1 => 'PETROL',
             preg_match('/\bLPG\b/', $value) === 1 => 'LPG',
             preg_match('/HYBRID/', $value) === 1 => 'HYBRID',
-            default => $value,
+            default => null,
         };
+    }
+
+    private function normaliseManufacturer(string $value): string
+    {
+        return (string) preg_replace(
+            '/(?<!\s)(PVT\.?\s*LTD\.?|LTD\.?|LIMITED)$/i',
+            ' $1',
+            strtoupper($this->clean($value))
+        );
+    }
+
+    private function normaliseMonthName(string $value): ?string
+    {
+        $months = [
+            'JAN' => '01', 'FEB' => '02', 'MAR' => '03', 'APR' => '04',
+            'MAY' => '05', 'JUN' => '06', 'JUL' => '07', 'AUG' => '08',
+            'SEP' => '09', 'OCT' => '10', 'NOV' => '11', 'DEC' => '12',
+        ];
+        if (! preg_match(
+            '/\b(JAN(?:UARY)?|FEB(?:RUARY)?|MAR(?:CH)?|APR(?:IL)?|MAY|'
+            .'JUN(?:E)?|JUL(?:Y)?|AUG(?:UST)?|SEP(?:TEMBER)?|OCT(?:OBER)?|'
+            .'NOV(?:EMBER)?|DEC(?:EMBER)?)\b/i',
+            $value,
+            $match
+        )) {
+            return null;
+        }
+
+        return $months[strtoupper(substr($match[1], 0, 3))] ?? null;
     }
 
     private function readImage(UploadedFile $image, string $key): string
