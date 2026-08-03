@@ -1,4 +1,15 @@
 export type VehicleFormValues = Record<string, string>;
+export type OcrMasterOption = { id: string; name: string };
+export type OcrMasterKind =
+  | "manufacturers"
+  | "models"
+  | "variants"
+  | "colours"
+  | "vehicle_types"
+  | "vehicle_classes"
+  | "body_types"
+  | "fuel_types"
+  | "rto_offices";
 
 export const OCR_PREFILL_FIELDS = [
   "vehicle_number",
@@ -40,6 +51,31 @@ export const OCR_PREFILL_FIELDS = [
 ] as const;
 
 const OCR_PREFILL_SET = new Set<string>(OCR_PREFILL_FIELDS);
+
+function normalizedMasterText(value: string, type: OcrMasterKind): string {
+  let normalized = value.toUpperCase().replaceAll("GRAY", "GREY");
+  normalized = normalized.replaceAll("+", type === "models" ? " PLUS " : " ");
+  if (type === "manufacturers") {
+    normalized = normalized.replace(
+      /\b(?:PRIVATE|PVT)\s+LIMITED\b|\bPVT\.?\s+LTD\.?\b|\bLIMITED\b|\bLTD\.?\b|\bINDIA\b/g,
+      " ",
+    );
+  }
+  return normalized.replace(/[^A-Z0-9]+/g, "");
+}
+
+export function findMatchingMasterId(
+  value: string,
+  options: readonly OcrMasterOption[],
+  type: OcrMasterKind,
+): string {
+  if (!value.trim()) return "";
+  const target = normalizedMasterText(value, type);
+  return (
+    options.find((option) => normalizedMasterText(option.name, type) === target)
+      ?.id ?? ""
+  );
+}
 
 export function applyOcrPrefill(
   current: VehicleFormValues,

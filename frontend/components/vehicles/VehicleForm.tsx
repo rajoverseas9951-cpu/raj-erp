@@ -6,7 +6,7 @@ import { BRAND } from "@/config/brand";
 import { useRouter } from "next/navigation";
 import { Customer, customerApi } from "@/lib/customers";
 import { scanDocument } from "@/lib/ocr";
-import { applyOcrPrefill } from "@/lib/rc-ocr";
+import { applyOcrPrefill, findMatchingMasterId } from "@/lib/rc-ocr";
 import { Vehicle, vehicleApi } from "@/lib/vehicles";
 import {
   VehicleMaster,
@@ -383,8 +383,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
       setMasters((current) => ({ ...current, ...loaded }));
       setValues((current) => {
         const match = (type: NonModelMaster, name: string) =>
-          loaded[type].find((x) => x.name.toUpperCase() === name.toUpperCase())
-            ?.id ?? "";
+          findMatchingMasterId(name, loaded[type], type);
         const manufacturerId =
           savedManufacturerId.current ||
           current.manufacturer_id ||
@@ -438,13 +437,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
       setMasters((current) => ({ ...current, models: sorted }));
       const selectedId = sorted.some((model) => model.id === selectId)
         ? selectId
-        : (sorted.find(
-            (model) =>
-              selectName &&
-              model.name.localeCompare(selectName, undefined, {
-                sensitivity: "accent",
-              }) === 0,
-          )?.id ?? "");
+        : findMatchingMasterId(selectName, sorted, "models");
       const selected = sorted.find((model) => model.id === selectedId);
       setValues((current) =>
         editedFields.current.has("model") || editedFields.current.has("model_id")
@@ -452,18 +445,13 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
           : {
               ...current,
               model_id: selectedId,
-              model: selected?.name ?? "",
+              model: selected?.name ?? (selectName || current.model),
             },
       );
     } catch (e) {
       if (requestId !== modelRequest.current) return;
       console.error("Vehicle models API load failed", e);
       setMasters((current) => ({ ...current, models: [] }));
-      setValues((current) =>
-        editedFields.current.has("model") || editedFields.current.has("model_id")
-          ? current
-          : { ...current, model_id: "", model: "" },
-      );
       setModelError(e instanceof Error ? e.message : "Models could not load.");
     } finally {
       if (requestId === modelRequest.current) setModelLoading(false);
@@ -537,7 +525,29 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
           ) === i,
       );
       const result = await scanDocument("rc", unique);
-      const extracted = result.fields;
+      const extracted = { ...result.fields };
+      const bindings: Array<[
+        VehicleMasterType,
+        string,
+        string,
+      ]> = [
+        ["rto_offices", "registration_authority", "rto_office_id"],
+        ["vehicle_types", "vehicle_type", "vehicle_type_id"],
+        ["vehicle_classes", "vehicle_class", "vehicle_class_id"],
+        ["body_types", "vehicle_category", "vehicle_category_id"],
+        ["manufacturers", "manufacturer", "manufacturer_id"],
+        ["colours", "colour", "colour_id"],
+        ["fuel_types", "fuel_type", "fuel_type_id"],
+      ];
+      for (const [type, nameField, idField] of bindings) {
+        if (!extracted[idField] && extracted[nameField]) {
+          extracted[idField] = findMatchingMasterId(
+            extracted[nameField],
+            masters[type],
+            type,
+          );
+        }
+      }
       setProgress(100);
       savedModelId.current = extracted.model_id ?? "";
       savedModelName.current = extracted.model ?? "";
@@ -870,6 +880,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
               add={() => setMasterModal("rto_offices")}
               loading={masterLoading}
               confidence={confidence("registration_authority")}
+              unresolvedText={values.registration_authority}
             />
             <Input
               label="State"
@@ -894,6 +905,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
               add={() => setMasterModal("vehicle_types")}
               loading={masterLoading}
               confidence={confidence("vehicle_type")}
+              unresolvedText={values.vehicle_type}
             />
           </Card>
         </div>
@@ -913,6 +925,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
               add={() => setMasterModal("vehicle_classes")}
               loading={masterLoading}
               confidence={confidence("vehicle_class")}
+              unresolvedText={values.vehicle_class}
             />
             <MasterSelect
               label="Vehicle Category / Body Type"
@@ -928,6 +941,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
               add={() => setMasterModal("body_types")}
               loading={masterLoading}
               confidence={confidence("vehicle_category")}
+              unresolvedText={values.vehicle_category}
             />
             <MasterSelect
               label="Manufacturer"
@@ -951,6 +965,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
               add={() => setMasterModal("manufacturers")}
               loading={masterLoading}
               confidence={confidence("manufacturer")}
+              unresolvedText={values.manufacturer}
             />
             <MasterSelect
               label="Model"
@@ -976,6 +991,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
               placeholder="Select Model"
               emptyLabel="No models found"
               confidence={confidence("model")}
+              unresolvedText={values.model}
             />
             <MasterSelect
               label="Variant"
@@ -991,6 +1007,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
               placeholder="Select Variant"
               emptyLabel="No variants found"
               confidence={confidence("variant")}
+              unresolvedText={values.variant}
             />
             <Input
               label="Manufacturing Year"
@@ -1020,6 +1037,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
               add={() => setMasterModal("colours")}
               loading={masterLoading}
               confidence={confidence("colour")}
+              unresolvedText={values.colour}
             />
             <MasterSelect
               label="Fuel Type"
@@ -1035,6 +1053,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
               add={() => setMasterModal("fuel_types")}
               loading={masterLoading}
               confidence={confidence("fuel_type")}
+              unresolvedText={values.fuel_type}
             />
             <Input
               label="Seating Capacity"
@@ -1367,6 +1386,7 @@ function MasterSelect({
   placeholder = "Select",
   emptyLabel = "No active records found",
   confidence,
+  unresolvedText = "",
 }: {
   label: string;
   value: string;
@@ -1379,11 +1399,14 @@ function MasterSelect({
   placeholder?: string;
   emptyLabel?: string;
   confidence?: number;
+  unresolvedText?: string;
 }) {
   const lowConfidence = confidence !== undefined && confidence < 0.8;
   const active = options
     .filter((x) => x.status === "active")
     .sort((a, b) => a.name.localeCompare(b.name));
+  const selectedIsLoaded = active.some((option) => option.id === value);
+  const showOcrValue = Boolean(unresolvedText && (!value || !selectedIsLoaded));
   return (
     <div>
       <label className="text-sm font-semibold">
@@ -1394,8 +1417,10 @@ function MasterSelect({
           onChange={(e) => onChange(e.target.value)}
           className={`mt-2 w-full rounded-xl border px-4 py-3 font-normal disabled:bg-slate-100 ${lowConfidence ? "border-amber-400 bg-amber-50/50" : "bg-white"}`}
         >
-          <option value="">
-            {loading
+          <option value={showOcrValue ? value : ""}>
+            {showOcrValue
+              ? `${unresolvedText} (OCR)`
+              : loading
               ? "Loading..."
               : disabled
                 ? "Select manufacturer first"

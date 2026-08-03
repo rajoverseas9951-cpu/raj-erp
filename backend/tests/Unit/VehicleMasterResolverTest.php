@@ -54,7 +54,7 @@ class VehicleMasterResolverTest extends TestCase
 
         $this->assertFalse($resolver->isValidOcrCandidate('fuel_types', 'USED', 0.99));
         $this->assertFalse($resolver->isValidOcrCandidate('manufacturers', "Maker's Name", 0.99));
-        $this->assertFalse($resolver->isValidOcrCandidate('colours', 'BLUE', 0.54));
+        $this->assertFalse($resolver->isValidOcrCandidate('colours', 'BLUE', 0.39));
         $this->assertTrue($resolver->isValidOcrCandidate('fuel_types', 'DIESEL', 0.90));
         $this->assertTrue($resolver->isValidOcrCandidate('manufacturers', 'ESCORTS LTD', 0.90));
     }

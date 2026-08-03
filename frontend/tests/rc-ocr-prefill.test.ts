@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 // Node's built-in TypeScript runner requires the explicit extension.
 // @ts-expect-error TypeScript's bundler mode omits runtime `.ts` extensions in application code.
-import { applyOcrPrefill } from "../lib/rc-ocr.ts";
+import { applyOcrPrefill, findMatchingMasterId } from "../lib/rc-ocr.ts";
 
 test("OCR prefill preserves customer and user-edited fields", () => {
   const current = {
@@ -103,4 +103,36 @@ test("manual fields remain protected while other OCR fields reset", () => {
   assert.equal(merged.financier, "USER VERIFIED FINANCIER");
   assert.equal(merged.unladen_weight, "");
   assert.equal(merged.cubic_capacity, "45");
+});
+
+test("valid OCR master text remains visible until its master ID resolves", () => {
+  const unresolved = applyOcrPrefill(
+    { customer_id: "customer-id" },
+    { manufacturer: "ESCORTS LTD", model: "FARMTRAC 45" },
+    new Set(),
+  );
+
+  assert.equal(unresolved.manufacturer, "ESCORTS LTD");
+  assert.equal(unresolved.manufacturer_id, "");
+  assert.equal(unresolved.model, "FARMTRAC 45");
+  const manufacturerId = findMatchingMasterId(
+    unresolved.manufacturer,
+    [{ id: "escorts-id", name: "ESCORTS" }],
+    "manufacturers",
+  );
+  const resolved = applyOcrPrefill(
+    unresolved,
+    {
+      manufacturer: unresolved.manufacturer,
+      manufacturer_id: manufacturerId,
+      model: unresolved.model,
+      model_id: "farmtrac-45-id",
+    },
+    new Set(),
+  );
+
+  assert.equal(resolved.manufacturer, "ESCORTS LTD");
+  assert.equal(resolved.manufacturer_id, "escorts-id");
+  assert.equal(resolved.model, "FARMTRAC 45");
+  assert.equal(resolved.model_id, "farmtrac-45-id");
 });

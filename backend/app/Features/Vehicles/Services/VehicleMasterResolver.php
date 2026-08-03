@@ -5,11 +5,10 @@ namespace App\Features\Vehicles\Services;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 class VehicleMasterResolver
 {
-    private const MIN_OCR_MASTER_CONFIDENCE = 0.55;
+    private const MIN_OCR_MASTER_CONFIDENCE = 0.40;
 
     private const FIELD_MAP = [
         'rto_offices' => ['registration_authority', 'rto_office_id'],
@@ -51,7 +50,7 @@ class VehicleMasterResolver
                     ? (float) $confidence[$nameField]
                     : null;
                 if (! $this->isValidOcrCandidate($type, $name, $fieldConfidence)) {
-                    unset($resolvedFields[$nameField], $resolvedFields[$idField]);
+                    unset($resolvedFields[$idField]);
                     Log::debug('ocr.rc.master_skipped', [
                         'type' => $type,
                         'reason' => 'invalid_candidate',
@@ -81,10 +80,14 @@ class VehicleMasterResolver
                     $parentId,
                     $actorId
                 );
+                if (! $master) {
+                    Log::warning('ocr.rc.master_resolution_failed', [
+                        'type' => $type,
+                    ]);
+
+                    continue;
+                }
                 $resolvedFields[$idField] = $master->id;
-                $resolvedFields[$nameField] = $type === 'vehicle_types'
-                    ? $this->vehicleTypeValue($master->code ?: $master->name)
-                    : $master->name;
                 $masters[$type] = (array) $master;
                 if ($wasCreated) {
                     $created[$type] = $master->id;
@@ -194,7 +197,7 @@ class VehicleMasterResolver
         ]));
     }
 
-    /** @return array{0:object,1:bool} */
+    /** @return array{0:object|null,1:bool} */
     private function resolveOne(
         string $tenantId,
         string $type,
@@ -249,14 +252,9 @@ class VehicleMasterResolver
             ->whereNull('deleted_at')
             ->first();
         if (! $master) {
-            throw new RuntimeException("Unable to resolve OCR vehicle master: {$type}.");
+            return [null, false];
         }
 
         return [$master, $master->id === $id];
-    }
-
-    private function vehicleTypeValue(string $value): string
-    {
-        return Str::of($value)->lower()->replaceMatches('/[^a-z0-9]+/', '_')->trim('_')->toString();
     }
 }

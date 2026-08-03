@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Features\Customers\Models\Customer;
+use App\Features\Vehicles\Services\VehicleMasterResolver;
 use App\Models\User;
 use Database\Seeders\VehicleMasterSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -34,8 +35,8 @@ class RcOcrWorkflowTest extends TestCase
             ->assertJsonPath('data.fields.registration_valid_upto', '2039-08-08')
             ->assertJsonPath('data.fields.owner_name', 'RABARI NARSEGBHAI')
             ->assertJsonMissingPath('data.fields.customer_id')
-            ->assertJsonPath('data.fields.manufacturer', 'HERO MOTOCORP')
-            ->assertJsonPath('data.fields.model', 'SPLENDOR PLUS')
+            ->assertJsonPath('data.fields.manufacturer', 'HERO MOTOCORP LTD')
+            ->assertJsonPath('data.fields.model', 'SPLENDOR+')
             ->assertJsonPath('data.fields.variant', 'DRS')
             ->assertJsonPath('data.fields.financier', 'ROYAL FINANCE THARAD')
             ->assertJsonPath('data.fields.number_of_cylinders', '1')
@@ -163,6 +164,7 @@ class RcOcrWorkflowTest extends TestCase
             ->assertJsonPath('data.fields.father_or_spouse_name', 'GANESHBHAI KALA')
             ->assertJsonPath('data.fields.address', 'AT-KHODA, TA-THARAD, BANASKANTHA, 385565')
             ->assertJsonPath('data.fields.vehicle_class', 'TRACTOR (AGRI)')
+            ->assertJsonPath('data.fields.vehicle_type', 'tractor')
             ->assertJsonPath('data.fields.fuel_type', 'DIESEL')
             ->assertJsonPath('data.fields.seating_capacity', '1')
             ->assertJsonPath('data.fields.manufacturer', 'ESCORTS LTD')
@@ -181,10 +183,12 @@ class RcOcrWorkflowTest extends TestCase
             ->assertJsonMissingPath('data.fields.unladen_weight')
             ->assertJsonMissingPath('data.fields.emission_norms');
 
-        $tractorFields = json_encode($tractor->json('data.fields'), JSON_THROW_ON_ERROR);
-        $this->assertStringNotContainsString('ROYAL FINANCE THARAD', $tractorFields);
-        $this->assertStringNotContainsString('97.20', $tractorFields);
-        $this->assertStringNotContainsString('109', $tractorFields);
+        $this->assertNotSame(
+            'ROYAL FINANCE THARAD',
+            $tractor->json('data.fields.financier')
+        );
+        $this->assertNull($tractor->json('data.fields.horse_power'));
+        $this->assertNull($tractor->json('data.fields.unladen_weight'));
         $this->assertDatabaseMissing('vehicle_masters', [
             'tenant_id' => $user->tenant_id,
             'type' => 'fuel_types',
@@ -198,6 +202,22 @@ class RcOcrWorkflowTest extends TestCase
             $motorcycle->json('data.fields.model_id'),
             $tractor->json('data.fields.model_id')
         );
+    }
+
+    public function test_unresolved_valid_master_text_is_returned_without_an_id(): void
+    {
+        $user = User::factory()->create(['is_admin' => true]);
+
+        $resolved = app(VehicleMasterResolver::class)->resolveOcrFields(
+            ['model' => 'FARMTRAC 45'],
+            (string) $user->tenant_id,
+            (string) $user->id,
+            ['model' => 0.95],
+        );
+
+        $this->assertSame('FARMTRAC 45', $resolved['fields']['model']);
+        $this->assertArrayNotHasKey('model_id', $resolved['fields']);
+        $this->assertSame([], $resolved['masters']);
     }
 
     /** @return array<string, mixed> */

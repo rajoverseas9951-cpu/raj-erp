@@ -207,6 +207,54 @@ _KNOWN_FUELS: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"\b(?:ELECTRIC|BATTERY|EV)\b", re.IGNORECASE), "ELECTRIC"),
     (re.compile(r"\bHYBRID\b", re.IGNORECASE), "HYBRID"),
 )
+_FIELD_MIN_CONFIDENCE: dict[str, float] = {
+    "vehicle_number": 0.30,
+    "registration_date": 0.30,
+    "registration_valid_upto": 0.30,
+    "chassis_number": 0.30,
+    "engine_number": 0.30,
+    "manufacturing_month_year": 0.35,
+    "manufacturer": 0.40,
+    "model": 0.40,
+    "financier": 0.40,
+    "colour": 0.40,
+    "vehicle_class": 0.40,
+    "body_type": 0.40,
+    "registration_authority": 0.40,
+    "fuel_type": 0.40,
+    "seating_capacity": 0.40,
+    "cubic_capacity": 0.40,
+    "number_of_cylinders": 0.40,
+    "owner_name": 0.42,
+    "father_or_spouse_name": 0.42,
+    "address": 0.42,
+    "unladen_weight": 0.50,
+    "gross_vehicle_weight": 0.50,
+    "horse_power": 0.50,
+    "wheel_base": 0.50,
+    "emission_norms": 0.50,
+}
+_TEXT_REGION_FIELDS = {
+    "owner_name",
+    "father_or_spouse_name",
+    "ownership_type",
+    "address",
+    "manufacturer",
+    "model",
+    "body_type",
+    "vehicle_class",
+    "colour",
+    "registration_authority",
+    "financier",
+}
+_PATTERN_FIELDS = {
+    "vehicle_number",
+    "registration_date",
+    "registration_valid_upto",
+    "chassis_number",
+    "engine_number",
+    "manufacturing_month_year",
+}
 
 
 def normalize_text(value: str) -> str:
@@ -259,10 +307,14 @@ def parse_rc(
 
         selected = max(candidates, key=lambda item: item.confidence)
         value, confidence = selected.value, selected.confidence
-        if confidence < min_confidence:
+        required_confidence = min(
+            min_confidence,
+            _FIELD_MIN_CONFIDENCE.get(rule.field, min_confidence),
+        )
+        if confidence < required_confidence:
             rejected_fields.append(rule.field)
             warnings.append(
-                f"{rule.field} was detected below the {min_confidence:.2f} confidence threshold."
+                f"{rule.field} was detected below its {required_confidence:.2f} confidence threshold."
             )
             continue
 
@@ -341,6 +393,9 @@ def _spatial_value_candidate(
     label_left, label_top, label_right, label_bottom = label_box
     label_height = max(1, label_bottom - label_top)
     label_width = max(1, label_right - label_left)
+    max_below_gap, max_column_offset, max_row_gap = _geometry_limits(
+        rule, label_height, label_width
+    )
     ranked: list[tuple[float, int, OCRLine]] = []
 
     for index, candidate in enumerate(lines):
@@ -357,12 +412,12 @@ def _spatial_value_candidate(
         same_row = (
             vertical_overlap >= min(label_height, candidate_height) * 0.35
             and left >= label_right - label_height
-            and left - label_right <= max(240, label_width * 2)
+            and left - label_right <= max_row_gap
         )
         vertical_gap = top - label_bottom
         directly_below = (
-            0 <= vertical_gap <= max(100, label_height * 4)
-            and abs(left - label_left) <= max(70, int(label_width * 0.6))
+            0 <= vertical_gap <= max_below_gap
+            and abs(left - label_left) <= max_column_offset
         )
         if not same_row and not directly_below:
             continue
@@ -386,6 +441,28 @@ def _spatial_value_candidate(
                 f"line:{candidate_index}",
             )
     return None
+
+
+def _geometry_limits(
+    rule: FieldRule, label_height: int, label_width: int
+) -> tuple[int, int, int]:
+    if rule.field in _TEXT_REGION_FIELDS:
+        return (
+            max(180, label_height * 7),
+            max(150, int(label_width * 1.1)),
+            max(480, label_width * 3),
+        )
+    if rule.field in _PATTERN_FIELDS:
+        return (
+            max(150, label_height * 6),
+            max(120, int(label_width * 0.9)),
+            max(360, label_width * 3),
+        )
+    return (
+        max(120, label_height * 5),
+        max(90, int(label_width * 0.75)),
+        max(300, label_width * 2),
+    )
 
 
 def _has_intervening_label(

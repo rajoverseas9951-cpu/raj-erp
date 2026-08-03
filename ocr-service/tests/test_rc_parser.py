@@ -300,3 +300,42 @@ def test_invalid_fuel_label_value_is_rejected() -> None:
     parsed = parse_rc([line("Fuel Used")])
 
     assert parsed.fields.fuel_type is None
+
+
+def test_field_specific_thresholds_restore_valid_wide_label_regions() -> None:
+    parsed = parse_rc(
+        [
+            boxed_line("Date of Reg.", 20, 20, confidence=0.65),
+            boxed_line("06/12/2016", 480, 20, confidence=0.25),
+            boxed_line("Chassis No.", 20, 80, confidence=0.65),
+            boxed_line("T052358130", 480, 80, confidence=0.25),
+            boxed_line("Engine No.", 20, 140, confidence=0.65),
+            boxed_line("E2363463", 480, 140, confidence=0.25),
+            boxed_line("Vehicle Class", 20, 200, confidence=0.65),
+            boxed_line("TRACTOR (AGRI)", 480, 200, confidence=0.25),
+            boxed_line("Maker's Name", 20, 260, confidence=0.65),
+            boxed_line("ESCORTSLTD", 480, 260, confidence=0.25),
+            boxed_line("Model Name", 20, 320, confidence=0.65),
+            boxed_line("FARMTRAC 45", 480, 320, confidence=0.25),
+            boxed_line("Colour", 20, 380, confidence=0.65),
+            boxed_line("BLUE", 480, 380, confidence=0.25),
+            boxed_line("Cubic Capacity", 20, 440, confidence=0.65),
+            boxed_line("45", 480, 440, confidence=0.25),
+            boxed_line("Month & Yr. of Mfg.", 20, 500, confidence=0.65),
+            boxed_line("JANUARY 2016", 480, 500, confidence=0.25),
+            boxed_line("Financier Name", 20, 560, confidence=0.65),
+            boxed_line("L AND T FINANCE LTD", 480, 560, confidence=0.25),
+        ]
+    )
+
+    assert parsed.fields.registration_date == "06/12/2016"
+    assert parsed.fields.chassis_number == "T052358130"
+    assert parsed.fields.engine_number == "E2363463"
+    assert parsed.fields.vehicle_class == "TRACTOR (AGRI)"
+    assert parsed.fields.manufacturer == "ESCORTS LTD"
+    assert parsed.fields.model == "FARMTRAC 45"
+    assert parsed.fields.colour == "BLUE"
+    assert parsed.fields.cubic_capacity == "45"
+    assert parsed.fields.manufacturing_month == "01"
+    assert parsed.fields.manufacturing_year == "2016"
+    assert parsed.fields.financier == "L AND T FINANCE LTD"

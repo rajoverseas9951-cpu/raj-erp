@@ -236,6 +236,7 @@ class OcrService
 
         $class = strtolower($fields['vehicle_class'] ?? '');
         if (preg_match('/m-?cycle|motor\s*cycle|scooter|2wn|two\s*wheeler/', $class)) $fields['vehicle_type'] = 'two_wheeler';
+        elseif (preg_match('/tractor|agri/', $class)) $fields['vehicle_type'] = 'tractor';
         elseif (preg_match('/hgv|heavy\s*goods|truck|trailer/', $class)) $fields['vehicle_type'] = 'hgv';
         elseif (preg_match('/lgv|light\s*goods|pickup/', $class)) $fields['vehicle_type'] = 'lgv';
         elseif (preg_match('/taxi|cab|maxi|passenger/', $class)) $fields['vehicle_type'] = 'taxi';
