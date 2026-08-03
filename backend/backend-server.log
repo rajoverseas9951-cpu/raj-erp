@@ -1173,3 +1173,1399 @@
   2026-08-01 14:39:49 /api/v1/accounting/balance-sheet ................................................... ~ 512.01ms
   2026-08-01 16:04:13 /favicon.ico ....................................................................... ~ 512.36ms
   2026-08-01 16:04:13 ...................................................................................... ~ 1m 13s
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:54:47 /api/v1/dashboard/summary ............................................................... ~ 17s
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:54:47 /api/v1/dashboard/summary ............................................................... ~ 17s
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:55:10 /api/v1/dashboard/summary ............................................................ ~ 5.40ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:55:11 /api/v1/dashboard/summary ............................................................ ~ 5.53ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:55:19 /api/v1/dashboard/summary ............................................................ ~ 2.62ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:55:20 /api/v1/dashboard/summary ............................................................ ~ 5.88ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:55:20 /api/v1/dashboard/summary ............................................................ ~ 4.49ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:55:20 /api/v1/dashboard/summary ............................................................ ~ 5.63ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:55:24 /api/v1/customers .................................................................... ~ 4.31ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:55:25 /api/v1/dashboard/summary ............................................................ ~ 6.46ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:55:25 /api/v1/organization ................................................................ ~ 11.93ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:55:28 /api/v1/auth/logout .................................................................. ~ 8.26ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:55:53 /api/v1/auth/login ................................................................... ~ 8.21ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:55:56 /api/v1/auth/login ................................................................... ~ 7.98ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:55:57 /api/v1/auth/login ................................................................... ~ 8.53ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:55:57 /api/v1/auth/login ................................................................... ~ 8.34ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:55:57 /api/v1/auth/login ................................................................... ~ 4.41ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:55:57 /api/v1/auth/login ................................................................... ~ 5.24ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:56:03 /api/v1/auth/login ................................................................... ~ 8.46ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:56:25 /api/v1/auth/login ....................................................................... ~ 2s
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:57:08 /api/v1/auth/login ................................................................... ~ 6.70ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:57:09 /api/v1/auth/login ................................................................... ~ 5.43ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:57:09 /api/v1/auth/login ................................................................... ~ 6.27ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:57:10 /api/v1/auth/login ................................................................... ~ 5.20ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:57:10 /api/v1/auth/login ................................................................... ~ 5.43ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:57:10 /api/v1/auth/login ................................................................... ~ 6.46ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:59:13 /api/v1/auth/login ................................................................... ~ 6.63ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 06:59:20 /api/v1/auth/login ................................................................... ~ 4.90ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:02:14 /api/v1/auth/login ................................................................... ~ 8.44ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:02:15 /api/v1/auth/login ................................................................... ~ 8.51ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:02:16 /api/v1/auth/login ................................................................... ~ 7.30ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:02:16 /api/v1/auth/login ................................................................... ~ 3.21ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:02:16 /api/v1/auth/login ................................................................... ~ 2.24ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:02:16 /api/v1/auth/login ................................................................... ~ 2.02ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:02:16 /api/v1/auth/login ................................................................... ~ 5.54ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:02:20 /api/v1/auth/login ................................................................... ~ 5.79ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:02:20 /api/v1/auth/login ................................................................... ~ 5.90ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:04:05 /api/v1/auth/login ................................................................... ~ 4.22ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:04:23 /api/v1/auth/login ................................................................... ~ 9.02ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:04:24 /api/v1/auth/login ................................................................... ~ 9.14ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:08:22 /api/v1/auth/login ................................................................... ~ 5.00ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:08:23 /api/v1/auth/login ................................................................... ~ 5.31ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:08:23 /api/v1/auth/login ................................................................... ~ 4.92ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:11:11 /api/v1/auth/login ................................................................... ~ 4.96ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:11:12 /api/v1/auth/login ................................................................... ~ 5.53ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:11:12 /api/v1/auth/login ................................................................... ~ 6.66ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:11:12 /api/v1/auth/login ................................................................... ~ 5.16ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:11:12 /api/v1/auth/login ................................................................... ~ 8.58ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:11:13 /api/v1/auth/login ................................................................... ~ 3.63ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:11:13 /api/v1/auth/login ................................................................... ~ 3.20ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:11:13 /api/v1/auth/login ................................................................... ~ 3.28ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:11:13 /api/v1/auth/login ................................................................... ~ 3.43ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:11:13 /api/v1/auth/login ................................................................... ~ 5.78ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:11:21 /api/v1/auth/login ................................................................... ~ 7.71ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:17:46 /api/v1/auth/login ................................................................... ~ 4.02ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:17:46 /api/v1/auth/login ................................................................... ~ 3.83ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:17:46 /api/v1/auth/login ................................................................... ~ 3.06ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:17:47 /api/v1/auth/login ................................................................... ~ 5.81ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:17:47 /api/v1/auth/login ................................................................... ~ 4.42ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:17:47 /api/v1/auth/login ................................................................... ~ 5.83ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:18:04 /api/v1/auth/login ................................................................... ~ 6.46ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:18:13 /api/v1/auth/login ................................................................... ~ 6.28ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:18:13 /api/v1/auth/login ................................................................... ~ 8.33ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:18:13 /api/v1/auth/login ................................................................... ~ 7.46ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:18:14 /api/v1/auth/login .................................................................. ~ 11.70ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:18:14 /api/v1/auth/login ................................................................... ~ 7.96ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:18:14 /api/v1/auth/login ................................................................... ~ 6.70ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:18:14 /api/v1/auth/login ................................................................... ~ 6.74ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:19:26 /api/v1/auth/login ................................................................... ~ 8.71ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:21:46 /api/v1/auth/login ................................................................... ~ 8.08ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:21:54 /api/v1/auth/login ................................................................... ~ 4.53ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:23:30 /api/v1/auth/login ................................................................... ~ 5.71ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:23:31 /api/v1/auth/login ................................................................... ~ 5.30ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:23:32 /api/v1/auth/login .................................................................. ~ 27.98ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:23:33 /api/v1/auth/login .................................................................. ~ 10.54ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:23:33 /api/v1/auth/login .................................................................. ~ 10.40ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:23:33 /api/v1/auth/login ................................................................... ~ 3.74ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:23:33 /api/v1/auth/login .................................................................. ~ 10.10ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:23:33 /api/v1/auth/login ................................................................... ~ 8.92ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:23:34 /api/v1/auth/login ................................................................... ~ 3.76ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:23:34 /api/v1/auth/login ................................................................... ~ 4.05ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:23:34 /api/v1/auth/login ................................................................... ~ 4.33ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:23:34 /api/v1/auth/login .................................................................. ~ 12.01ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:23:34 /api/v1/auth/login ................................................................... ~ 9.16ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:23:35 /api/v1/auth/login ................................................................... ~ 5.62ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:23:35 /api/v1/auth/login ................................................................... ~ 4.99ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:23:35 /api/v1/auth/login ................................................................... ~ 4.89ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:23:35 /api/v1/auth/login ................................................................... ~ 5.33ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:23:36 /api/v1/auth/login ................................................................... ~ 4.34ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:26:52 /api/v1/auth/login .................................................................. ~ 50.05ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:26:53 /api/v1/auth/login ................................................................... ~ 8.01ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:26:53 /api/v1/auth/login ................................................................... ~ 6.62ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:26:56 /api/v1/auth/login ................................................................... ~ 7.73ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:26:57 /api/v1/auth/login ................................................................... ~ 7.06ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:26:57 /api/v1/auth/login .................................................................. ~ 10.13ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:26:58 /api/v1/auth/login ................................................................... ~ 7.03ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:26:58 /api/v1/auth/login ................................................................... ~ 4.41ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:26:58 /api/v1/auth/login ................................................................... ~ 9.79ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:26:58 /api/v1/auth/login ................................................................... ~ 3.87ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:27:04 /api/v1/auth/login ................................................................... ~ 8.45ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 07:27:04 /api/v1/auth/login ................................................................... ~ 8.65ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:12:08 /api/v1/auth/login ................................................................... ~ 5.44ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:12:09 /api/v1/auth/login ................................................................... ~ 2.79ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:17:32 /api/v1/auth/login ................................................................... ~ 8.87ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:17:34 /api/v1/auth/login ................................................................... ~ 8.11ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:17:35 /api/v1/auth/login ................................................................... ~ 8.82ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:17:35 /api/v1/auth/login ................................................................... ~ 5.55ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:17:35 /api/v1/auth/login ................................................................... ~ 8.72ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:17:35 /api/v1/auth/login ................................................................... ~ 7.72ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:17:36 /api/v1/auth/login ................................................................... ~ 5.60ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:17:36 /api/v1/auth/login ................................................................... ~ 5.15ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:17:36 /api/v1/auth/login ................................................................... ~ 9.56ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:17:36 /api/v1/auth/login ................................................................... ~ 8.11ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:17:36 /api/v1/auth/login ................................................................... ~ 4.73ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:17:36 /api/v1/auth/login ................................................................... ~ 7.61ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:17:37 /api/v1/auth/login ................................................................... ~ 7.36ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:17:37 /api/v1/auth/login ................................................................... ~ 7.07ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:19:16 /api/v1/auth/login ................................................................... ~ 7.15ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:19:20 /api/v1/auth/login ................................................................... ~ 7.30ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:19:21 /api/v1/auth/login ................................................................... ~ 9.48ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:19:21 /api/v1/auth/login ................................................................... ~ 7.91ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:19:21 /api/v1/auth/login ................................................................... ~ 5.91ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:19:21 /api/v1/auth/login ................................................................. ~ 518.11ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:19:21 /api/v1/auth/login ................................................................... ~ 7.41ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:19:22 /api/v1/auth/login ................................................................... ~ 6.33ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:19:22 /api/v1/auth/login ................................................................... ~ 7.91ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:19:22 /api/v1/auth/login ................................................................... ~ 5.16ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:19:31 /api/v1/auth/login ................................................................... ~ 8.15ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:44:37 /api/v1/auth/login ................................................................... ~ 6.85ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:44:37 /api/v1/auth/login ................................................................... ~ 4.34ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:44:38 /api/v1/auth/login ................................................................... ~ 2.68ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:44:38 /api/v1/auth/login ................................................................... ~ 8.76ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:44:39 /api/v1/auth/login ................................................................... ~ 5.18ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:44:40 /api/v1/auth/login .................................................................. ~ 96.41ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:53:16 /api/v1/auth/login .................................................................. ~ 10.13ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:53:17 /api/v1/auth/login ................................................................... ~ 5.69ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:53:17 /api/v1/auth/login ................................................................. ~ 514.43ms
+  PHP Warning:  require(C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php): Failed to open stream: No such file or directory in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Projects\raj-erp\backend\vendor\composer/../myclabs/deep-copy/src/DeepCopy/deep_copy.php' (include_path='.;C:\php\pear') in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php:41
+  Stack trace:
+  #0 C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php(45): {closure:ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader():37}()
+  #1 C:\Projects\raj-erp\backend\vendor\autoload.php(22): ComposerAutoloaderInit693a4fd77a286aeb23c17031072a3fbb::getLoader()
+  #2 C:\Projects\raj-erp\backend\public\index.php(5): require('...')
+  #3 C:\Projects\raj-erp\backend\vendor\laravel\framework\src\Illuminate\Foundation\resources\server.php(23): require_once('...')
+  #4 {main}
+  thrown in C:\Projects\raj-erp\backend\vendor\composer\autoload_real.php on line 41
+  2026-08-02 08:53:17 /api/v1/auth/login ................................................................... ~ 7.05ms
+  2026-08-02 09:51:02 /favicon.ico ....................................................................... ~ 534.15ms
+  2026-08-02 09:51:02 ...................................................................................... ~ 1m 15s
+  2026-08-02 09:56:02 /api/v1/auth/login ................................................................. ~ 517.82ms
+  2026-08-02 09:56:12 /api/v1/auth/login ................................................................. ~ 516.75ms
+  2026-08-02 09:56:12 /api/v1/auth/login ................................................................... ~ 0.44ms
+  2026-08-02 09:56:13 /api/v1/auth/login ................................................................... ~ 0.22ms
+  2026-08-02 09:56:13 /api/v1/auth/login ................................................................. ~ 510.23ms
+  2026-08-02 09:56:13 /api/v1/auth/login ................................................................... ~ 0.32ms
+  2026-08-02 09:56:13 /api/v1/auth/login ................................................................... ~ 0.38ms
+  2026-08-02 09:56:13 /api/v1/auth/login ................................................................... ~ 0.90ms
+  2026-08-02 09:56:14 /api/v1/auth/login ................................................................... ~ 0.34ms
+  2026-08-02 09:56:14 /api/v1/auth/login ................................................................. ~ 509.81ms
+  2026-08-02 09:56:14 /api/v1/auth/login ................................................................... ~ 0.27ms
+  2026-08-02 09:56:14 /api/v1/auth/login ................................................................... ~ 0.35ms
+  2026-08-02 20:15:04 /favicon.ico ............................................................................. ~ 3s
+  2026-08-02 20:15:04 ....................................................................................... ~ 1m 4s

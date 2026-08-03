@@ -3,6 +3,7 @@
 namespace App\Features\Ocr\Controllers;
 
 use App\Features\Ocr\Services\OcrService;
+use App\Features\Vehicles\Services\VehicleMasterResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -11,7 +12,10 @@ use RuntimeException;
 
 class OcrController
 {
-    public function __construct(private OcrService $ocr) {}
+    public function __construct(
+        private OcrService $ocr,
+        private VehicleMasterResolver $masters,
+    ) {}
 
     public function scan(Request $request): JsonResponse
     {
@@ -39,6 +43,16 @@ class OcrController
 
         try {
             $data = $this->ocr->scan($validated['images'], $validated['document_type']);
+            if ($validated['document_type'] === 'rc') {
+                $resolution = $this->masters->resolveOcrFields(
+                    $data['fields'],
+                    (string) $request->user()?->tenant_id,
+                    $request->user()?->id,
+                    $data['field_confidence'] ?? [],
+                );
+                $data['fields'] = $resolution['fields'];
+                $data['masters'] = $resolution['masters'];
+            }
         } catch (RuntimeException $exception) {
             report($exception);
 

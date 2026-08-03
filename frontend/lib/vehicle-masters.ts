@@ -20,6 +20,7 @@ export type VehicleMaster = {
   parent_name?: string;
   status: "active" | "inactive";
   notes?: string;
+  source?: "OCR" | string;
 };
 export type VehicleMasterPageResult = {
   data: VehicleMaster[];

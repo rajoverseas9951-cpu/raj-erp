@@ -48,6 +48,10 @@ class JsonFormatter(logging.Formatter):
             "paddlex_version",
             "device",
             "mkldnn_enabled",
+            "extracted_fields",
+            "field_confidence",
+            "low_confidence_fields",
+            "rejected_fields",
         ):
             value = getattr(record, key, None)
             if value is not None:
@@ -196,6 +200,19 @@ def create_app(
 
         lines = merge_ocr_lines(*groups)
         parsed = parse_rc(lines, runtime_settings.min_field_confidence)
+        logger.info(
+            "rc_fields_parsed",
+            extra={
+                "extracted_fields": parsed.fields.model_dump(exclude_none=True),
+                "field_confidence": parsed.field_confidence,
+                "low_confidence_fields": sorted(
+                    field
+                    for field, confidence in parsed.field_confidence.items()
+                    if confidence < 0.8
+                ),
+                "rejected_fields": parsed.rejected_fields,
+            },
+        )
         response_warnings = list(parsed.warnings)
         if not lines:
             response_warnings.append("OCR did not detect readable text.")

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Features\Vehicles\Services\VehicleMasterResolver;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -118,9 +119,12 @@ class VehicleMasterSeeder extends Seeder
         $name = strtoupper(trim($name));
         if (DB::table('vehicle_masters')->where('tenant_id', $tenant)->where('type', $type)
             ->whereRaw('UPPER(name) = ?', [$name])->whereNull('deleted_at')->exists()) return;
-        DB::table('vehicle_masters')->insert([
+        $resolver = app(VehicleMasterResolver::class);
+        DB::table('vehicle_masters')->insertOrIgnore([
             'id' => (string) Str::uuid(), 'tenant_id' => $tenant, 'type' => $type,
             'name' => $name, 'parent_id' => $parent, 'status' => 'active',
+            'normalized_name' => $resolver->normalizeName($name),
+            'normalized_key' => $resolver->normalizedKey($tenant, $type, $name, $parent),
             'created_at' => now(), 'updated_at' => now(),
         ]);
     }

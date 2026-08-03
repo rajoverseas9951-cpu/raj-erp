@@ -18,9 +18,16 @@ class VehicleService
         'vehicle_class_id' => ['vehicle_classes', 'vehicle_class'],
         'vehicle_category_id' => ['body_types', 'vehicle_category'],
         'fuel_type_id' => ['fuel_types', 'fuel_type'],
+        'rto_office_id' => ['rto_offices', 'registration_authority'],
+        'vehicle_type_id' => ['vehicle_types', 'vehicle_type'],
+        'variant_id' => ['variants', 'variant'],
     ];
 
-    public function __construct(private VehicleRepository $vehicles, private VehicleTimelineRepository $timeline)
+    public function __construct(
+        private VehicleRepository $vehicles,
+        private VehicleTimelineRepository $timeline,
+        private VehicleMasterResolver $masterResolver,
+    )
     {
     }
 
@@ -61,20 +68,40 @@ class VehicleService
         foreach (self::MASTER_FIELDS as $idField => [$type, $nameField]) {
             $id = $data[$idField] ?? null;
             if (! $id && ! empty($data[$nameField])) {
-                $id = DB::table('vehicle_masters')->where('tenant_id', $tenantId)->where('type', $type)
-                    ->whereRaw('UPPER(name) = ?', [strtoupper(trim($data[$nameField]))])->whereNull('deleted_at')->value('id');
+                $query = DB::table('vehicle_masters')->where('tenant_id', $tenantId)->where('type', $type)
+                    ->whereNull('deleted_at');
+                $parentId = match ($type) {
+                    'models' => $resolved['manufacturer_id'] ?? $data['manufacturer_id'] ?? null,
+                    'variants' => $resolved['model_id'] ?? $data['model_id'] ?? null,
+                    default => null,
+                };
+                $parentId ? $query->where('parent_id', $parentId) : $query->whereNull('parent_id');
+                $target = $this->masterResolver->matchingName($type, (string) $data[$nameField]);
+                $id = $query->get()->first(
+                    fn (object $master) => $this->masterResolver->matchingName($type, $master->name) === $target
+                )?->id;
             }
             if (! $id) continue;
             $master = DB::table('vehicle_masters')->where('tenant_id', $tenantId)->where('type', $type)
                 ->where('id', $id)->whereNull('deleted_at')->first();
             if (! $master) throw ValidationException::withMessages([$idField => ['Select a valid master record.']]);
             $resolved[$idField] = $master->id;
-            $resolved[$nameField] = $master->name;
+            $resolved[$nameField] = $type === 'vehicle_types'
+                ? str($master->code ?: $master->name)->lower()->replaceMatches('/[^a-z0-9]+/', '_')->trim('_')->toString()
+                : $master->name;
         }
         if (! empty($resolved['model_id']) && ! empty($resolved['manufacturer_id'])) {
-            $modelParent = DB::table('vehicle_masters')->where('id', $resolved['model_id'])->value('parent_id');
+            $modelParent = DB::table('vehicle_masters')->where('tenant_id', $tenantId)
+                ->where('id', $resolved['model_id'])->value('parent_id');
             if ($modelParent !== $resolved['manufacturer_id']) {
                 throw ValidationException::withMessages(['model_id' => ['Selected model does not belong to the selected manufacturer.']]);
+            }
+        }
+        if (! empty($resolved['variant_id']) && ! empty($resolved['model_id'])) {
+            $variantParent = DB::table('vehicle_masters')->where('tenant_id', $tenantId)
+                ->where('id', $resolved['variant_id'])->value('parent_id');
+            if ($variantParent !== $resolved['model_id']) {
+                throw ValidationException::withMessages(['variant_id' => ['Selected variant does not belong to the selected model.']]);
             }
         }
         return array_merge($data, $resolved);

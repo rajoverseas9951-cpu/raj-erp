@@ -5,6 +5,7 @@ export type OcrResult = {
   field_confidence?: Record<string, number>;
   overall_confidence?: number;
   warnings?: string[];
+  masters?: Partial<Record<VehicleMasterType, VehicleMaster>>;
 };
 
 export async function scanDocument(
@@ -21,3 +22,4 @@ export async function scanDocument(
   });
 }
 import { authenticatedRequest } from "@/lib/api-client";
+import type { VehicleMaster, VehicleMasterType } from "@/lib/vehicle-masters";

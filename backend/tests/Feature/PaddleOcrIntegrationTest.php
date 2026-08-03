@@ -11,6 +11,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 
 class PaddleOcrIntegrationTest extends TestCase
 {
@@ -23,6 +24,7 @@ class PaddleOcrIntegrationTest extends TestCase
             'services' => ['paddleocr' => ['url' => 'http://ocr.internal', 'timeout' => 100]],
         ]));
         $application->instance(Factory::class, new Factory);
+        $application->instance('log', new NullLogger);
         Facade::setFacadeApplication($application);
     }
 
@@ -43,22 +45,31 @@ class PaddleOcrIntegrationTest extends TestCase
                 'fields' => [
                     'vehicle_number' => 'GJ 16 DM 9932',
                     'registration_date' => '7/8/2022',
+                    'registration_valid_upto' => '08-08-2039',
                     'registration_authority' => 'RTO Ahmedabad',
                     'chassis_number' => 'MA3EJKD1S00123456',
                     'engine_number' => 'K12MN1234567',
                     'manufacturer' => 'Maruti Suzuki India Ltd',
                     'model' => 'Swift VXI',
+                    'variant' => 'ZXI',
                     'vehicle_class' => 'Motor Car LMV',
+                    'body_type' => 'Hatchback',
                     'fuel_type' => 'PETROL',
                     'colour' => 'Pearl White',
                     'manufacturing_month_year' => '08/2019',
+                    'manufacturing_month' => '08',
+                    'manufacturing_year' => '2019',
                     'seating_capacity' => '5',
                     'cubic_capacity' => '1197 CC',
                     'unladen_weight' => '865 KG',
                     'gross_vehicle_weight' => '1335 KG',
+                    'number_of_cylinders' => '4',
+                    'emission_norms' => 'BHARAT STAGE VI',
+                    'horse_power' => '88.50',
+                    'wheel_base' => '2450',
                     'financier' => 'Example Bank Ltd',
                 ],
-                'field_confidence' => ['vehicle_number' => 0.96],
+                'field_confidence' => ['vehicle_number' => 0.96, 'body_type' => 0.78],
                 'raw_text' => "REGN NO: GJ16DM9932\nOwner Name: Raj Kumar",
                 'ocr_lines' => [
                     ['text' => 'REGN NO: GJ16DM9932', 'confidence' => 0.96, 'source' => 'front'],
@@ -77,14 +88,21 @@ class PaddleOcrIntegrationTest extends TestCase
 
         $this->assertSame('GJ16DM9932', $result['fields']['vehicle_number']);
         $this->assertSame('2022-08-07', $result['fields']['registration_date']);
+        $this->assertSame('2039-08-08', $result['fields']['registration_valid_upto']);
         $this->assertSame('RTO AHMEDABAD', $result['fields']['registration_authority']);
         $this->assertSame('RTO AHMEDABAD', $result['fields']['district']);
         $this->assertSame('1197', $result['fields']['cubic_capacity']);
         $this->assertSame('1335', $result['fields']['gross_weight']);
+        $this->assertSame('HATCHBACK', $result['fields']['vehicle_category']);
+        $this->assertSame('4', $result['fields']['number_of_cylinders']);
+        $this->assertSame('88.50', $result['fields']['horse_power']);
+        $this->assertSame('2450', $result['fields']['wheel_base']);
         $this->assertSame('2019', $result['fields']['manufacturing_year']);
+        $this->assertSame('08', $result['fields']['manufacturing_month']);
         $this->assertSame('private_car', $result['fields']['vehicle_type']);
         $this->assertSame(['Confirm all fields before saving.'], $result['warnings']);
         $this->assertSame(0.93, $result['overall_confidence']);
+        $this->assertSame(0.78, $result['field_confidence']['vehicle_category']);
 
         Http::assertSent(fn (Request $request) =>
             $request->method() === 'POST'

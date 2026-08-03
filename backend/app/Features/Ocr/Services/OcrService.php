@@ -5,6 +5,7 @@ namespace App\Features\Ocr\Services;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class OcrService
@@ -109,11 +110,24 @@ class OcrService
         ));
         if ($texts === [] && $text !== '') $texts = [$text];
 
+        $mappedFields = $this->mapPaddleRcFields($payload['fields']);
+        $mappedConfidence = $this->mapPaddleRcConfidence(
+            is_array($payload['field_confidence'] ?? null) ? $payload['field_confidence'] : []
+        );
+        Log::debug('ocr.rc.fields_normalized', [
+            'extracted_fields' => $payload['fields'],
+            'normalized_fields' => $mappedFields,
+            'low_confidence_fields' => array_keys(array_filter(
+                $mappedConfidence,
+                fn (float $confidence) => $confidence < 0.8
+            )),
+        ]);
+
         return [
             'text' => $text,
             'texts' => $texts,
-            'fields' => $this->mapPaddleRcFields($payload['fields']),
-            'field_confidence' => is_array($payload['field_confidence'] ?? null) ? $payload['field_confidence'] : [],
+            'fields' => $mappedFields,
+            'field_confidence' => $mappedConfidence,
             'overall_confidence' => is_numeric($payload['overall_confidence'] ?? null) ? (float) $payload['overall_confidence'] : 0.0,
             'warnings' => array_values(array_filter(
                 is_array($payload['warnings'] ?? null) ? $payload['warnings'] : [],
@@ -128,7 +142,9 @@ class OcrService
         $fields = [];
         foreach ([
             'vehicle_number', 'registration_authority', 'chassis_number', 'engine_number',
-            'manufacturer', 'model', 'vehicle_class', 'colour', 'financier',
+            'owner_name', 'father_or_spouse_name', 'ownership_type', 'address',
+            'manufacturer', 'model', 'variant', 'vehicle_class', 'body_type', 'colour',
+            'emission_norms', 'financier',
         ] as $key) {
             $value = $source[$key] ?? null;
             if (is_string($value) && trim($value) !== '') $fields[$key] = trim($value);
@@ -138,20 +154,34 @@ class OcrService
         foreach (['chassis_number', 'engine_number'] as $key) {
             if (isset($fields[$key])) $fields[$key] = $this->identifier($fields[$key]);
         }
-        foreach (['manufacturer', 'model', 'vehicle_class', 'colour', 'registration_authority', 'financier'] as $key) {
+        foreach ([
+            'owner_name', 'father_or_spouse_name', 'ownership_type', 'manufacturer',
+            'model', 'variant', 'vehicle_class', 'body_type', 'colour',
+            'registration_authority', 'emission_norms', 'financier',
+        ] as $key) {
             if (isset($fields[$key])) $fields[$key] = strtoupper($this->clean($fields[$key]));
         }
-        if (isset($fields['registration_authority'])) $fields['district'] = $fields['registration_authority'];
+        if (isset($fields['body_type'])) {
+            $fields['vehicle_category'] = $fields['body_type'];
+            unset($fields['body_type']);
+        }
+        if (isset($fields['registration_authority'])) {
+            $fields['district'] = $fields['registration_authority'];
+        }
+        if (str_starts_with($fields['vehicle_number'] ?? '', 'GJ')) $fields['state'] = 'Gujarat';
 
         $registrationDate = $source['registration_date'] ?? null;
         if (is_string($registrationDate) && ($date = $this->normaliseDate($registrationDate))) {
             $fields['registration_date'] = $date;
         }
+        $registrationValidity = $source['registration_valid_upto'] ?? null;
+        if (is_string($registrationValidity) && ($date = $this->normaliseDate($registrationValidity))) {
+            $fields['registration_valid_upto'] = $date;
+        }
 
         $fuel = $source['fuel_type'] ?? null;
         if (is_string($fuel) && trim($fuel) !== '') {
-            $fuel = strtolower(trim($fuel));
-            $fields['fuel_type'] = preg_match('/electric|battery|\bev\b/i', $fuel) ? 'electric' : $fuel;
+            $fields['fuel_type'] = $this->normaliseFuel($fuel);
         }
 
         foreach ([
@@ -159,6 +189,9 @@ class OcrService
             'cubic_capacity' => 'cubic_capacity',
             'unladen_weight' => 'unladen_weight',
             'gross_vehicle_weight' => 'gross_weight',
+            'horse_power' => 'horse_power',
+            'wheel_base' => 'wheel_base',
+            'number_of_cylinders' => 'number_of_cylinders',
         ] as $sourceKey => $targetKey) {
             $value = $source[$sourceKey] ?? null;
             if (is_string($value) && preg_match('/\d+(?:\.\d+)?/', $value, $match)) {
@@ -166,9 +199,27 @@ class OcrService
             }
         }
 
-        $manufactured = $source['manufacturing_month_year'] ?? null;
-        if (is_string($manufactured) && preg_match('/\b(?:19|20)\d{2}\b/', $manufactured, $match)) {
+        $manufacturingMonth = $source['manufacturing_month'] ?? null;
+        if (is_string($manufacturingMonth) && preg_match('/\b(0?[1-9]|1[0-2])\b/', $manufacturingMonth, $match)) {
+            $fields['manufacturing_month'] = str_pad($match[1], 2, '0', STR_PAD_LEFT);
+        }
+        $manufacturingYear = $source['manufacturing_year'] ?? null;
+        if (is_string($manufacturingYear) && preg_match('/\b(?:19|20)\d{2}\b/', $manufacturingYear, $match)) {
             $fields['manufacturing_year'] = $match[0];
+        } else {
+            $manufactured = $source['manufacturing_month_year'] ?? null;
+            if (is_string($manufactured) && preg_match('/\b(?:19|20)\d{2}\b/', $manufactured, $match)) {
+                $fields['manufacturing_year'] = $match[0];
+            }
+            if (is_string($manufactured) && preg_match('/\b(0?[1-9]|1[0-2])[.\/-](?:19|20)\d{2}\b/', $manufactured, $match)) {
+                $fields['manufacturing_month'] = str_pad($match[1], 2, '0', STR_PAD_LEFT);
+            }
+        }
+
+        if (isset($fields['model']) && ! isset($fields['variant'])
+            && preg_match('/^(.+?)\s*\(([^()]{1,30})\)$/', $fields['model'], $match)) {
+            $fields['model'] = trim($match[1]);
+            $fields['variant'] = trim($match[2]);
         }
 
         $class = strtolower($fields['vehicle_class'] ?? '');
@@ -179,6 +230,40 @@ class OcrService
         elseif (preg_match('/motor\s*car|private\s*car|\blmv\b/', $class)) $fields['vehicle_type'] = 'private_car';
 
         return array_filter($fields, fn ($value) => $value !== '');
+    }
+
+    /** @param array<string, mixed> $source @return array<string, float> */
+    private function mapPaddleRcConfidence(array $source): array
+    {
+        $mapping = [
+            'body_type' => ['vehicle_category'],
+            'manufacturing_month_year' => ['manufacturing_month', 'manufacturing_year'],
+            'gross_vehicle_weight' => ['gross_weight'],
+        ];
+        $confidence = [];
+        foreach ($source as $field => $value) {
+            if (! is_string($field) || ! is_numeric($value)) continue;
+            foreach ($mapping[$field] ?? [$field] as $target) {
+                $confidence[$target] = max(0.0, min(1.0, (float) $value));
+            }
+        }
+        return $confidence;
+    }
+
+    private function normaliseFuel(string $value): string
+    {
+        $value = strtoupper($this->clean($value));
+        return match (true) {
+            preg_match('/ELECTRIC|BATTERY|\bEV\b/', $value) === 1 => 'ELECTRIC',
+            preg_match('/PETROL.*CNG|CNG.*PETROL|DUAL.*CNG/', $value) === 1 => 'PETROL/CNG',
+            preg_match('/PETROL.*LPG|LPG.*PETROL|DUAL.*LPG/', $value) === 1 => 'PETROL/LPG',
+            preg_match('/\bCNG\b/', $value) === 1 => 'CNG',
+            preg_match('/\bDIESEL\b/', $value) === 1 => 'DIESEL',
+            preg_match('/\bPETROL\b/', $value) === 1 => 'PETROL',
+            preg_match('/\bLPG\b/', $value) === 1 => 'LPG',
+            preg_match('/HYBRID/', $value) === 1 => 'HYBRID',
+            default => $value,
+        };
     }
 
     private function readImage(UploadedFile $image, string $key): string

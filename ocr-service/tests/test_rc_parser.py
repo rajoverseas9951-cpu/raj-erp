@@ -8,6 +8,28 @@ def line(text: str, confidence: float = 0.9, source: str = "front") -> OCRLine:
     return OCRLine(text=text, confidence=confidence, source=source)
 
 
+def boxed_line(
+    text: str,
+    left: int,
+    top: int,
+    width: int = 180,
+    height: int = 30,
+    confidence: float = 0.9,
+    source: str = "front",
+) -> OCRLine:
+    return OCRLine(
+        text=text,
+        confidence=confidence,
+        source=source,
+        bounding_box=[
+            [left, top],
+            [left + width, top],
+            [left + width, top + height],
+            [left, top + height],
+        ],
+    )
+
+
 def test_parser_extracts_common_indian_rc_labels() -> None:
     parsed = parse_rc(
         [
@@ -93,3 +115,102 @@ def test_front_back_merge_prefers_higher_confidence_candidate() -> None:
     assert [item.source for item in merged] == ["front", "front", "back", "back"]
     assert parsed.fields.owner_name == "Raj Kumar"
     assert parsed.fields.engine_number == "K12MN1234567"
+
+
+def test_gujarat_front_back_layout_extracts_fields_without_crossing_labels() -> None:
+    parsed = parse_rc(
+        [
+            line(
+                "Regn No GJ08DH9235 Date of Regn. 09-08-2024 "
+                "Regn. Validity 08-08-2039",
+                0.98,
+                "front",
+            ),
+            line("Chassis No MBLHAW236R5B01749", 0.97, "front"),
+            line("Engine/Motor No HA11E8R5B53325", 0.96, "front"),
+            line("Owner Name RABARI NARSEGBHAI Owner Serial 1", 0.95, "front"),
+            line(
+                "Son/Wife/Daughter of (In case of Individual Owner) SAVABHAI",
+                0.92,
+                "front",
+            ),
+            line("Ownership INDIVIDUAL", 0.93, "front"),
+            line(
+                "Address BUKNA, BUKNA, VAV, BANASKANTHA-GUJARAT-385575",
+                0.94,
+                "front",
+            ),
+            line("Fuel PETROL Emission Norms BHARAT STAGE VI", 0.94, "front"),
+            line("Vehicle Class: M-CYCLE/SCOOTER (2WN)", 0.97, "back"),
+            line("Maker's Name: HERO MOTOCORP LTD", 0.96, "back"),
+            line("Model Name: SPLENDOR+ (DRS)", 0.95, "back"),
+            line("Colour: / Body Type:", 0.93, "back"),
+            line("BLACK GREY STRIPE / SOLO WITH PILLION", 0.94, "back"),
+            line("Seating(in all) Capacity 2", 0.94, "back"),
+            line("Unladen Weight (Kg) 109", 0.93, "back"),
+            line(
+                "Cubic Cap. / Horse Power (BHP/Kw) Wheel Base(mm)",
+                0.92,
+                "back",
+            ),
+            line("97.20 / 7.91 1236", 0.93, "back"),
+            line("Month-Year of Mfg. 02-2024 No. of Cylinders 1", 0.92, "back"),
+            line("Financier: ROYAL FINANCE THARAD", 0.96, "back"),
+            line("Registration Authority BANASKANTHA", 0.95, "back"),
+        ]
+    )
+
+    assert parsed.fields.model_dump(exclude_none=True) == {
+        "vehicle_number": "GJ08DH9235",
+        "owner_name": "RABARI NARSEGBHAI",
+        "father_or_spouse_name": "SAVABHAI",
+        "ownership_type": "INDIVIDUAL",
+        "address": "BUKNA, BUKNA, VAV, BANASKANTHA-GUJARAT-385575",
+        "registration_date": "09-08-2024",
+        "registration_valid_upto": "08-08-2039",
+        "chassis_number": "MBLHAW236R5B01749",
+        "engine_number": "HA11E8R5B53325",
+        "manufacturer": "HERO MOTOCORP LTD",
+        "model": "SPLENDOR+",
+        "variant": "DRS",
+        "vehicle_class": "M-CYCLE/SCOOTER (2WN)",
+        "body_type": "SOLO WITH PILLION",
+        "fuel_type": "PETROL",
+        "emission_norms": "BHARAT STAGE VI",
+        "colour": "BLACK GREY STRIPE",
+        "manufacturing_month_year": "02-2024",
+        "manufacturing_month": "02",
+        "manufacturing_year": "2024",
+        "seating_capacity": "2",
+        "cubic_capacity": "97.20",
+        "horse_power": "7.91",
+        "wheel_base": "1236",
+        "number_of_cylinders": "1",
+        "unladen_weight": "109",
+        "registration_authority": "BANASKANTHA",
+        "financier": "ROYAL FINANCE THARAD",
+    }
+    assert parsed.fields.financier != "NO. OF CYLINDERS"
+
+
+def test_spatial_columns_pair_each_label_with_the_value_below_it() -> None:
+    parsed = parse_rc(
+        [
+            boxed_line("Regn No", 60, 50),
+            boxed_line("Date of Regn.", 360, 50),
+            boxed_line("Regn. Validity", 660, 50),
+            boxed_line("GJ08DH9235", 60, 95),
+            boxed_line("09-08-2024", 360, 95),
+            boxed_line("08-08-2039", 660, 95),
+            boxed_line("No. of Cylinders", 60, 180, source="back"),
+            boxed_line("Financier", 430, 180, source="back"),
+            boxed_line("1", 60, 225, source="back"),
+            boxed_line("ROYAL FINANCE THARAD", 430, 225, source="back"),
+        ]
+    )
+
+    assert parsed.fields.vehicle_number == "GJ08DH9235"
+    assert parsed.fields.registration_date == "09-08-2024"
+    assert parsed.fields.registration_valid_upto == "08-08-2039"
+    assert parsed.fields.number_of_cylinders == "1"
+    assert parsed.fields.financier == "ROYAL FINANCE THARAD"
