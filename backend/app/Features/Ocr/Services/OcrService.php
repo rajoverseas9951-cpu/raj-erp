@@ -10,6 +10,47 @@ use RuntimeException;
 
 class OcrService
 {
+    private const PADDLE_FIELD_ALIASES = [
+        'registration_number' => 'vehicle_number',
+        'vehicle_registration_number' => 'vehicle_number',
+        'regn_number' => 'vehicle_number',
+        'reg_no' => 'vehicle_number',
+        'date_of_registration' => 'registration_date',
+        'date_of_regn' => 'registration_date',
+        'regn_date' => 'registration_date',
+        'registration_validity' => 'registration_valid_upto',
+        'valid_upto' => 'registration_valid_upto',
+        'validity' => 'registration_valid_upto',
+        'registering_authority' => 'registration_authority',
+        'rto' => 'registration_authority',
+        'chassis_no' => 'chassis_number',
+        'engine_no' => 'engine_number',
+        'engine_motor_no' => 'engine_number',
+        'engine_motor_number' => 'engine_number',
+        'owner' => 'owner_name',
+        'son_daughter_wife_of' => 'father_or_spouse_name',
+        'makers_name' => 'manufacturer',
+        'maker_name' => 'manufacturer',
+        'make' => 'manufacturer',
+        'model_name' => 'model',
+        'vehicle_category' => 'body_type',
+        'vehicle_body_type' => 'body_type',
+        'color' => 'colour',
+        'fuel_used' => 'fuel_type',
+        'seating_in_all' => 'seating_capacity',
+        'cubic_cap' => 'cubic_capacity',
+        'cubic_capacity_cc' => 'cubic_capacity',
+        'unladen_weight_kg' => 'unladen_weight',
+        'gross_weight' => 'gross_vehicle_weight',
+        'wheel_base_mm' => 'wheel_base',
+        'cylinder_no' => 'number_of_cylinders',
+        'no_of_cylinders' => 'number_of_cylinders',
+        'cylinders' => 'number_of_cylinders',
+        'month_year_of_mfg' => 'manufacturing_month_year',
+        'month_year_of_manufacture' => 'manufacturing_month_year',
+        'financier_name' => 'financier',
+    ];
+
     /**
      * @param  array<int, UploadedFile>  $images
      * @return array{text:string,texts:array<int,string>,fields:array<string,string>,field_confidence?:array<string,float>,overall_confidence?:float,warnings?:array<int,string>}
@@ -117,6 +158,7 @@ class OcrService
         Log::debug('ocr.rc.fields_normalized', [
             'extracted_fields' => $payload['fields'],
             'normalized_fields' => $mappedFields,
+            'field_confidence' => $mappedConfidence,
             'low_confidence_fields' => array_keys(array_filter(
                 $mappedConfidence,
                 fn (float $confidence) => $confidence < 0.8
@@ -139,6 +181,7 @@ class OcrService
     /** @param array<string, mixed> $source @return array<string, string> */
     private function mapPaddleRcFields(array $source): array
     {
+        $source = $this->canonicalizePaddleFields($source);
         $fields = [];
         foreach ([
             'vehicle_number', 'registration_authority', 'chassis_number', 'engine_number',
@@ -248,6 +291,7 @@ class OcrService
     /** @param array<string, mixed> $source @return array<string, float> */
     private function mapPaddleRcConfidence(array $source): array
     {
+        $source = $this->canonicalizePaddleFields($source);
         $mapping = [
             'body_type' => ['vehicle_category'],
             'manufacturing_month_year' => ['manufacturing_month', 'manufacturing_year'],
@@ -261,6 +305,25 @@ class OcrService
             }
         }
         return $confidence;
+    }
+
+    /** @param array<string, mixed> $source @return array<string, mixed> */
+    private function canonicalizePaddleFields(array $source): array
+    {
+        $canonical = $source;
+        foreach (self::PADDLE_FIELD_ALIASES as $alias => $target) {
+            $value = $source[$alias] ?? null;
+            if (! array_key_exists($target, $canonical)
+                || $canonical[$target] === null
+                || (is_string($canonical[$target]) && trim($canonical[$target]) === '')) {
+                if ($value !== null && (! is_string($value) || trim($value) !== '')) {
+                    $canonical[$target] = $value;
+                }
+            }
+            unset($canonical[$alias]);
+        }
+
+        return $canonical;
     }
 
     private function normaliseFuel(string $value): ?string

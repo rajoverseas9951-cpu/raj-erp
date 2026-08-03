@@ -25,7 +25,7 @@ class VehicleMasterResolver
     /**
      * @param  array<string, mixed>  $fields
      * @param  array<string, float>  $confidence
-     * @return array{fields:array<string,mixed>,masters:array<string,array<string,mixed>>,matched:array<string,string>,created:array<string,string>}
+     * @return array{fields:array<string,mixed>,masters:array<string,array<string,mixed>>,matched:array<string,string>,created:array<string,string>,warnings:array<int,string>}
      */
     public function resolveOcrFields(
         array $fields,
@@ -38,6 +38,7 @@ class VehicleMasterResolver
             $masters = [];
             $matched = [];
             $created = [];
+            $warnings = [];
             $manufacturerId = null;
             $modelId = null;
 
@@ -51,6 +52,7 @@ class VehicleMasterResolver
                     : null;
                 if (! $this->isValidOcrCandidate($type, $name, $fieldConfidence)) {
                     unset($resolvedFields[$idField]);
+                    $warnings[] = "OCR {$nameField} was retained as text but was not auto-resolved.";
                     Log::debug('ocr.rc.master_skipped', [
                         'type' => $type,
                         'reason' => 'invalid_candidate',
@@ -65,6 +67,7 @@ class VehicleMasterResolver
                     default => null,
                 };
                 if (in_array($type, ['models', 'variants'], true) && ! $parentId) {
+                    $warnings[] = "OCR {$nameField} was retained as text until its parent master resolves.";
                     Log::debug('ocr.rc.master_skipped', [
                         'type' => $type,
                         'reason' => 'missing_parent',
@@ -81,6 +84,7 @@ class VehicleMasterResolver
                     $actorId
                 );
                 if (! $master) {
+                    $warnings[] = "OCR {$nameField} was retained as text because master resolution failed.";
                     Log::warning('ocr.rc.master_resolution_failed', [
                         'type' => $type,
                     ]);
@@ -112,7 +116,7 @@ class VehicleMasterResolver
                 )),
             ]);
 
-            return compact('masters', 'matched', 'created') + [
+            return compact('masters', 'matched', 'created', 'warnings') + [
                 'fields' => $resolvedFields,
             ];
         });

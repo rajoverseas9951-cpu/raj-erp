@@ -143,4 +143,78 @@ class PaddleOcrIntegrationTest extends TestCase
         $this->assertSame('2016', $result['fields']['manufacturing_year']);
         $this->assertArrayNotHasKey('fuel_type', $result['fields']);
     }
+
+    public function test_tractor_alias_keys_are_canonicalized_without_losing_valid_values(): void
+    {
+        $aliasFields = [
+            'registration_number' => 'GJ08BB6056',
+            'date_of_regn' => '06/12/2016',
+            'registration_validity' => '05/12/2031',
+            'chassis_no' => 'T052358130',
+            'engine_motor_no' => 'E2363463',
+            'owner' => 'KARSHANBHAI',
+            'son_daughter_wife_of' => 'GANESHBHAI KALA',
+            'vehicle_class' => 'TRACTOR (AGRI)',
+            'fuel_used' => 'DIESEL',
+            'makers_name' => 'ESCORTSLTD',
+            'model_name' => 'FARMTRAC 45',
+            'vehicle_category' => 'TRACTOR (OPEN)',
+            'color' => 'BLUE',
+            'seating_in_all' => '1',
+            'cubic_cap' => '45',
+            'cylinder_no' => '3',
+            'month_year_of_mfg' => 'JANUARY 2016',
+            'financier_name' => 'L AND T FINANCE LTD',
+            'registering_authority' => 'PALANPUR',
+        ];
+        Http::fake([
+            'http://ocr.internal/v1/ocr/rc' => Http::response([
+                'success' => true,
+                'fields' => $aliasFields,
+                'field_confidence' => array_fill_keys(array_keys($aliasFields), 0.94),
+                'raw_text' => '',
+                'ocr_lines' => [],
+                'overall_confidence' => 0.94,
+                'warnings' => [],
+            ]),
+        ]);
+
+        $result = (new OcrService)->scan([
+            UploadedFile::fake()->create('tractor.png', 100, 'image/png'),
+        ], 'rc');
+
+        $expected = [
+            'vehicle_number' => 'GJ08BB6056',
+            'registration_date' => '2016-12-06',
+            'registration_valid_upto' => '2031-12-05',
+            'chassis_number' => 'T052358130',
+            'engine_number' => 'E2363463',
+            'owner_name' => 'KARSHANBHAI',
+            'father_or_spouse_name' => 'GANESHBHAI KALA',
+            'vehicle_class' => 'TRACTOR (AGRI)',
+            'vehicle_type' => 'tractor',
+            'fuel_type' => 'DIESEL',
+            'manufacturer' => 'ESCORTS LTD',
+            'model' => 'FARMTRAC 45',
+            'vehicle_category' => 'TRACTOR (OPEN)',
+            'colour' => 'BLUE',
+            'seating_capacity' => '1',
+            'cubic_capacity' => '45',
+            'number_of_cylinders' => '3',
+            'manufacturing_month' => '01',
+            'manufacturing_year' => '2016',
+            'financier' => 'L AND T FINANCE LTD',
+            'registration_authority' => 'PALANPUR',
+            'district' => 'PALANPUR',
+            'state' => 'Gujarat',
+        ];
+        foreach ($expected as $field => $value) {
+            $this->assertSame($value, $result['fields'][$field] ?? null, $field);
+        }
+        $this->assertSame(0.94, $result['field_confidence']['manufacturer']);
+        $this->assertSame(0.94, $result['field_confidence']['vehicle_category']);
+        foreach (['variant', 'wheel_base', 'horse_power', 'unladen_weight', 'emission_norms'] as $blank) {
+            $this->assertArrayNotHasKey($blank, $result['fields']);
+        }
+    }
 }

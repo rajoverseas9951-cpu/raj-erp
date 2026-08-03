@@ -6,6 +6,7 @@ use App\Features\Ocr\Services\OcrService;
 use App\Features\Vehicles\Services\VehicleMasterResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -52,6 +53,20 @@ class OcrController
                 );
                 $data['fields'] = $resolution['fields'];
                 $data['masters'] = $resolution['masters'];
+                $data['warnings'] = array_values(array_unique(array_merge(
+                    $data['warnings'] ?? [],
+                    $resolution['warnings'] ?? [],
+                )));
+                Log::debug('ocr.rc.response_ready', [
+                    'fields' => $data['fields'],
+                    'field_confidence' => $data['field_confidence'] ?? [],
+                    'resolved_master_ids' => array_filter(
+                        $data['fields'],
+                        fn ($value, $field) => str_ends_with((string) $field, '_id') && $value !== '',
+                        ARRAY_FILTER_USE_BOTH,
+                    ),
+                    'warnings' => $data['warnings'],
+                ]);
             }
         } catch (RuntimeException $exception) {
             report($exception);

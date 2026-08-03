@@ -1,5 +1,5 @@
 export type VehicleFormValues = Record<string, string>;
-export type OcrMasterOption = { id: string; name: string };
+export type OcrMasterOption = { id: string; name: string; parent_id?: string | null };
 export type OcrMasterKind =
   | "manufacturers"
   | "models"
@@ -77,6 +77,74 @@ export function findMatchingMasterId(
   );
 }
 
+type OcrMasterLists = Partial<
+  Record<OcrMasterKind, readonly OcrMasterOption[]>
+>;
+
+const MASTER_BINDINGS: ReadonlyArray<{
+  type: OcrMasterKind;
+  nameField: string;
+  idField: string;
+  parentIdField?: string;
+}> = [
+  { type: "rto_offices", nameField: "registration_authority", idField: "rto_office_id" },
+  { type: "vehicle_types", nameField: "vehicle_type", idField: "vehicle_type_id" },
+  { type: "vehicle_classes", nameField: "vehicle_class", idField: "vehicle_class_id" },
+  { type: "body_types", nameField: "vehicle_category", idField: "vehicle_category_id" },
+  { type: "manufacturers", nameField: "manufacturer", idField: "manufacturer_id" },
+  { type: "models", nameField: "model", idField: "model_id", parentIdField: "manufacturer_id" },
+  { type: "variants", nameField: "variant", idField: "variant_id", parentIdField: "model_id" },
+  { type: "colours", nameField: "colour", idField: "colour_id" },
+  { type: "fuel_types", nameField: "fuel_type", idField: "fuel_type_id" },
+];
+
+export function resolveOcrMasterIds(
+  values: VehicleFormValues,
+  lists: OcrMasterLists,
+  editedFields: ReadonlySet<string> = new Set(),
+): VehicleFormValues {
+  const next = { ...values };
+  for (const binding of MASTER_BINDINGS) {
+    if (
+      next[binding.idField] ||
+      !next[binding.nameField]?.trim() ||
+      editedFields.has(binding.nameField) ||
+      editedFields.has(binding.idField)
+    ) {
+      continue;
+    }
+
+    const parentId = binding.parentIdField
+      ? next[binding.parentIdField]
+      : "";
+    if (binding.parentIdField && !parentId) continue;
+    const options = (lists[binding.type] ?? []).filter(
+      (option) => !parentId || !option.parent_id || option.parent_id === parentId,
+    );
+    const id = findMatchingMasterId(
+      next[binding.nameField],
+      options,
+      binding.type,
+    );
+    if (id) next[binding.idField] = id;
+  }
+
+  return next;
+}
+
+function normalizeOcrDate(value: string): string {
+  const trimmed = value.trim();
+  const iso = trimmed.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+  if (iso) {
+    return `${iso[1]}-${iso[2].padStart(2, "0")}-${iso[3].padStart(2, "0")}`;
+  }
+  const indian = trimmed.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+  if (indian) {
+    return `${indian[3]}-${indian[2].padStart(2, "0")}-${indian[1].padStart(2, "0")}`;
+  }
+  return trimmed;
+}
+
 export function applyOcrPrefill(
   current: VehicleFormValues,
   extracted: Record<string, string>,
@@ -90,7 +158,9 @@ export function applyOcrPrefill(
     if (!OCR_PREFILL_SET.has(field) || editedFields.has(field) || value === "") {
       continue;
     }
-    next[field] = String(value);
+    next[field] = ["registration_date", "registration_valid_upto"].includes(field)
+      ? normalizeOcrDate(String(value))
+      : String(value);
   }
   next.customer_id = current.customer_id;
   return next;

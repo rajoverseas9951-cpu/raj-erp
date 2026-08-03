@@ -6,7 +6,11 @@ import { BRAND } from "@/config/brand";
 import { useRouter } from "next/navigation";
 import { Customer, customerApi } from "@/lib/customers";
 import { scanDocument } from "@/lib/ocr";
-import { applyOcrPrefill, findMatchingMasterId } from "@/lib/rc-ocr";
+import {
+  applyOcrPrefill,
+  findMatchingMasterId,
+  resolveOcrMasterIds,
+} from "@/lib/rc-ocr";
 import { Vehicle, vehicleApi } from "@/lib/vehicles";
 import {
   VehicleMaster,
@@ -318,6 +322,34 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
     savedModelName.current = "";
   }, [values.manufacturer_id]);
   useEffect(() => {
+    setValues((current) => {
+      const resolved = resolveOcrMasterIds(
+        current,
+        masters,
+        editedFields.current,
+      );
+      const resolvedIds = Object.fromEntries(
+        Object.entries(resolved).filter(
+          ([field, value]) =>
+            field.endsWith("_id") && value && value !== current[field],
+        ),
+      );
+      if (Object.keys(resolvedIds).length === 0) return current;
+      console.info("rc_ocr_master_ids_resolved", resolvedIds);
+      return resolved;
+    });
+  }, [
+    masters.rto_offices,
+    masters.vehicle_types,
+    masters.vehicle_classes,
+    masters.body_types,
+    masters.manufacturers,
+    masters.models,
+    masters.variants,
+    masters.colours,
+    masters.fuel_types,
+  ]);
+  useEffect(() => {
     const close = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !masterSaving) setMasterModal(undefined);
     };
@@ -382,30 +414,21 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
       ) as Record<NonModelMaster, VehicleMaster[]>;
       setMasters((current) => ({ ...current, ...loaded }));
       setValues((current) => {
-        const match = (type: NonModelMaster, name: string) =>
-          findMatchingMasterId(name, loaded[type], type);
-        const manufacturerId =
-          savedManufacturerId.current ||
-          current.manufacturer_id ||
-          match("manufacturers", current.manufacturer);
+        const manufacturerId = savedManufacturerId.current;
         savedManufacturerId.current = "";
-        return {
+        const withSavedManufacturer = {
           ...current,
-          manufacturer_id: manufacturerId,
-          model_id: current.model_id,
-          variant_id: current.variant_id || match("variants", current.variant),
-          vehicle_type_id: current.vehicle_type_id || match("vehicle_types", current.vehicle_type),
-          rto_office_id: current.rto_office_id || match("rto_offices", current.registration_authority),
-          colour_id: current.colour_id || match("colours", current.colour),
-          vehicle_class_id:
-            current.vehicle_class_id ||
-            match("vehicle_classes", current.vehicle_class),
-          vehicle_category_id:
-            current.vehicle_category_id ||
-            match("body_types", current.vehicle_category),
-          fuel_type_id:
-            current.fuel_type_id || match("fuel_types", current.fuel_type),
+          manufacturer_id:
+            current.manufacturer_id ||
+            (editedFields.current.has("manufacturer_id")
+              ? ""
+              : manufacturerId),
         };
+        return resolveOcrMasterIds(
+          withSavedManufacturer,
+          loaded,
+          editedFields.current,
+        );
       });
     } catch (e) {
       if (e instanceof AuthenticationRedirectError) return;
@@ -525,33 +548,32 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
           ) === i,
       );
       const result = await scanDocument("rc", unique);
-      const extracted = { ...result.fields };
-      const bindings: Array<[
-        VehicleMasterType,
-        string,
-        string,
-      ]> = [
-        ["rto_offices", "registration_authority", "rto_office_id"],
-        ["vehicle_types", "vehicle_type", "vehicle_type_id"],
-        ["vehicle_classes", "vehicle_class", "vehicle_class_id"],
-        ["body_types", "vehicle_category", "vehicle_category_id"],
-        ["manufacturers", "manufacturer", "manufacturer_id"],
-        ["colours", "colour", "colour_id"],
-        ["fuel_types", "fuel_type", "fuel_type_id"],
-      ];
-      for (const [type, nameField, idField] of bindings) {
-        if (!extracted[idField] && extracted[nameField]) {
-          extracted[idField] = findMatchingMasterId(
-            extracted[nameField],
-            masters[type],
-            type,
-          );
-        }
-      }
+      const extracted = resolveOcrMasterIds(
+        { ...result.fields },
+        masters,
+        editedFields.current,
+      );
+      console.info("rc_ocr_response", {
+        fields: extracted,
+        field_confidence: result.field_confidence ?? {},
+        resolved_master_ids: Object.fromEntries(
+          Object.entries(extracted).filter(
+            ([field, value]) => field.endsWith("_id") && value,
+          ),
+        ),
+      });
       setProgress(100);
       savedModelId.current = extracted.model_id ?? "";
       savedModelName.current = extracted.model ?? "";
-      setValues((old) => applyOcrPrefill(old, extracted, editedFields.current));
+      setValues((old) => {
+        const next = applyOcrPrefill(old, extracted, editedFields.current);
+        console.info("rc_ocr_prefill_applied", {
+          fields: Object.fromEntries(
+            Object.keys(extracted).map((field) => [field, next[field] ?? ""]),
+          ),
+        });
+        return next;
+      });
       setOwnerSuggestion(extracted.owner_name ?? "");
       setOcrConfidence(
         Object.fromEntries(

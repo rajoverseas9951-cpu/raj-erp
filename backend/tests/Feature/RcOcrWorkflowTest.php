@@ -177,6 +177,8 @@ class RcOcrWorkflowTest extends TestCase
             ->assertJsonPath('data.fields.manufacturing_year', '2016')
             ->assertJsonPath('data.fields.financier', 'L AND T FINANCE LTD')
             ->assertJsonPath('data.fields.registration_authority', 'PALANPUR')
+            ->assertJsonPath('data.fields.district', 'PALANPUR')
+            ->assertJsonPath('data.fields.state', 'Gujarat')
             ->assertJsonMissingPath('data.fields.variant')
             ->assertJsonMissingPath('data.fields.wheel_base')
             ->assertJsonMissingPath('data.fields.horse_power')
