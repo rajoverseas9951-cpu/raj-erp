@@ -251,3 +251,68 @@ def test_commercial_rc_returns_unladen_and_gross_weight_independently() -> None:
     assert fields["unladen_weight"] == "1780"
     assert fields["gross_vehicle_weight"] == "3490"
     assert fields["unladen_weight"] != fields["gross_vehicle_weight"]
+
+
+def test_old_gujarat_form_23a_api_is_stable_across_repeated_scans() -> None:
+    def boxed(text: str, left: int, top: int, width: int = 190) -> OCRLine:
+        return OCRLine(
+            text=text,
+            confidence=0.95,
+            source="combined",
+            bounding_box=[
+                [left, top],
+                [left + width, top],
+                [left + width, top + 30],
+                [left, top + 30],
+            ],
+        )
+
+    class OldGujaratEngine:
+        def recognize(self, image, source: str) -> list[OCRLine]:
+            return [
+                boxed("Reg. No.", 40, 40),
+                boxed("Date of Reg.", 300, 40),
+                boxed("Reg. Validity", 560, 40),
+                boxed("31/12/2031", 560, 90),
+                boxed("GJ24AA2794", 40, 90),
+                boxed("24/05/2016", 300, 90),
+                boxed("Seating Capacity", 40, 300),
+                boxed("Cylinder No", 40, 420),
+                boxed("03", 40, 465, 100),
+                boxed("005", 40, 345, 100),
+                boxed("Cubic Capacity", 300, 300),
+                boxed("000796", 300, 345, 130),
+                boxed("Month & Yr of Mfg", 40, 525, 240),
+                boxed("MARCH 2016", 40, 570),
+                boxed("Body Type: SALOON SALOON", 560, 245, 280),
+                boxed("Fuel: PETROL / CNG", 300, 245, 230),
+            ]
+
+    app = create_app(Settings(), engine_factory=lambda settings: OldGujaratEngine())
+    image = png_bytes()
+    with TestClient(app) as client:
+        first = client.post(
+            "/v1/ocr/rc",
+            files={"combined": ("old-gujarat.png", image, "image/png")},
+        ).json()
+        second = client.post(
+            "/v1/ocr/rc",
+            files={"combined": ("old-gujarat-repeat.png", image, "image/png")},
+        ).json()
+
+    expected = {
+        "vehicle_number": "GJ24AA2794",
+        "registration_date": "24/05/2016",
+        "manufacturing_month_year": "MARCH 2016",
+        "manufacturing_year": "2016",
+        "seating_capacity": "5",
+        "number_of_cylinders": "3",
+        "cubic_capacity": "796",
+        "body_type": "SALOON",
+        "fuel_type": "PETROL/CNG",
+    }
+    for field, value in expected.items():
+        assert first["fields"][field] == value
+    assert first["fields"] == second["fields"]
+    assert first["fields"]["seating_capacity"] != "3"
+    assert first["fields"]["number_of_cylinders"] != "5"

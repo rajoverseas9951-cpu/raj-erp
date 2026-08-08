@@ -193,6 +193,59 @@ test("backend-created OCR masters merge into options and select immediately", ()
   }
 });
 
+test("old Gujarat smart-card values remain distinct and select canonical masters", () => {
+  const values = applyOcrPrefill(
+    { customer_id: "customer-id" },
+    {
+      vehicle_number: "GJ24AA2794",
+      registration_date: "2016-05-24",
+      vehicle_type: "private_car",
+      vehicle_class: "MOTOR CAR",
+      manufacturer: "MARUTI SUZUKI INDIA LTD",
+      model: "ALTO 800 LXI",
+      vehicle_category: "SALOON",
+      fuel_type: "PETROL/CNG",
+      seating_capacity: "5",
+      cubic_capacity: "796",
+      number_of_cylinders: "3",
+      manufacturing_year: "2016",
+    },
+    new Set(),
+  );
+  const masters = {
+    vehicle_types: [{ id: "private-id", name: "PRIVATE CAR" }],
+    vehicle_classes: [{ id: "motor-car-id", name: "MOTOR CAR" }],
+    manufacturers: [{ id: "maruti-id", name: "MARUTI SUZUKI" }],
+    models: [{ id: "alto-id", name: "ALTO 800 LXI", parent_id: "maruti-id" }],
+    body_types: [{ id: "saloon-id", name: "SALOON" }],
+    fuel_types: [{ id: "petrol-cng-id", name: "PETROL+CNG" }],
+  };
+  const resolved = resolveOcrMasterIds(values, masters);
+
+  assert.equal(resolved.seating_capacity, "5");
+  assert.equal(resolved.number_of_cylinders, "3");
+  assert.equal(resolved.cubic_capacity, "796");
+  assert.notEqual(resolved.seating_capacity, "3");
+  assert.notEqual(resolved.number_of_cylinders, "5");
+  assert.equal(resolved.vehicle_type_id, "private-id");
+  assert.equal(resolved.manufacturer_id, "maruti-id");
+  assert.equal(resolved.model_id, "alto-id");
+  assert.equal(resolved.vehicle_category_id, "saloon-id");
+  assert.equal(resolved.fuel_type_id, "petrol-cng-id");
+  assert.equal(
+    findMatchingMasterId(
+      "MARUTI SUZUKIINDIA LTD",
+      masters.manufacturers,
+      "manufacturers",
+    ),
+    "maruti-id",
+  );
+  assert.equal(
+    findMatchingMasterId("ALTO 800LXI", masters.models, "models"),
+    "alto-id",
+  );
+});
+
 test("the Gujarat motorcycle values drive visible form inputs and selects", async () => {
   const expected = {
     vehicle_number: "GJ08DH9235",

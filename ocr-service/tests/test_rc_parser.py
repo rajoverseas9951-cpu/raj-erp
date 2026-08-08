@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from app.rc_parser import merge_ocr_lines, normalize_vehicle_number, parse_rc
 from app.schemas import OCRLine
 
@@ -271,3 +273,106 @@ def test_tractor_labels_do_not_leak_model_or_fuel_text_into_numeric_fields() -> 
     assert parsed.fields.cubic_capacity is None
     assert parsed.fields.unladen_weight is None
     assert parsed.fields.gross_vehicle_weight is None
+
+
+def test_old_gujarat_form_23a_geometry_keeps_columns_and_numeric_fields_separate() -> None:
+    lines = [
+        boxed_line("Reg. No.", 40, 40, 170, source="front"),
+        boxed_line("Date of Reg.", 300, 40, 170, source="front"),
+        boxed_line("Reg. Validity", 560, 40, 180, source="front"),
+        # PaddleOCR order is deliberately different from visual column order.
+        boxed_line("31/12/2031", 560, 90, 180, source="front"),
+        boxed_line("GJ24AA2794", 40, 90, 170, source="front"),
+        boxed_line("24/05/2016", 300, 90, 170, source="front"),
+        boxed_line("Owner Name: KIRANGIRI", 40, 160, 300, source="front"),
+        boxed_line("Vehicle Class: MOTOR CAR", 40, 215, 330, source="front"),
+        boxed_line("Fuel Used: PETROL-CNG", 40, 270, 300, source="front"),
+        boxed_line("Chassis No: MA3EUA61S00868624", 40, 325, 390, source="front"),
+        boxed_line("Engine No: F8DN5635307", 40, 380, 340, source="front"),
+        boxed_line("Maker's Name", 300, 40, 220, source="back"),
+        boxed_line("MARUTI SUZUKIINDIA LTD", 300, 85, 300, source="back"),
+        boxed_line("Model Name", 300, 145, 200, source="back"),
+        boxed_line("ALTO 800LXI", 300, 190, 220, source="back"),
+        boxed_line("Colour: SILVER", 300, 245, 220, source="back"),
+        boxed_line("Body Type: SALOON SALOON", 560, 245, 280, source="back"),
+        boxed_line("Seating Capacity", 40, 300, 200, source="back"),
+        boxed_line("Cylinder No.", 40, 420, 200, source="back"),
+        boxed_line("03", 40, 465, 100, source="back"),
+        boxed_line("005", 40, 345, 100, source="back"),
+        boxed_line("Cubic Capacity", 300, 300, 220, source="back"),
+        boxed_line("000796", 300, 345, 130, source="back"),
+        boxed_line("Month & Yr. of Mfg.", 40, 525, 250, source="back"),
+        boxed_line("MARCH 2016", 40, 570, 200, source="back"),
+        boxed_line("Registration Authority", 560, 525, 260, source="back"),
+        boxed_line("PATAN", 560, 570, 150, source="back"),
+    ]
+
+    parsed = parse_rc(lines)
+
+    assert parsed.fields.vehicle_number == "GJ24AA2794"
+    assert parsed.fields.registration_date == "24/05/2016"
+    assert parsed.fields.vehicle_class == "MOTOR CAR"
+    assert parsed.fields.owner_name == "KIRANGIRI"
+    assert parsed.fields.fuel_type == "PETROL/CNG"
+    assert parsed.fields.manufacturer == "MARUTI SUZUKI INDIA LTD"
+    assert parsed.fields.model == "ALTO 800 LXI"
+    assert parsed.fields.colour == "SILVER"
+    assert parsed.fields.body_type == "SALOON"
+    assert parsed.fields.seating_capacity == "5"
+    assert parsed.fields.cubic_capacity == "796"
+    assert parsed.fields.number_of_cylinders == "3"
+    assert parsed.fields.manufacturing_month_year == "MARCH 2016"
+    assert parsed.fields.manufacturing_year == "2016"
+    assert parsed.fields.registration_authority == "PATAN"
+    assert parsed.fields.chassis_number == "MA3EUA61S00868624"
+    assert parsed.fields.engine_number == "F8DN5635307"
+    assert parsed.fields.seating_capacity != "3"
+    assert parsed.fields.number_of_cylinders != "5"
+
+
+@pytest.mark.parametrize(
+    "label",
+    [
+        "Date of Reg.",
+        "Date of Reg",
+        "Date of Registration",
+        "Reg. Date",
+        "Regn. Date",
+    ],
+)
+def test_old_registration_date_label_variants(label: str) -> None:
+    assert parse_rc([line(f"{label}: 24/05/2016")]).fields.registration_date == "24/05/2016"
+
+
+@pytest.mark.parametrize(
+    ("label", "value", "expected_month_year"),
+    [
+        ("Month & Yr. of Mfg.", "March 2016", "MARCH 2016"),
+        ("Month & Yr of Mfg", "MAR 2016", "MAR 2016"),
+        ("Month & Year of Mfg", "03/2016", "03/2016"),
+        ("Month-Year of Mfg", "03-2016", "03-2016"),
+        ("Mfg. Month & Year", "March 2016", "MARCH 2016"),
+        ("Month / Year of Manufacture", "MAR 2016", "MAR 2016"),
+    ],
+)
+def test_old_manufacturing_label_and_value_variants(
+    label: str, value: str, expected_month_year: str
+) -> None:
+    fields = parse_rc([line(f"{label}: {value}")]).fields
+    assert fields.manufacturing_month_year == expected_month_year
+    assert fields.manufacturing_year == "2016"
+
+
+@pytest.mark.parametrize(
+    "label",
+    [
+        "Cylinder No",
+        "Cylinder No.",
+        "Cylinders No",
+        "No. of Cylinders",
+        "No of Cylinders",
+        "Number of Cylinders",
+    ],
+)
+def test_cylinder_label_variants_strip_leading_zeroes(label: str) -> None:
+    assert parse_rc([line(f"{label}: 03")]).fields.number_of_cylinders == "3"

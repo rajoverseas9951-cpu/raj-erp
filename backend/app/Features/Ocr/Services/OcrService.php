@@ -181,6 +181,16 @@ class OcrService
         if (isset($fields['model'])) {
             $fields['model'] = $this->normaliseModel($fields['model']);
         }
+        if (isset($fields['manufacturer'])) {
+            $fields['manufacturer'] = (string) preg_replace(
+                '/\bSUZUKIINDIA\b/i',
+                'SUZUKI INDIA',
+                $fields['manufacturer']
+            );
+        }
+        if (isset($fields['body_type'])) {
+            $fields['body_type'] = $this->collapseRepeatedAdjacentPhrase($fields['body_type']);
+        }
         if (isset($fields['body_type'])) {
             $fields['vehicle_category'] = $fields['body_type'];
             unset($fields['body_type']);
@@ -279,6 +289,7 @@ class OcrService
     {
         $value = (string) preg_replace('/\s*\([^()]{1,30}\)\s*$/', '', $value);
         $value = str_replace('+', ' PLUS ', $value);
+        $value = (string) preg_replace('/(?<=\d)(?=[A-Z]{2,}\b)/i', ' ', $value);
 
         return strtoupper($this->clean($value));
     }
@@ -297,7 +308,31 @@ class OcrService
             default => false,
         };
 
-        return $valid ? $match[1] : null;
+        if (! $valid) {
+            return null;
+        }
+        if (str_contains($match[1], '.')) {
+            [$integer, $fraction] = explode('.', $match[1], 2);
+
+            return ((string) ((int) $integer)).'.'.$fraction;
+        }
+
+        return (string) ((int) $match[1]);
+    }
+
+    private function collapseRepeatedAdjacentPhrase(string $value): string
+    {
+        $tokens = preg_split('/\s+/', trim($value)) ?: [];
+        if (count($tokens) > 0 && count($tokens) % 2 === 0) {
+            $midpoint = intdiv(count($tokens), 2);
+            $first = array_slice($tokens, 0, $midpoint);
+            $second = array_slice($tokens, $midpoint);
+            if (array_map('strtoupper', $first) === array_map('strtoupper', $second)) {
+                return implode(' ', $first);
+            }
+        }
+
+        return $value;
     }
 
     /**

@@ -139,6 +139,7 @@ class VehicleMasterResolver
         $upper = str_replace('GRAY', 'GREY', $upper);
 
         if ($type === 'manufacturers') {
+            $upper = (string) preg_replace('/(?<=[A-Z])INDIA\b/', ' INDIA', $upper);
             $upper = (string) preg_replace(
                 '/\b(?:PRIVATE|PVT)\s+LIMITED\b|\bPVT\.?\s+LTD\.?\b|\bLIMITED\b|\bLTD\.?\b|\bINDIA\b/',
                 ' ',

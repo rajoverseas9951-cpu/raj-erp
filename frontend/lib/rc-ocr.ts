@@ -49,6 +49,7 @@ function normalizedMasterText(value: string, type: OcrMasterKind): string {
   let normalized = value.toUpperCase().replaceAll("GRAY", "GREY");
   normalized = normalized.replaceAll("+", type === "models" ? " PLUS " : " ");
   if (type === "manufacturers") {
+    normalized = normalized.replace(/(?<=[A-Z])INDIA\b/g, " INDIA");
     normalized = normalized.replace(
       /\b(?:PRIVATE|PVT)\s+LIMITED\b|\bPVT\.?\s+LTD\.?\b|\bLIMITED\b|\bLTD\.?\b|\bINDIA\b/g,
       " ",

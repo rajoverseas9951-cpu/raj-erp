@@ -39,6 +39,18 @@ class VehicleMasterResolverTest extends TestCase
             $resolver->matchingName('vehicle_types', 'TRACTOR'),
             $resolver->matchingName('vehicle_types', 'AGRICULTURAL TRACTOR')
         );
+        $this->assertSame(
+            $resolver->matchingName('manufacturers', 'MARUTI SUZUKI INDIA LTD'),
+            $resolver->matchingName('manufacturers', 'MARUTI SUZUKIINDIA LTD')
+        );
+        $this->assertSame(
+            $resolver->matchingName('models', 'ALTO 800 LXI'),
+            $resolver->matchingName('models', 'ALTO 800LXI')
+        );
+        $this->assertSame(
+            $resolver->matchingName('fuel_types', 'PETROL/CNG'),
+            $resolver->matchingName('fuel_types', 'PETROL-CNG')
+        );
     }
 
     public function test_normalized_keys_are_tenant_and_parent_scoped(): void

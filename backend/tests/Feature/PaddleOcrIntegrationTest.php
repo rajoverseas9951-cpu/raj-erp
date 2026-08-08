@@ -269,4 +269,67 @@ class PaddleOcrIntegrationTest extends TestCase
         $this->assertArrayNotHasKey('vehicle_type', $result['fields']);
         $this->assertArrayNotHasKey('fuel_type', $result['fields']);
     }
+
+    public function test_old_gujarat_smart_card_values_are_normalized_without_cross_field_contamination(): void
+    {
+        $fields = [
+            'vehicle_number' => 'GJ24AA2794',
+            'registration_date' => '24/05/2016',
+            'vehicle_class' => 'MOTOR CAR',
+            'owner_name' => 'KIRANGIRI',
+            'fuel_type' => 'PETROL-CNG',
+            'manufacturer' => 'MARUTI SUZUKIINDIA LTD',
+            'model' => 'ALTO 800LXI',
+            'colour' => 'SILVER',
+            'body_type' => 'SALOON SALOON',
+            'seating_capacity' => '005',
+            'cubic_capacity' => '000796',
+            'number_of_cylinders' => '03',
+            'manufacturing_month_year' => 'MARCH 2016',
+            'manufacturing_year' => '2016',
+            'registration_authority' => 'PATAN',
+            'chassis_number' => 'MA3EUA61S00868624',
+            'engine_number' => 'F8DN5635307',
+        ];
+        Http::fake([
+            'http://ocr.internal/v1/ocr/rc' => Http::response([
+                'success' => true,
+                'fields' => $fields,
+                'field_confidence' => array_fill_keys(array_keys($fields), 0.95),
+                'raw_text' => '',
+                'ocr_lines' => [],
+                'overall_confidence' => 0.95,
+                'warnings' => [],
+            ]),
+        ]);
+
+        $result = (new OcrService)->scan([
+            UploadedFile::fake()->create('gj24aa2794.jpg', 100, 'image/jpeg'),
+        ], 'rc');
+
+        $expected = [
+            'vehicle_number' => 'GJ24AA2794',
+            'registration_date' => '2016-05-24',
+            'vehicle_class' => 'MOTOR CAR',
+            'vehicle_type' => 'private_car',
+            'owner_name' => 'KIRANGIRI',
+            'fuel_type' => 'PETROL/CNG',
+            'manufacturer' => 'MARUTI SUZUKI INDIA LTD',
+            'model' => 'ALTO 800 LXI',
+            'colour' => 'SILVER',
+            'vehicle_category' => 'SALOON',
+            'seating_capacity' => '5',
+            'cubic_capacity' => '796',
+            'number_of_cylinders' => '3',
+            'manufacturing_year' => '2016',
+            'registration_authority' => 'PATAN',
+            'chassis_number' => 'MA3EUA61S00868624',
+            'engine_number' => 'F8DN5635307',
+        ];
+        foreach ($expected as $field => $value) {
+            $this->assertSame($value, $result['fields'][$field] ?? null, $field);
+        }
+        $this->assertNotSame('3', $result['fields']['seating_capacity']);
+        $this->assertNotSame('5', $result['fields']['number_of_cylinders']);
+    }
 }

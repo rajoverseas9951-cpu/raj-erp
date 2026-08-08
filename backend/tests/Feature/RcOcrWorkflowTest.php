@@ -294,6 +294,81 @@ class RcOcrWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_old_gujarat_smart_card_resolves_existing_masters_without_duplicates(): void
+    {
+        $user = User::factory()->create(['is_admin' => true]);
+        $this->seed(VehicleMasterSeeder::class);
+        $canonical = app(VehicleMasterResolver::class)->resolveOcrFields(
+            [
+                'manufacturer' => 'MARUTI SUZUKI INDIA LTD',
+                'model' => 'ALTO 800 LXI',
+            ],
+            (string) $user->tenant_id,
+            (string) $user->id,
+            ['manufacturer' => 0.99, 'model' => 0.99],
+        );
+        Http::fake([
+            'http://ocr.internal/v1/ocr/rc' => Http::sequence()
+                ->push($this->oldGujaratPayload())
+                ->push($this->oldGujaratPayload()),
+        ]);
+        config(['services.paddleocr.url' => 'http://ocr.internal']);
+
+        $first = $this->actingAs($user)->post('/api/v1/ocr', [
+            'document_type' => 'rc',
+            'images' => [UploadedFile::fake()->create('gj24aa2794.jpg', 100, 'image/jpeg')],
+        ])->assertOk();
+
+        $expected = [
+            'vehicle_number' => 'GJ24AA2794',
+            'registration_date' => '2016-05-24',
+            'vehicle_class' => 'MOTOR CAR',
+            'vehicle_type' => 'private_car',
+            'owner_name' => 'KIRANGIRI',
+            'fuel_type' => 'PETROL/CNG',
+            'manufacturer' => 'MARUTI SUZUKI INDIA LTD',
+            'model' => 'ALTO 800 LXI',
+            'colour' => 'SILVER',
+            'vehicle_category' => 'SALOON',
+            'seating_capacity' => '5',
+            'cubic_capacity' => '796',
+            'number_of_cylinders' => '3',
+            'manufacturing_year' => '2016',
+            'registration_authority' => 'PATAN',
+            'chassis_number' => 'MA3EUA61S00868624',
+            'engine_number' => 'F8DN5635307',
+        ];
+        foreach ($expected as $field => $value) {
+            $this->assertSame($value, $first->json("data.fields.{$field}"), $field);
+        }
+        $this->assertSame(
+            $canonical['fields']['manufacturer_id'],
+            $first->json('data.fields.manufacturer_id')
+        );
+        $this->assertSame(
+            $canonical['fields']['model_id'],
+            $first->json('data.fields.model_id')
+        );
+        $fuel = DB::table('vehicle_masters')
+            ->where('id', $first->json('data.fields.fuel_type_id'))
+            ->first();
+        $this->assertSame('PETROL+CNG', $fuel->name);
+
+        $countAfterFirst = DB::table('vehicle_masters')
+            ->where('tenant_id', $user->tenant_id)
+            ->count();
+        $second = $this->actingAs($user)->post('/api/v1/ocr', [
+            'document_type' => 'rc',
+            'images' => [UploadedFile::fake()->create('gj24aa2794-repeat.jpg', 100, 'image/jpeg')],
+        ])->assertOk();
+
+        $this->assertSame($first->json('data.fields'), $second->json('data.fields'));
+        $this->assertSame(
+            $countAfterFirst,
+            DB::table('vehicle_masters')->where('tenant_id', $user->tenant_id)->count()
+        );
+    }
+
     public function test_commercial_weight_aliases_validate_and_legacy_fields_remain_compatible(): void
     {
         $user = User::factory()->create(['is_admin' => true]);
@@ -445,6 +520,42 @@ class RcOcrWorkflowTest extends TestCase
             'overall_confidence' => 0.94,
             'warnings' => [],
             'processing_ms' => 280,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function oldGujaratPayload(): array
+    {
+        $fields = [
+            'vehicle_number' => 'GJ24AA2794',
+            'registration_date' => '24/05/2016',
+            'vehicle_class' => 'MOTOR CAR',
+            'owner_name' => 'KIRANGIRI',
+            'fuel_type' => 'PETROL / CNG',
+            'manufacturer' => 'MARUTI SUZUKIINDIA LTD',
+            'model' => 'ALTO 800LXI',
+            'colour' => 'SILVER',
+            'body_type' => 'SALOON SALOON',
+            'seating_capacity' => '005',
+            'cubic_capacity' => '000796',
+            'number_of_cylinders' => '03',
+            'manufacturing_month_year' => 'MARCH 2016',
+            'manufacturing_year' => '2016',
+            'registration_authority' => 'PATAN',
+            'chassis_number' => 'MA3EUA61S00868624',
+            'engine_number' => 'F8DN5635307',
+        ];
+
+        return [
+            'success' => true,
+            'document_type' => 'vehicle_rc',
+            'fields' => $fields,
+            'field_confidence' => array_fill_keys(array_keys($fields), 0.95),
+            'raw_text' => 'Old Gujarat RC OCR text intentionally omitted from logs.',
+            'ocr_lines' => [],
+            'overall_confidence' => 0.95,
+            'warnings' => [],
+            'processing_ms' => 240,
         ];
     }
 }

@@ -30,7 +30,7 @@ def _label(pattern: str) -> re.Pattern[str]:
 FIELD_RULES: tuple[FieldRule, ...] = (
     FieldRule(
         "vehicle_number",
-        _label(r"\b(?:REGN|REGISTRATION)[.\s]*(?:NO\.?|NUMBER)\b"),
+        _label(r"\b(?:REGN|REGISTRATION|REG\.?)[.\s]*(?:NO\.?|NUMBER)\b"),
         "vehicle_number",
     ),
     FieldRule(
@@ -78,10 +78,10 @@ FIELD_RULES: tuple[FieldRule, ...] = (
     FieldRule(
         "manufacturer",
         _label(r"\b(?:MAKER(?:'?S)?(?:\s+NAME)?|MANUFACTURER)\b"),
-        "text",
+        "manufacturer",
     ),
-    FieldRule("model", _label(r"\bMODEL(?:\s+NAME)?\b"), "text"),
-    FieldRule("body_type", _label(r"\bBODY\s*TYPE\b"), "text"),
+    FieldRule("model", _label(r"\bMODEL(?:\s+NAME)?\b"), "model"),
+    FieldRule("body_type", _label(r"\bBODY\s*TYPE\b"), "body_type"),
     FieldRule(
         "vehicle_class",
         _label(r"\b(?:VEHICLE\s+CLASS|CLASS\s+OF\s+VEHICLE|CLASS)\b"),
@@ -101,8 +101,12 @@ FIELD_RULES: tuple[FieldRule, ...] = (
     FieldRule(
         "manufacturing_month_year",
         _label(
-            r"\b(?:MFG|MFD|MANUFACTURING|MONTH\s*[-&/]?\s*YEAR\s+OF\s+MFG)"
-            r"\s*(?:DATE|DT\.?|MONTH\s*/?\s*YEAR)?\b"
+            r"\b(?:"
+            r"MFG|MFD|MANUFACTURING|"
+            r"MONTH\s*(?:[-/&]|AND)?\s*(?:YR\.?|YEAR)\s+OF\s+MFG\.?|"
+            r"MFG\.?\s+MONTH\s*(?:[-/&]|AND)?\s*(?:YR\.?|YEAR)|"
+            r"MONTH\s*/\s*YEAR\s+OF\s+MANUFACTURE"
+            r")\s*(?:DATE|DT\.?|MONTH\s*/?\s*YEAR)?\b"
         ),
         "month_year",
     ),
@@ -128,7 +132,10 @@ FIELD_RULES: tuple[FieldRule, ...] = (
     ),
     FieldRule(
         "number_of_cylinders",
-        _label(r"\b(?:NO\.?\s*OF\s+CYLINDERS?|NUMBER\s+OF\s+CYLINDERS?)\b"),
+        _label(
+            r"\b(?:NO\.?\s*OF\s+CYLINDERS?|NUMBER\s+OF\s+CYLINDERS?)\b|"
+            r"\bCYLINDERS?\s+NO\b\.?"
+        ),
         "cylinders",
     ),
     FieldRule(
@@ -322,18 +329,56 @@ def _spatial_value_candidate(
         vertical_gap = max(0, top - label_bottom)
         if vertical_gap > max(260, label_height * 9):
             continue
-        horizontal_gap = abs(left - label_left)
-        overlaps = min(label_right, right) - max(label_left, left) > 0
+        overlap_width = max(0, min(label_right, right) - max(label_left, left))
+        overlaps = overlap_width > 0
+        horizontal_gap = abs((left + right) / 2 - (label_left + label_right) / 2)
         if not overlaps and horizontal_gap > max(360, label_width * 3):
             continue
+        if top >= label_bottom and _has_intervening_column_label(
+            label_index, top, label_box, lines
+        ):
+            continue
         same_row_penalty = 0 if top >= label_bottom - label_height // 2 else 120
-        ranked.append((vertical_gap * 4 + horizontal_gap + same_row_penalty, candidate))
+        overlap_penalty = 0 if overlaps else 500
+        ranked.append(
+            (
+                vertical_gap * 4
+                + horizontal_gap
+                + same_row_penalty
+                + overlap_penalty,
+                candidate,
+            )
+        )
 
     for _, candidate in sorted(ranked, key=lambda item: item[0]):
         value = _normalise_value(candidate.text, rule.value_type)
         if value:
             return (value, (label_line.confidence + candidate.confidence) / 2)
     return None
+
+
+def _has_intervening_column_label(
+    label_index: int,
+    candidate_top: int,
+    label_box: tuple[int, int, int, int],
+    lines: Sequence[OCRLine],
+) -> bool:
+    label_line = lines[label_index]
+    label_left, _, label_right, label_bottom = label_box
+    for index, line in enumerate(lines):
+        if index == label_index or line.source != label_line.source:
+            continue
+        if not _contains_label(line.text):
+            continue
+        box = _box_bounds(line)
+        if not box:
+            continue
+        left, top, right, _ = box
+        if not label_bottom < top < candidate_top:
+            continue
+        if min(label_right, right) - max(label_left, left) > 0:
+            return True
+    return False
 
 
 def _box_bounds(line: OCRLine) -> tuple[int, int, int, int] | None:
@@ -519,6 +564,12 @@ def _normalise_value(value: str, value_type: str) -> str | None:
             if re.search(pattern, upper):
                 return fuel
         return None
+    if value_type == "manufacturer":
+        return re.sub(r"\bSUZUKIINDIA\b", "SUZUKI INDIA", cleaned, flags=re.IGNORECASE)
+    if value_type == "model":
+        return re.sub(r"(?<=\d)(?=[A-Z]{2,}\b)", " ", cleaned, flags=re.IGNORECASE)
+    if value_type == "body_type":
+        return _collapse_repeated_adjacent_phrase(cleaned)
     if value_type in {"chassis", "engine"}:
         compact = re.sub(r"[^A-Z0-9]", "", cleaned.upper())
         minimum = 8 if value_type == "chassis" else 5
@@ -526,8 +577,17 @@ def _normalise_value(value: str, value_type: str) -> str | None:
             return compact
         return None
     if value_type == "seats":
-        match = re.search(r"\b\d{1,2}\b", cleaned)
-        return match.group(0) if match else None
+        match = re.fullmatch(
+            r"\s*(?:\(\s*IN\s+ALL\s*\)\s*)?(?:CAPACITY|CAP\.?)?\s*:?[\s]*"
+            r"(\d{1,3})\s*(?:(?:SEATS?|PERSONS?|PASSENGERS?)|"
+            r"\(\s*IN\s+ALL\s*\))?\s*",
+            cleaned,
+            re.IGNORECASE,
+        )
+        if not match:
+            return None
+        numeric = int(match.group(1))
+        return str(numeric) if 1 <= numeric <= 100 else None
     if value_type in {"capacity", "weight", "cylinders"}:
         match = re.fullmatch(
             r"\s*(?:\(\s*(?:CC|KG|KGS)\s*\)\s*)?"
@@ -549,6 +609,11 @@ def _normalise_value(value: str, value_type: str) -> str | None:
             return None
         if value_type == "cylinders":
             return str(int(numeric))
+        if "." not in number:
+            number = str(int(number))
+        else:
+            integer, fraction = number.split(".", 1)
+            number = f"{int(integer)}.{fraction}"
         suffix = re.sub(r"\s+", " ", match.group(2).upper()).strip()
         return f"{number} {suffix}".strip()
     if value_type == "number":
@@ -564,6 +629,17 @@ def _normalise_value(value: str, value_type: str) -> str | None:
     ):
         return None
     return cleaned
+
+
+def _collapse_repeated_adjacent_phrase(value: str) -> str:
+    tokens = value.split()
+    if len(tokens) % 2 == 0:
+        midpoint = len(tokens) // 2
+        if [token.upper() for token in tokens[:midpoint]] == [
+            token.upper() for token in tokens[midpoint:]
+        ]:
+            return " ".join(tokens[:midpoint])
+    return value
 
 
 def _deduplicate(values: Iterable[str]) -> list[str]:
