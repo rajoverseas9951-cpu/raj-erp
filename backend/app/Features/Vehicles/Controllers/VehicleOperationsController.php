@@ -15,13 +15,13 @@ class VehicleOperationsController
     private const TABLES = [
         'puc' => 'vehicle_pucs', 'fitness' => 'vehicle_fitnesses', 'permit' => 'vehicle_permits', 'tax' => 'vehicle_taxes',
         'counter_tax' => 'vehicle_counter_taxes', 'hsrp' => 'vehicle_hsrp_records', 'sld' => 'vehicle_sld_records',
-        'rto_process' => 'vehicle_rto_processes', 'transfer' => 'vehicle_transfer_processes', 'payment' => 'vehicle_payments',
+        'vltd' => 'vehicle_vltd_records', 'rto_process' => 'vehicle_rto_processes', 'transfer' => 'vehicle_transfer_processes', 'payment' => 'vehicle_payments',
         'agent_payment' => 'vehicle_agent_payments', 'other_payment' => 'vehicle_other_payments',
     ];
 
     private const FINANCIAL = ['payment', 'agent_payment', 'other_payment'];
 
-    private const EXPIRY_MODULES = ['puc', 'fitness', 'permit', 'tax', 'counter_tax', 'sld'];
+    private const EXPIRY_MODULES = ['puc', 'fitness', 'permit', 'tax', 'counter_tax', 'sld', 'vltd'];
 
     public function profile(Request $request, string $vehicle, VehicleModuleApplicabilityService $applicability)
     {
@@ -115,7 +115,8 @@ class VehicleOperationsController
             $query->update(array_merge($data, ['updated_by' => $request->user()?->id, 'updated_at' => now()]));
             if ($module === 'transfer' && ($data['status'] ?? null) === 'COMPLETED' && ($data['owner_change_confirmed'] ?? false) && ! empty($data['new_customer_id'])) {
                 $model->update(['customer_id' => $data['new_customer_id'], 'updated_by' => $request->user()?->id]);
-            } $this->timeline($model, $request, 'vehicle.'.$module.'.updated', Str::headline($module).' updated', $record);
+            }
+            $this->timeline($model, $request, 'vehicle.'.$module.'.updated', Str::headline($module).' updated', $record);
         });
 
         return response()->json(['success' => true, 'data' => $this->present($query->first())]);
