@@ -18,7 +18,6 @@ export default function AddVehiclePage() {
 
         .vehicle-onboarding form { gap: 24px; }
 
-        /* HERO */
         .vehicle-onboarding form > section:first-child {
           overflow: visible !important;
           border: 0 !important;
@@ -52,7 +51,6 @@ export default function AddVehiclePage() {
           color: #7dd3fc;
         }
 
-        /* STEP RAIL */
         .vehicle-onboarding form > section:first-child nav {
           position: relative;
           z-index: 3;
@@ -87,7 +85,6 @@ export default function AddVehiclePage() {
           box-shadow: 0 8px 18px rgba(37,99,235,.22);
         }
 
-        /* RC / MANUAL CHOICE */
         .vehicle-onboarding form > section:first-child > div:nth-of-type(2) {
           margin-top: 18px;
           padding: 0 !important;
@@ -116,8 +113,10 @@ export default function AddVehiclePage() {
           letter-spacing: .15em;
         }
         .vehicle-onboarding form > section:first-child > div:nth-of-type(2) button[aria-pressed="true"] {
-          border-color: #60a5fa !important;
-          background: linear-gradient(145deg,#f8fbff,#edf5ff) !important;
+          border-color: #4f8ef7 !important;
+          background:
+            radial-gradient(circle at 82% 0%,rgba(56,189,248,.14),transparent 35%),
+            linear-gradient(145deg,#fafdff,#eef5ff) !important;
           box-shadow: 0 20px 46px rgba(37,99,235,.16), inset 0 0 0 2px rgba(59,130,246,.08) !important;
         }
         .vehicle-onboarding form > section:first-child > div:nth-of-type(2) button[aria-pressed="true"]::after {
@@ -126,7 +125,116 @@ export default function AddVehiclePage() {
           background: #ecfdf5;
         }
 
-        /* MAIN FORM CARDS */
+        /* RC UPLOAD WORKSPACE */
+        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) {
+          position: relative;
+          margin-top: 16px;
+          padding: 22px !important;
+          gap: 16px !important;
+          border: 1px solid #d9e5f4 !important;
+          border-radius: 28px !important;
+          background:
+            radial-gradient(circle at 96% 0%,rgba(59,130,246,.08),transparent 27%),
+            linear-gradient(145deg,#ffffff,#f7fbff) !important;
+          box-shadow: 0 18px 44px rgba(15,23,42,.07) !important;
+        }
+        .vehicle-onboarding form > section:first-child > div:nth-of-type(3)::before {
+          content: "RC DOCUMENT SCAN";
+          grid-column: 1 / -1;
+          display: block;
+          margin-bottom: -2px;
+          color: #2d63bb;
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: .22em;
+        }
+        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > div:not(.md\\:col-span-2) {
+          min-height: 190px;
+          padding: 0 !important;
+          overflow: hidden;
+          border: 1.5px dashed #aac5ea !important;
+          border-radius: 22px !important;
+          background: rgba(247,250,255,.9) !important;
+          transition: .18s ease;
+        }
+        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > div:not(.md\\:col-span-2):hover {
+          transform: translateY(-2px);
+          border-color: #4f8ef7 !important;
+          background: #fff !important;
+          box-shadow: 0 14px 30px rgba(37,99,235,.10);
+        }
+        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > div:not(.md\\:col-span-2) > label {
+          display: flex !important;
+          min-height: 190px;
+          width: 100%;
+          flex-direction: column;
+          justify-content: center;
+          padding: 24px !important;
+          color: #0a2147 !important;
+          font-size: 16px !important;
+          font-weight: 900 !important;
+        }
+        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > div:not(.md\\:col-span-2) > label::before {
+          content: "⇧";
+          display: grid;
+          place-items: center;
+          width: 48px;
+          height: 48px;
+          margin-bottom: 16px;
+          border-radius: 15px;
+          background: linear-gradient(145deg,#0b2f6b,#2563eb);
+          color: #fff;
+          font-size: 23px;
+          box-shadow: 0 10px 24px rgba(37,99,235,.22);
+        }
+        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > div:not(.md\\:col-span-2) label span {
+          margin-top: 6px !important;
+          color: #718097 !important;
+          font-size: 11px !important;
+          font-weight: 600 !important;
+        }
+        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) input[type="file"] {
+          min-height: 0 !important;
+          margin-top: 18px !important;
+          padding: 0 !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          color: #607089 !important;
+          font-size: 11px !important;
+        }
+        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) input[type="file"]::file-selector-button {
+          margin-right: 12px;
+          padding: 10px 15px;
+          border: 0;
+          border-radius: 11px;
+          background: #eaf2ff;
+          color: #154d9f;
+          font-size: 11px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > .md\\:col-span-2 {
+          padding-top: 2px;
+        }
+        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > .md\\:col-span-2 button {
+          min-height: 56px;
+          border-radius: 16px !important;
+          background: linear-gradient(90deg,#082654,#1c64d7,#3286ff) !important;
+          box-shadow: 0 14px 32px rgba(37,99,235,.22) !important;
+          letter-spacing: .01em;
+        }
+        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > .md\\:col-span-2 button:not(:disabled):hover {
+          transform: translateY(-1px);
+          box-shadow: 0 18px 38px rgba(37,99,235,.28) !important;
+        }
+        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > .md\\:col-span-2 p {
+          color: #a16207 !important;
+          font-size: 10px !important;
+          letter-spacing: .02em;
+        }
+
         .vehicle-onboarding form > div[id^="vehicle-step-"] > section {
           position: relative;
           overflow: hidden;
@@ -166,7 +274,6 @@ export default function AddVehiclePage() {
         .vehicle-onboarding #vehicle-step-3 h2::before { content:"03"; }
         .vehicle-onboarding #vehicle-step-4 h2::before { content:"04"; }
 
-        /* FIELDS */
         .vehicle-onboarding form > div[id^="vehicle-step-"] label {
           display: block;
           padding: 4px;
@@ -206,7 +313,6 @@ export default function AddVehiclePage() {
           color: #1752b5 !important;
         }
 
-        /* COMPLIANCE */
         .vehicle-onboarding #vehicle-step-4 > section > div > div {
           min-height: 132px;
           padding: 16px !important;
@@ -216,7 +322,6 @@ export default function AddVehiclePage() {
           box-shadow: 0 10px 24px rgba(15,23,42,.04);
         }
 
-        /* SAVE BAR */
         .vehicle-onboarding form > div.fixed {
           left: 0 !important;
           padding: 13px max(16px,calc((100vw - 1500px)/2 + 26px)) !important;
@@ -268,6 +373,14 @@ export default function AddVehiclePage() {
           .vehicle-onboarding form > section:first-child > div:nth-of-type(2) button {
             min-height: 132px;
             border-radius: 22px !important;
+          }
+          .vehicle-onboarding form > section:first-child > div:nth-of-type(3) {
+            padding: 14px !important;
+            border-radius: 22px !important;
+          }
+          .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > div:not(.md\\:col-span-2),
+          .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > div:not(.md\\:col-span-2) > label {
+            min-height: 160px;
           }
           .vehicle-onboarding form > div[id^="vehicle-step-"] > section {
             padding: 0 16px 20px !important;
