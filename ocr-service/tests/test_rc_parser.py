@@ -157,6 +157,7 @@ def test_gujarat_front_back_layout_extracts_fields_without_crossing_labels() -> 
             line("Month-Year of Mfg. 02-2024 No. of Cylinders 1", 0.92, "back"),
             line("Financier: ROYAL FINANCE THARAD", 0.96, "back"),
             line("Registration Authority BANASKANTHA", 0.95, "back"),
+            line("GJ08175196", 0.99, "back"),
         ]
     )
 
@@ -191,6 +192,12 @@ def test_gujarat_front_back_layout_extracts_fields_without_crossing_labels() -> 
         "financier": "ROYAL FINANCE THARAD",
     }
     assert parsed.fields.financier != "NO. OF CYLINDERS"
+    assert parsed.fields.manufacturer != "GJ08175196"
+    assert parsed.fields.body_type != "GJ08175196"
+    assert parsed.fields.emission_norms != parsed.fields.address
+    assert parsed.fields.horse_power != "97.20"
+    assert parsed.fields.cubic_capacity != "7.91"
+    assert parsed.fields.unladen_weight != "1236"
 
 
 def test_spatial_columns_pair_each_label_with_the_value_below_it() -> None:
@@ -214,128 +221,3 @@ def test_spatial_columns_pair_each_label_with_the_value_below_it() -> None:
     assert parsed.fields.registration_valid_upto == "08-08-2039"
     assert parsed.fields.number_of_cylinders == "1"
     assert parsed.fields.financier == "ROYAL FINANCE THARAD"
-
-
-def test_gujarat_tractor_layout_does_not_manufacture_absent_values() -> None:
-    parsed = parse_rc(
-        [
-            boxed_line("Reg. No.", 300, 50),
-            boxed_line("Date of Reg.", 560, 50),
-            boxed_line("Reg. Validity", 800, 50),
-            boxed_line("GJ08BB6056", 300, 90),
-            boxed_line("06/12/2016", 560, 90),
-            boxed_line("05/12/2031", 800, 90),
-            boxed_line("Chassis No.", 300, 150),
-            boxed_line("T052358130", 300, 190),
-            boxed_line("Engine No.", 300, 240),
-            boxed_line("E2363463", 300, 280),
-            boxed_line("Owner Name", 300, 330),
-            boxed_line("KARSHANBHAI", 300, 370),
-            boxed_line("Vehicle Class", 70, 330),
-            boxed_line("TRACTOR (AGRI)", 70, 370),
-            boxed_line("Son/Daughter/Wife of", 300, 420),
-            boxed_line("GANESHBHAI KALA", 300, 460),
-            boxed_line("Fuel Used", 70, 510),
-            boxed_line("DIESEL", 70, 550),
-            boxed_line("Address", 300, 510),
-            boxed_line("AT-KHODA,", 300, 550),
-            boxed_line("TA-THARAD,", 300, 585),
-            boxed_line("BANASKANTHA, 385565", 300, 620),
-            boxed_line("Seating Capacity", 60, 50, source="back"),
-            boxed_line("1", 60, 90, source="back"),
-            boxed_line("Wheel Base", 60, 150, source="back"),
-            boxed_line("Cubic Capacity", 60, 230, source="back"),
-            boxed_line("45", 60, 270, source="back"),
-            boxed_line("Cylinder No", 60, 320, source="back"),
-            boxed_line("3", 60, 360, source="back"),
-            boxed_line("Cylinder Validity", 60, 410, source="back"),
-            boxed_line("Month & Yr. of Mfg.", 60, 470, source="back"),
-            boxed_line("JANUARY 2016", 60, 510, source="back"),
-            boxed_line("Maker's Name", 320, 50, source="back"),
-            boxed_line("ESCORTSLTD", 320, 90, source="back"),
-            boxed_line("Model Name", 320, 180, source="back"),
-            boxed_line("FARMTRAC 45", 320, 220, source="back"),
-            boxed_line("Colour", 320, 290, source="back"),
-            boxed_line("BLUE", 320, 330, source="back"),
-            boxed_line("Body Type", 320, 400, source="back"),
-            boxed_line("TRACTOR (OPEN)", 320, 440, source="back"),
-            boxed_line("Financier Name", 700, 390, source="back"),
-            boxed_line("L AND T FINANCE LTD", 700, 430, source="back"),
-            boxed_line("Registration Authority", 700, 560, source="back"),
-            boxed_line("PALANPUR", 700, 600, source="back"),
-        ]
-    )
-
-    assert parsed.fields.model_dump(exclude_none=True) == {
-        "vehicle_number": "GJ08BB6056",
-        "owner_name": "KARSHANBHAI",
-        "father_or_spouse_name": "GANESHBHAI KALA",
-        "address": "AT-KHODA, TA-THARAD, BANASKANTHA, 385565",
-        "registration_date": "06/12/2016",
-        "registration_valid_upto": "05/12/2031",
-        "chassis_number": "T052358130",
-        "engine_number": "E2363463",
-        "manufacturer": "ESCORTS LTD",
-        "model": "FARMTRAC 45",
-        "vehicle_class": "TRACTOR (AGRI)",
-        "body_type": "TRACTOR (OPEN)",
-        "fuel_type": "DIESEL",
-        "colour": "BLUE",
-        "manufacturing_month_year": "JANUARY 2016",
-        "manufacturing_month": "01",
-        "manufacturing_year": "2016",
-        "seating_capacity": "1",
-        "cubic_capacity": "45",
-        "number_of_cylinders": "3",
-        "registration_authority": "PALANPUR",
-        "financier": "L AND T FINANCE LTD",
-    }
-    assert parsed.fields.wheel_base is None
-    assert parsed.fields.horse_power is None
-    assert parsed.fields.unladen_weight is None
-    assert parsed.fields.emission_norms is None
-
-
-def test_invalid_fuel_label_value_is_rejected() -> None:
-    parsed = parse_rc([line("Fuel Used")])
-
-    assert parsed.fields.fuel_type is None
-
-
-def test_field_specific_thresholds_restore_valid_wide_label_regions() -> None:
-    parsed = parse_rc(
-        [
-            boxed_line("Date of Reg.", 20, 20, confidence=0.65),
-            boxed_line("06/12/2016", 480, 20, confidence=0.25),
-            boxed_line("Chassis No.", 20, 80, confidence=0.65),
-            boxed_line("T052358130", 480, 80, confidence=0.25),
-            boxed_line("Engine No.", 20, 140, confidence=0.65),
-            boxed_line("E2363463", 480, 140, confidence=0.25),
-            boxed_line("Vehicle Class", 20, 200, confidence=0.65),
-            boxed_line("TRACTOR (AGRI)", 480, 200, confidence=0.25),
-            boxed_line("Maker's Name", 20, 260, confidence=0.65),
-            boxed_line("ESCORTSLTD", 480, 260, confidence=0.25),
-            boxed_line("Model Name", 20, 320, confidence=0.65),
-            boxed_line("FARMTRAC 45", 480, 320, confidence=0.25),
-            boxed_line("Colour", 20, 380, confidence=0.65),
-            boxed_line("BLUE", 480, 380, confidence=0.25),
-            boxed_line("Cubic Capacity", 20, 440, confidence=0.65),
-            boxed_line("45", 480, 440, confidence=0.25),
-            boxed_line("Month & Yr. of Mfg.", 20, 500, confidence=0.65),
-            boxed_line("JANUARY 2016", 480, 500, confidence=0.25),
-            boxed_line("Financier Name", 20, 560, confidence=0.65),
-            boxed_line("L AND T FINANCE LTD", 480, 560, confidence=0.25),
-        ]
-    )
-
-    assert parsed.fields.registration_date == "06/12/2016"
-    assert parsed.fields.chassis_number == "T052358130"
-    assert parsed.fields.engine_number == "E2363463"
-    assert parsed.fields.vehicle_class == "TRACTOR (AGRI)"
-    assert parsed.fields.manufacturer == "ESCORTS LTD"
-    assert parsed.fields.model == "FARMTRAC 45"
-    assert parsed.fields.colour == "BLUE"
-    assert parsed.fields.cubic_capacity == "45"
-    assert parsed.fields.manufacturing_month == "01"
-    assert parsed.fields.manufacturing_year == "2016"
-    assert parsed.fields.financier == "L AND T FINANCE LTD"

@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 // Node's built-in TypeScript runner requires the explicit extension.
 // @ts-expect-error TypeScript's bundler mode omits runtime `.ts` extensions in application code.
-import { applyOcrPrefill, findMatchingMasterId, resolveOcrMasterIds } from "../lib/rc-ocr.ts";
+import { applyOcrPrefill, findMatchingMasterId, getOcrMasterControlState, resolveOcrMasterIds } from "../lib/rc-ocr.ts";
 
 test("OCR prefill preserves customer and user-edited fields", () => {
   const current = {
@@ -135,6 +136,130 @@ test("valid OCR master text remains visible until its master ID resolves", () =>
   assert.equal(resolved.manufacturer_id, "escorts-id");
   assert.equal(resolved.model, "FARMTRAC 45");
   assert.equal(resolved.model_id, "farmtrac-45-id");
+});
+
+test("the Gujarat motorcycle values drive visible form inputs and selects", async () => {
+  const expected = {
+    vehicle_number: "GJ08DH9235",
+    registration_date: "2024-08-09",
+    registration_valid_upto: "2039-08-08",
+    registration_authority: "BANASKANTHA",
+    state: "Gujarat",
+    district: "BANASKANTHA",
+    vehicle_type: "two_wheeler",
+    vehicle_class: "M-CYCLE/SCOOTER (2WN)",
+    vehicle_category: "SOLO WITH PILLION",
+    manufacturer: "HERO MOTOCORP LTD",
+    model: "SPLENDOR+",
+    variant: "DRS",
+    colour: "BLACK GREY STRIPE",
+    fuel_type: "PETROL",
+    manufacturing_month: "02",
+    manufacturing_year: "2024",
+    seating_capacity: "2",
+    unladen_weight: "109",
+    cubic_capacity: "97.20",
+    horse_power: "7.91",
+    wheel_base: "1236",
+    number_of_cylinders: "1",
+    chassis_number: "MBLHAW236R5B01749",
+    engine_number: "HA11E8R5B53325",
+    emission_norms: "BHARAT STAGE VI",
+    financier: "ROYAL FINANCE THARAD",
+  };
+  const previousRc = applyOcrPrefill(
+    { customer_id: "explicit-customer" },
+    {
+      manufacturer: "WRONG OLD MAKE",
+      financier: "OLD FINANCIER",
+      cubic_capacity: "7.91",
+      horse_power: "97.20",
+      unladen_weight: "1236",
+    },
+    new Set(),
+  );
+  const beforeMasters = applyOcrPrefill(previousRc, expected, new Set());
+
+  assert.equal(Object.keys(expected).length, 26);
+  for (const [field, value] of Object.entries(expected)) {
+    assert.equal(beforeMasters[field], value, `${field} input value`);
+  }
+  assert.equal(beforeMasters.customer_id, "explicit-customer");
+  assert.notEqual(beforeMasters.manufacturer, "GJ08175196");
+  assert.notEqual(beforeMasters.vehicle_category, "GJ08175196");
+  assert.notEqual(beforeMasters.emission_norms, beforeMasters.address);
+  assert.equal(beforeMasters.cubic_capacity, "97.20");
+  assert.equal(beforeMasters.horse_power, "7.91");
+  assert.equal(beforeMasters.unladen_weight, "109");
+
+  const directInputs = [
+    "vehicle_number",
+    "registration_date",
+    "registration_valid_upto",
+    "state",
+    "district",
+    "manufacturing_month",
+    "manufacturing_year",
+    "seating_capacity",
+    "unladen_weight",
+    "cubic_capacity",
+    "horse_power",
+    "wheel_base",
+    "number_of_cylinders",
+    "chassis_number",
+    "engine_number",
+    "emission_norms",
+    "financier",
+  ];
+  const formSource = readFileSync(
+    new URL("../components/vehicles/VehicleForm.tsx", import.meta.url),
+    "utf8",
+  );
+  for (const field of directInputs) {
+    assert.match(formSource, new RegExp(`value=\\{values\\.${field}\\}`));
+  }
+
+  const unresolvedManufacturer = getOcrMasterControlState(
+    "",
+    beforeMasters.manufacturer,
+    [],
+  );
+  assert.equal(unresolvedManufacturer.visibleText, "HERO MOTOCORP LTD");
+  assert.equal(unresolvedManufacturer.fallbackLabel, "HERO MOTOCORP LTD (OCR)");
+
+  const delayedLists = await Promise.resolve({
+    rto_offices: [{ id: "rto-id", name: "BANASKANTHA" }],
+    vehicle_types: [{ id: "type-id", name: "TWO WHEELER" }],
+    vehicle_classes: [{ id: "class-id", name: "M-CYCLE/SCOOTER (2WN)" }],
+    body_types: [{ id: "body-id", name: "SOLO WITH PILLION" }],
+    manufacturers: [{ id: "make-id", name: "HERO MOTOCORP" }],
+    models: [{ id: "model-id", name: "SPLENDOR PLUS", parent_id: "make-id" }],
+    variants: [{ id: "variant-id", name: "DRS", parent_id: "model-id" }],
+    colours: [{ id: "colour-id", name: "BLACK GREY STRIPE" }],
+    fuel_types: [{ id: "fuel-id", name: "PETROL" }],
+  });
+  const resolved = resolveOcrMasterIds(beforeMasters, delayedLists);
+  const expectedIds = {
+    rto_office_id: "rto-id",
+    vehicle_type_id: "type-id",
+    vehicle_class_id: "class-id",
+    vehicle_category_id: "body-id",
+    manufacturer_id: "make-id",
+    model_id: "model-id",
+    variant_id: "variant-id",
+    colour_id: "colour-id",
+    fuel_type_id: "fuel-id",
+  };
+  for (const [field, value] of Object.entries(expectedIds)) {
+    assert.equal(resolved[field], value, `${field} selected value`);
+  }
+  const selectedModel = getOcrMasterControlState(
+    resolved.model_id,
+    resolved.model,
+    delayedLists.models,
+  );
+  assert.equal(selectedModel.visibleText, "SPLENDOR PLUS");
+  assert.equal(selectedModel.fallbackLabel, "");
 });
 
 test("the complete tractor prefill survives delayed dependent master loading", async () => {

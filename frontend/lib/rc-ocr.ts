@@ -77,6 +77,24 @@ export function findMatchingMasterId(
   );
 }
 
+export function getOcrMasterControlState(
+  value: string,
+  unresolvedText: string,
+  options: readonly OcrMasterOption[],
+): {
+  fallbackValue: string;
+  fallbackLabel: string;
+  visibleText: string;
+} {
+  const selected = options.find((option) => option.id === value);
+  const showOcrValue = Boolean(unresolvedText && (!value || !selected));
+  return {
+    fallbackValue: showOcrValue ? value : "",
+    fallbackLabel: showOcrValue ? `${unresolvedText} (OCR)` : "",
+    visibleText: selected?.name ?? (showOcrValue ? unresolvedText : ""),
+  };
+}
+
 type OcrMasterLists = Partial<
   Record<OcrMasterKind, readonly OcrMasterOption[]>
 >;

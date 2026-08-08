@@ -9,6 +9,7 @@ import { scanDocument } from "@/lib/ocr";
 import {
   applyOcrPrefill,
   findMatchingMasterId,
+  getOcrMasterControlState,
   resolveOcrMasterIds,
 } from "@/lib/rc-ocr";
 import { Vehicle, vehicleApi } from "@/lib/vehicles";
@@ -1427,8 +1428,12 @@ function MasterSelect({
   const active = options
     .filter((x) => x.status === "active")
     .sort((a, b) => a.name.localeCompare(b.name));
-  const selectedIsLoaded = active.some((option) => option.id === value);
-  const showOcrValue = Boolean(unresolvedText && (!value || !selectedIsLoaded));
+  const controlState = getOcrMasterControlState(
+    value,
+    unresolvedText,
+    active,
+  );
+  const showOcrValue = Boolean(controlState.fallbackLabel);
   return (
     <div>
       <label className="text-sm font-semibold">
@@ -1439,9 +1444,9 @@ function MasterSelect({
           onChange={(e) => onChange(e.target.value)}
           className={`mt-2 w-full rounded-xl border px-4 py-3 font-normal disabled:bg-slate-100 ${lowConfidence ? "border-amber-400 bg-amber-50/50" : "bg-white"}`}
         >
-          <option value={showOcrValue ? value : ""}>
+          <option value={controlState.fallbackValue}>
             {showOcrValue
-              ? `${unresolvedText} (OCR)`
+              ? controlState.fallbackLabel
               : loading
               ? "Loading..."
               : disabled

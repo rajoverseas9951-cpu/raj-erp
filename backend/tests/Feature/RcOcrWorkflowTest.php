@@ -48,6 +48,45 @@ class RcOcrWorkflowTest extends TestCase
             ->assertJsonPath('data.field_confidence.vehicle_category', 0.79);
 
         $fields = $first->json('data.fields');
+        $expected = [
+            'vehicle_number' => 'GJ08DH9235',
+            'registration_date' => '2024-08-09',
+            'registration_valid_upto' => '2039-08-08',
+            'owner_name' => 'RABARI NARSEGBHAI',
+            'father_or_spouse_name' => 'SAVABHAI',
+            'ownership_type' => 'INDIVIDUAL',
+            'address' => 'BUKNA, BUKNA, VAV, BANASKANTHA-GUJARAT-385575',
+            'state' => 'Gujarat',
+            'district' => 'BANASKANTHA',
+            'registration_authority' => 'BANASKANTHA',
+            'vehicle_type' => 'two_wheeler',
+            'vehicle_class' => 'M-CYCLE/SCOOTER (2WN)',
+            'manufacturer' => 'HERO MOTOCORP LTD',
+            'model' => 'SPLENDOR+',
+            'variant' => 'DRS',
+            'vehicle_category' => 'SOLO WITH PILLION',
+            'fuel_type' => 'PETROL',
+            'emission_norms' => 'BHARAT STAGE VI',
+            'colour' => 'BLACK GREY STRIPE',
+            'manufacturing_month' => '02',
+            'manufacturing_year' => '2024',
+            'seating_capacity' => '2',
+            'unladen_weight' => '109',
+            'cubic_capacity' => '97.20',
+            'horse_power' => '7.91',
+            'wheel_base' => '1236',
+            'number_of_cylinders' => '1',
+            'chassis_number' => 'MBLHAW236R5B01749',
+            'engine_number' => 'HA11E8R5B53325',
+            'financier' => 'ROYAL FINANCE THARAD',
+        ];
+        foreach ($expected as $field => $value) {
+            $this->assertSame($value, $fields[$field] ?? null, $field);
+        }
+        $this->assertGreaterThanOrEqual(25, count($expected));
+        $this->assertNotSame('GJ08175196', $fields['manufacturer']);
+        $this->assertNotSame('GJ08175196', $fields['vehicle_category']);
+        $this->assertNotSame($fields['address'], $fields['emission_norms']);
         $manufacturer = DB::table('vehicle_masters')->where('id', $fields['manufacturer_id'])->first();
         $model = DB::table('vehicle_masters')->where('id', $fields['model_id'])->first();
         $variant = DB::table('vehicle_masters')->where('id', $fields['variant_id'])->first();
@@ -164,7 +203,6 @@ class RcOcrWorkflowTest extends TestCase
             ->assertJsonPath('data.fields.father_or_spouse_name', 'GANESHBHAI KALA')
             ->assertJsonPath('data.fields.address', 'AT-KHODA, TA-THARAD, BANASKANTHA, 385565')
             ->assertJsonPath('data.fields.vehicle_class', 'TRACTOR (AGRI)')
-            ->assertJsonPath('data.fields.vehicle_type', 'tractor')
             ->assertJsonPath('data.fields.fuel_type', 'DIESEL')
             ->assertJsonPath('data.fields.seating_capacity', '1')
             ->assertJsonPath('data.fields.manufacturer', 'ESCORTS LTD')
@@ -286,13 +324,15 @@ class RcOcrWorkflowTest extends TestCase
             'vehicle_class' => 'TRACTOR (AGRI)',
             'fuel_type' => 'DIESEL',
             'seating_capacity' => '1',
-            'manufacturer' => 'ESCORTSLTD',
+            'manufacturer' => 'ESCORTS LTD',
             'model' => 'FARMTRAC 45',
             'colour' => 'BLUE',
             'body_type' => 'TRACTOR (OPEN)',
             'cubic_capacity' => '45',
             'number_of_cylinders' => '3',
             'manufacturing_month_year' => 'JANUARY 2016',
+            'manufacturing_month' => '01',
+            'manufacturing_year' => '2016',
             'financier' => 'L AND T FINANCE LTD',
             'registration_authority' => 'PALANPUR',
         ];

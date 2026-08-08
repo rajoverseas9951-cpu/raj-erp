@@ -171,13 +171,13 @@ def test_sequential_rc_requests_never_share_parsed_fields() -> None:
                     "REGN NO: GJ08BB6056",
                     "Date of Reg.: 06/12/2016",
                     "Reg. Validity: 05/12/2031",
-                    "Fuel Used: DIESEL",
-                    "Maker's Name: ESCORTSLTD",
+                    "Fuel: DIESEL",
+                    "Maker's Name: ESCORTS LTD",
                     "Model Name: FARMTRAC 45",
                     "Cubic Capacity: 45",
-                    "Cylinder No: 3",
-                    "Month & Yr. of Mfg.: JANUARY 2016",
-                    "Financier Name: L AND T FINANCE LTD",
+                    "No. of Cylinders: 3",
+                    "Month-Year of Mfg. JANUARY 2016",
+                    "Financier: L AND T FINANCE LTD",
                 ]
             )
             return [

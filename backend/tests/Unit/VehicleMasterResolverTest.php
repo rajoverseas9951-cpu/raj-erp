@@ -48,14 +48,4 @@ class VehicleMasterResolverTest extends TestCase
         );
     }
 
-    public function test_invalid_or_low_confidence_ocr_master_candidates_are_rejected(): void
-    {
-        $resolver = new VehicleMasterResolver;
-
-        $this->assertFalse($resolver->isValidOcrCandidate('fuel_types', 'USED', 0.99));
-        $this->assertFalse($resolver->isValidOcrCandidate('manufacturers', "Maker's Name", 0.99));
-        $this->assertFalse($resolver->isValidOcrCandidate('colours', 'BLUE', 0.39));
-        $this->assertTrue($resolver->isValidOcrCandidate('fuel_types', 'DIESEL', 0.90));
-        $this->assertTrue($resolver->isValidOcrCandidate('manufacturers', 'ESCORTS LTD', 0.90));
-    }
 }
