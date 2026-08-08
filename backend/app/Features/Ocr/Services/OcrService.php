@@ -80,7 +80,9 @@ class OcrService
             throw new RuntimeException('The internal PaddleOCR service could not be reached. Please try again.', previous: $exception);
         } finally {
             foreach ($streams as $stream) {
-                if (is_resource($stream)) fclose($stream);
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
             }
         }
 
@@ -100,7 +102,9 @@ class OcrService
         $text = is_string($payload['raw_text'] ?? null) ? trim($payload['raw_text']) : '';
         $textsBySource = [];
         foreach (is_array($payload['ocr_lines'] ?? null) ? $payload['ocr_lines'] : [] as $line) {
-            if (! is_array($line) || ! is_string($line['text'] ?? null)) continue;
+            if (! is_array($line) || ! is_string($line['text'] ?? null)) {
+                continue;
+            }
             $source = is_string($line['source'] ?? null) ? $line['source'] : 'combined';
             $textsBySource[$source][] = trim($line['text']);
         }
@@ -108,12 +112,15 @@ class OcrService
             fn (array $lines) => trim(implode("\n", array_filter($lines))),
             $textsBySource
         ));
-        if ($texts === [] && $text !== '') $texts = [$text];
+        if ($texts === [] && $text !== '') {
+            $texts = [$text];
+        }
 
         $mappedFields = $this->mapPaddleRcFields($payload['fields']);
         $mappedConfidence = $this->mapPaddleRcConfidence(
             is_array($payload['field_confidence'] ?? null) ? $payload['field_confidence'] : []
         );
+        $contextWarnings = $this->applyVehicleContext($mappedFields, $mappedConfidence);
         Log::debug('ocr.rc.fields_normalized', [
             'extracted_fields' => $payload['fields'],
             'normalized_fields' => $mappedFields,
@@ -129,10 +136,13 @@ class OcrService
             'fields' => $mappedFields,
             'field_confidence' => $mappedConfidence,
             'overall_confidence' => is_numeric($payload['overall_confidence'] ?? null) ? (float) $payload['overall_confidence'] : 0.0,
-            'warnings' => array_values(array_filter(
-                is_array($payload['warnings'] ?? null) ? $payload['warnings'] : [],
-                fn ($warning) => is_string($warning) && trim($warning) !== ''
-            )),
+            'warnings' => array_values(array_unique(array_merge(
+                array_values(array_filter(
+                    is_array($payload['warnings'] ?? null) ? $payload['warnings'] : [],
+                    fn ($warning) => is_string($warning) && trim($warning) !== ''
+                )),
+                $contextWarnings,
+            ))),
         ];
     }
 
@@ -146,19 +156,27 @@ class OcrService
             'manufacturer', 'model', 'vehicle_class', 'body_type', 'colour', 'financier',
         ] as $key) {
             $value = $source[$key] ?? null;
-            if (is_string($value) && trim($value) !== '') $fields[$key] = trim($value);
+            if (is_string($value) && trim($value) !== '') {
+                $fields[$key] = trim($value);
+            }
         }
 
-        if (isset($fields['vehicle_number'])) $fields['vehicle_number'] = $this->identifier($fields['vehicle_number']);
+        if (isset($fields['vehicle_number'])) {
+            $fields['vehicle_number'] = $this->identifier($fields['vehicle_number']);
+        }
         foreach (['chassis_number', 'engine_number'] as $key) {
-            if (isset($fields[$key])) $fields[$key] = $this->identifier($fields[$key]);
+            if (isset($fields[$key])) {
+                $fields[$key] = $this->identifier($fields[$key]);
+            }
         }
         foreach ([
             'owner_name', 'father_or_spouse_name', 'ownership_type', 'manufacturer',
             'model', 'vehicle_class', 'body_type', 'colour',
             'registration_authority', 'financier',
         ] as $key) {
-            if (isset($fields[$key])) $fields[$key] = strtoupper($this->clean($fields[$key]));
+            if (isset($fields[$key])) {
+                $fields[$key] = strtoupper($this->clean($fields[$key]));
+            }
         }
         if (isset($fields['model'])) {
             $fields['model'] = $this->normaliseModel($fields['model']);
@@ -170,7 +188,9 @@ class OcrService
         if (isset($fields['registration_authority'])) {
             $fields['district'] = $fields['registration_authority'];
         }
-        if (str_starts_with($fields['vehicle_number'] ?? '', 'GJ')) $fields['state'] = 'Gujarat';
+        if (str_starts_with($fields['vehicle_number'] ?? '', 'GJ')) {
+            $fields['state'] = 'Gujarat';
+        }
 
         $registrationDate = $source['registration_date'] ?? null;
         if (is_string($registrationDate) && ($date = $this->normaliseDate($registrationDate))) {
@@ -178,7 +198,10 @@ class OcrService
         }
         $fuel = $source['fuel_type'] ?? null;
         if (is_string($fuel) && trim($fuel) !== '') {
-            $fields['fuel_type'] = $this->normaliseFuel($fuel);
+            $normalisedFuel = $this->normaliseFuel($fuel);
+            if ($normalisedFuel !== null) {
+                $fields['fuel_type'] = $normalisedFuel;
+            }
         }
 
         foreach ([
@@ -189,8 +212,8 @@ class OcrService
             'number_of_cylinders' => 'number_of_cylinders',
         ] as $sourceKey => $targetKey) {
             $value = $source[$sourceKey] ?? null;
-            if (is_string($value) && preg_match('/\d+(?:\.\d+)?/', $value, $match)) {
-                $fields[$targetKey] = $match[0];
+            if (is_string($value) && ($number = $this->normaliseNumericField($sourceKey, $value)) !== null) {
+                $fields[$targetKey] = $number;
             }
         }
 
@@ -205,11 +228,17 @@ class OcrService
         }
 
         $class = strtolower($fields['vehicle_class'] ?? '');
-        if (preg_match('/m-?cycle|motor\s*cycle|scooter|2wn|two\s*wheeler/', $class)) $fields['vehicle_type'] = 'two_wheeler';
-        elseif (preg_match('/hgv|heavy\s*goods|truck|trailer/', $class)) $fields['vehicle_type'] = 'hgv';
-        elseif (preg_match('/lgv|light\s*goods|pickup/', $class)) $fields['vehicle_type'] = 'lgv';
-        elseif (preg_match('/taxi|cab|maxi|passenger/', $class)) $fields['vehicle_type'] = 'taxi';
-        elseif (preg_match('/motor\s*car|private\s*car|\blmv\b/', $class)) $fields['vehicle_type'] = 'private_car';
+        if (preg_match('/m-?cycle|motor\s*cycle|scooter|2wn|two\s*wheeler/', $class)) {
+            $fields['vehicle_type'] = 'two_wheeler';
+        } elseif (preg_match('/hgv|heavy\s*goods|truck|trailer/', $class)) {
+            $fields['vehicle_type'] = 'hgv';
+        } elseif (preg_match('/lgv|light\s*goods|pickup/', $class)) {
+            $fields['vehicle_type'] = 'lgv';
+        } elseif (preg_match('/taxi|cab|maxi|passenger/', $class)) {
+            $fields['vehicle_type'] = 'taxi';
+        } elseif (preg_match('/motor\s*car|private\s*car|\blmv\b/', $class)) {
+            $fields['vehicle_type'] = 'private_car';
+        }
 
         return array_filter($fields, fn ($value) => $value !== '');
     }
@@ -232,12 +261,17 @@ class OcrService
         ];
         $confidence = [];
         foreach ($source as $field => $value) {
-            if (! is_string($field) || ! is_numeric($value)) continue;
+            if (! is_string($field) || ! is_numeric($value)) {
+                continue;
+            }
             foreach ($mapping[$field] ?? [$field] as $target) {
-                if (! in_array($target, $allowed, true)) continue;
+                if (! in_array($target, $allowed, true)) {
+                    continue;
+                }
                 $confidence[$target] = max(0.0, min(1.0, (float) $value));
             }
         }
+
         return $confidence;
     }
 
@@ -249,9 +283,86 @@ class OcrService
         return strtoupper($this->clean($value));
     }
 
-    private function normaliseFuel(string $value): string
+    private function normaliseNumericField(string $field, string $value): ?string
+    {
+        if (! preg_match('/^\s*(\d+(?:\.\d+)?)\s*(?:CC|KG|KGS|CYLINDERS?)?\s*$/i', $value, $match)) {
+            return null;
+        }
+        $number = (float) $match[1];
+        $valid = match ($field) {
+            'seating_capacity' => $number >= 1 && $number <= 100 && floor($number) === $number,
+            'cubic_capacity' => $number >= 20 && $number <= 20_000,
+            'unladen_weight', 'gross_vehicle_weight' => $number >= 20 && $number <= 100_000,
+            'number_of_cylinders' => $number >= 1 && $number <= 16 && floor($number) === $number,
+            default => false,
+        };
+
+        return $valid ? $match[1] : null;
+    }
+
+    /**
+     * @param  array<string, string>  $fields
+     * @param  array<string, float>  $confidence
+     * @return array<int, string>
+     */
+    private function applyVehicleContext(array &$fields, array &$confidence): array
+    {
+        $warnings = [];
+        $tractorEvidence = [
+            'vehicle_class' => $fields['vehicle_class'] ?? '',
+            'vehicle_category' => $fields['vehicle_category'] ?? '',
+            'manufacturer' => $fields['manufacturer'] ?? '',
+            'model' => $fields['model'] ?? '',
+        ];
+        $tractorContext = strtoupper(implode(' ', $tractorEvidence));
+        $tractorConfidence = max(array_map(
+            fn (string $field) => (float) ($confidence[$field] ?? 0.0),
+            array_keys($tractorEvidence)
+        ));
+        $hasTractorIndicator = preg_match(
+            '/\bTRACTOR\b|\bFARMTRAC\s*\d*\b|\bPOWERTRAC\s*\d*\b|'
+            .'\bESCORTS\b|\bSONALIKA\b|\bJOHN\s+DEERE\b|\bDEUTZ\b|\bKUBOTA\b|'
+            .'\bNEW\s+HOLLAND\b|\bEICHER\s+TRACTOR\b/',
+            $tractorContext
+        ) === 1;
+        $isTractor = $hasTractorIndicator && $tractorConfidence >= 0.65;
+
+        if (isset($fields['vehicle_type']) && ! isset($confidence['vehicle_type'])) {
+            $confidence['vehicle_type'] = max(
+                (float) ($confidence['vehicle_class'] ?? 0.0),
+                (float) ($confidence['vehicle_category'] ?? 0.0),
+            );
+        }
+
+        if ($isTractor) {
+            $fields['vehicle_type'] = 'tractor';
+            $confidence['vehicle_type'] = $tractorConfidence;
+
+            $fuelConfidence = (float) ($confidence['fuel_type'] ?? 0.0);
+            if (! isset($fields['fuel_type']) || $fuelConfidence < 0.55) {
+                $fields['fuel_type'] = 'DIESEL';
+                $confidence['fuel_type'] = 0.70;
+                $warnings[] = 'Fuel Type was suggested as DIESEL from reliable tractor context; verify before saving.';
+            }
+        }
+
+        if (! isset($fields['manufacturing_year']) && isset($fields['registration_date'])
+            && preg_match('/\b((?:19|20)\d{2})\b/', $fields['registration_date'], $match)) {
+            $fields['manufacturing_year'] = $match[1];
+            $confidence['manufacturing_year'] = min(
+                0.55,
+                (float) ($confidence['registration_date'] ?? 0.55)
+            );
+            $warnings[] = 'Manufacturing Year was suggested from Registration Date because the RC manufacturing field was unreadable.';
+        }
+
+        return $warnings;
+    }
+
+    private function normaliseFuel(string $value): ?string
     {
         $value = strtoupper($this->clean($value));
+
         return match (true) {
             preg_match('/ELECTRIC|BATTERY|\bEV\b/', $value) === 1 => 'ELECTRIC',
             preg_match('/PETROL.*CNG|CNG.*PETROL|DUAL.*CNG/', $value) === 1 => 'PETROL/CNG',
@@ -261,7 +372,9 @@ class OcrService
             preg_match('/\bPETROL\b/', $value) === 1 => 'PETROL',
             preg_match('/\bLPG\b/', $value) === 1 => 'LPG',
             preg_match('/HYBRID/', $value) === 1 => 'HYBRID',
-            default => $value,
+            preg_match('/HYDROGEN/', $value) === 1 => 'HYDROGEN',
+            preg_match('/FLEX\s*FUEL/', $value) === 1 => 'FLEX FUEL',
+            default => null,
         };
     }
 
@@ -340,8 +453,11 @@ class OcrService
         $messages = [];
         foreach (['ErrorMessage', 'ErrorDetails'] as $key) {
             $value = $payload[$key] ?? null;
-            if (is_array($value)) $messages = [...$messages, ...array_map('strval', $value)];
-            elseif (is_string($value) && trim($value) !== '') $messages[] = trim($value);
+            if (is_array($value)) {
+                $messages = [...$messages, ...array_map('strval', $value)];
+            } elseif (is_string($value) && trim($value) !== '') {
+                $messages[] = trim($value);
+            }
         }
 
         return $messages ? implode(' ', array_unique($messages)) : $fallback;
@@ -416,7 +532,9 @@ class OcrService
         ];
         foreach ($labels as $key => $label) {
             $value = $this->labelValue($lines, $label, 2);
-            if (strlen($value) >= 3 && strlen($value) <= 200) $fields[$key] = $value;
+            if (strlen($value) >= 3 && strlen($value) <= 200) {
+                $fields[$key] = $value;
+            }
         }
         if (preg_match('/\b[A-Z]{2}[\s-]?\d{1,2}[\s-]?[A-Z]{1,3}[\s-]?\d{3,4}\b/i', $joined, $m)) {
             $fields['registration_number'] = strtoupper((string) preg_replace('/[^A-Z0-9]/i', '', $m[0]));
@@ -427,7 +545,9 @@ class OcrService
             'expiry_date' => '/(?:policy\s*(?:expiry|end|to)|valid\s*(?:upto|until))/i',
             'long_term_tp_expiry' => '/(?:long[\s-]*term|bundled)\s*(?:tp|third\s*party).*?(?:expiry|valid)/i',
         ] as $key => $label) {
-            if ($date = $this->normaliseDate($this->labelValue($lines, $label, 2))) $fields[$key] = $date;
+            if ($date = $this->normaliseDate($this->labelValue($lines, $label, 2))) {
+                $fields[$key] = $date;
+            }
         }
         foreach ([
             'od_premium' => '/(?:own\s*damage|od)\s*(?:premium|total)?/i',
@@ -443,10 +563,16 @@ class OcrService
             }
         }
         $lower = strtolower($joined);
-        if (str_contains($lower, 'standalone own damage')) $fields['insurance_type'] = 'standalone_od';
-        elseif (str_contains($lower, 'standalone third party') || str_contains($lower, 'liability only')) $fields['insurance_type'] = 'third_party';
-        elseif (str_contains($lower, 'commercial package')) $fields['insurance_type'] = 'commercial_package';
-        elseif (str_contains($lower, 'comprehensive') || str_contains($lower, 'package')) $fields['insurance_type'] = 'comprehensive';
+        if (str_contains($lower, 'standalone own damage')) {
+            $fields['insurance_type'] = 'standalone_od';
+        } elseif (str_contains($lower, 'standalone third party') || str_contains($lower, 'liability only')) {
+            $fields['insurance_type'] = 'third_party';
+        } elseif (str_contains($lower, 'commercial package')) {
+            $fields['insurance_type'] = 'commercial_package';
+        } elseif (str_contains($lower, 'comprehensive') || str_contains($lower, 'package')) {
+            $fields['insurance_type'] = 'comprehensive';
+        }
+
         return $fields;
     }
 
@@ -478,16 +604,22 @@ class OcrService
 
     private function normaliseDate(string $value): string
     {
-        if (! preg_match('/\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})\b/', $value, $match)) {
+        if (! preg_match('/\b(\d{1,2})[\/.\-]([A-Z]{3,9}|\d{1,2})[\/.\-](\d{2,4})\b/i', $value, $match)) {
             return '';
         }
 
+        $month = ctype_digit($match[2])
+            ? (int) $match[2]
+            : array_search(strtoupper(substr($match[2], 0, 3)), [
+                1 => 'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+                'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+            ], true);
         $year = strlen($match[3]) === 2 ? ((int) $match[3] > 50 ? '19' : '20').$match[3] : $match[3];
-        if (! checkdate((int) $match[2], (int) $match[1], (int) $year)) {
+        if (! is_int($month) || ! checkdate($month, (int) $match[1], (int) $year)) {
             return '';
         }
 
-        return sprintf('%04d-%02d-%02d', $year, $match[2], $match[1]);
+        return sprintf('%04d-%02d-%02d', $year, $month, $match[1]);
     }
 
     private function identifier(string $value): string

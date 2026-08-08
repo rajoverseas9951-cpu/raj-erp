@@ -8,6 +8,8 @@ use Illuminate\Support\Str;
 
 class VehicleMasterResolver
 {
+    private const MIN_OCR_MASTER_CONFIDENCE = 0.65;
+
     private const FIELD_MAP = [
         'rto_offices' => ['registration_authority', 'rto_office_id'],
         'vehicle_types' => ['vehicle_type', 'vehicle_type_id'],
@@ -41,6 +43,29 @@ class VehicleMasterResolver
             foreach (self::FIELD_MAP as $type => [$nameField, $idField]) {
                 $name = trim((string) ($resolvedFields[$nameField] ?? ''));
                 if ($name === '') {
+                    continue;
+                }
+                if (! $this->isStructurallyValidOcrCandidate($type, $name)) {
+                    unset($resolvedFields[$nameField], $resolvedFields[$idField]);
+                    $warnings[] = "OCR {$nameField} was rejected as an invalid master value.";
+                    Log::debug('ocr.rc.master_skipped', [
+                        'type' => $type,
+                        'reason' => 'invalid_value',
+                    ]);
+
+                    continue;
+                }
+                $fieldConfidence = isset($confidence[$nameField])
+                    ? (float) $confidence[$nameField]
+                    : null;
+                if ($fieldConfidence === null || $fieldConfidence < self::MIN_OCR_MASTER_CONFIDENCE) {
+                    unset($resolvedFields[$idField]);
+                    $warnings[] = "OCR {$nameField} was retained as editable text but was not auto-created because confidence was low.";
+                    Log::debug('ocr.rc.master_skipped', [
+                        'type' => $type,
+                        'reason' => 'low_confidence',
+                    ]);
+
                     continue;
                 }
                 $parentId = match ($type) {
@@ -131,9 +156,42 @@ class VehicleMasterResolver
             'vehicle_types' => match (true) {
                 preg_match('/^(?:TWOWHEELER|2WHEELER|MOTORCYCLE|SCOOTER)$/', $normalized) === 1 => 'TWOWHEELER',
                 preg_match('/^(?:PRIVATECAR|MOTORCAR|LMV)$/', $normalized) === 1 => 'PRIVATECAR',
+                preg_match('/^(?:TRACTOR|AGRICULTURALTRACTOR|AGRITRACTOR)$/', $normalized) === 1 => 'TRACTOR',
                 default => $normalized,
             },
             default => $normalized,
+        };
+    }
+
+    public function isStructurallyValidOcrCandidate(string $type, string $value): bool
+    {
+        $value = trim(Str::ascii(Str::upper($value)));
+        $normalized = $this->matchingName($type, $value);
+        if (strlen($normalized) < 2 || strlen($value) > 160) {
+            return false;
+        }
+        if (preg_match('/^(?:USED?|NEW|OLD|OWNER|INDIVIDUAL|PRIVATE|NAME|TYPE|NUMBER|NO|NA|UNKNOWN)$/', $normalized)) {
+            return false;
+        }
+        if (preg_match('/^(?:REGN|REGISTRATION|CHASSIS|ENGINE|ADDRESS|FINANCIER|MAKER|MODEL|FUEL)(?:NO|NUMBER|NAME|TYPE)?$/', $normalized)) {
+            return false;
+        }
+        if (preg_match('/^[A-Z]{2}\d{1,2}[A-Z]{1,3}\d{3,4}$/', $normalized)) {
+            return false;
+        }
+
+        return match ($type) {
+            'fuel_types' => in_array($normalized, [
+                'PETROL', 'DIESEL', 'CNG', 'LPG', 'ELECTRIC', 'HYBRID',
+                'PETROLCNG', 'PETROLLPG', 'HYDROGEN', 'FLEXFUEL',
+            ], true),
+            'vehicle_types' => in_array($normalized, [
+                'TWOWHEELER', 'PRIVATECAR', 'LGV', 'HGV', 'TAXI', 'TRACTOR',
+                'COMMERCIAL', 'GOODSVEHICLE', 'TRANSPORT', 'BUS',
+            ], true),
+            'manufacturers', 'models', 'vehicle_classes', 'body_types',
+            'colours', 'rto_offices' => preg_match('/[A-Z]/', $value) === 1,
+            default => false,
         };
     }
 

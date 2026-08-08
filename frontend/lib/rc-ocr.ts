@@ -88,9 +88,25 @@ export function getOcrMasterControlState(
   };
 }
 
-type OcrMasterLists = Partial<
+export type OcrMasterLists = Partial<
   Record<OcrMasterKind, readonly OcrMasterOption[]>
 >;
+
+export function mergeOcrMasterOptions(
+  current: OcrMasterLists,
+  incoming: Partial<Record<OcrMasterKind, OcrMasterOption>> = {},
+): OcrMasterLists {
+  const next: OcrMasterLists = { ...current };
+  for (const [type, master] of Object.entries(incoming)) {
+    if (!master) continue;
+    const key = type as OcrMasterKind;
+    next[key] = [
+      ...(next[key] ?? []).filter((option) => option.id !== master.id),
+      master,
+    ];
+  }
+  return next;
+}
 
 const MASTER_BINDINGS: ReadonlyArray<{
   type: OcrMasterKind;

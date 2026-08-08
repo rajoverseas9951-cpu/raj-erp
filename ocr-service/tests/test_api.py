@@ -169,15 +169,15 @@ def test_sequential_rc_requests_never_share_parsed_fields() -> None:
                 if self.calls == 1
                 else [
                     "REGN NO: GJ08BB6056",
-                    "Date of Reg.: 06/12/2016",
+                    "Date of Reg.: 06/Dec/2016",
                     "Reg. Validity: 05/12/2031",
-                    "Fuel: DIESEL",
+                    "Vehicle Class: TRACTOR (AGRI)",
+                    "Fuel Used",
                     "Maker's Name: ESCORTS LTD",
-                    "Model Name: FARMTRAC 45",
-                    "Cubic Capacity: 45",
+                    "Model Name: FARMTRAC45",
                     "No. of Cylinders: 3",
-                    "Month-Year of Mfg. JANUARY 2016",
                     "Financier: L AND T FINANCE LTD",
+                    "Registration Authority: PALANPUR",
                 ]
             )
             return [
@@ -202,13 +202,17 @@ def test_sequential_rc_requests_never_share_parsed_fields() -> None:
     assert motorcycle["fields"]["cubic_capacity"] == "97.20"
     assert motorcycle["fields"]["unladen_weight"] == "109"
     assert tractor["fields"]["vehicle_number"] == "GJ08BB6056"
-    assert tractor["fields"]["fuel_type"] == "DIESEL"
+    assert tractor["fields"]["registration_date"] == "06/DEC/2016"
+    assert tractor["fields"]["vehicle_class"] == "TRACTOR (AGRI)"
+    assert tractor["fields"]["fuel_type"] is None
     assert tractor["fields"]["manufacturer"] == "ESCORTS LTD"
-    assert tractor["fields"]["manufacturing_month"] == "01"
-    assert tractor["fields"]["manufacturing_year"] == "2016"
+    assert tractor["fields"]["model"] == "FARMTRAC45"
+    assert tractor["fields"]["manufacturing_month"] is None
+    assert tractor["fields"]["manufacturing_year"] is None
     assert tractor["fields"]["number_of_cylinders"] == "3"
     assert tractor["fields"]["financier"] == "L AND T FINANCE LTD"
-    assert tractor["fields"]["cubic_capacity"] == "45"
+    assert tractor["fields"]["registration_authority"] == "PALANPUR"
+    assert tractor["fields"]["cubic_capacity"] is None
     assert tractor["fields"]["wheel_base"] is None
     assert tractor["fields"]["horse_power"] is None
     assert tractor["fields"]["unladen_weight"] is None

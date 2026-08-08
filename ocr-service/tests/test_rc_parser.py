@@ -242,3 +242,32 @@ def test_commercial_combined_weight_columns_remain_independent() -> None:
     assert parsed.fields.financier == "COMMERCIAL FINANCE LTD"
     assert parsed.fields.chassis_number == "MA1AB2CD3EF456789"
     assert parsed.fields.engine_number == "ENG1234567"
+
+
+def test_tractor_labels_do_not_leak_model_or_fuel_text_into_numeric_fields() -> None:
+    parsed = parse_rc(
+        [
+            line("Reg. No. GJ08BB6056", 0.98),
+            line("Date of Reg. 06/Dec/2016", 0.96),
+            line("Vehicle Class: TRACTOR (AGRI)", 0.97),
+            line("Maker's Name: ESCORTS LTD", 0.96),
+            line("Model Name: FARMTRAC45", 0.95),
+            line("Fuel Used", 0.94),
+            line("No. of Cylinders", 0.94),
+            line("3", 0.93),
+            line("Registration Authority PALANPUR", 0.95),
+        ]
+    )
+
+    assert parsed.fields.vehicle_number == "GJ08BB6056"
+    assert parsed.fields.registration_date == "06/DEC/2016"
+    assert parsed.fields.vehicle_class == "TRACTOR (AGRI)"
+    assert parsed.fields.manufacturer == "ESCORTS LTD"
+    assert parsed.fields.model == "FARMTRAC45"
+    assert parsed.fields.registration_authority == "PALANPUR"
+    assert parsed.fields.number_of_cylinders == "3"
+    assert parsed.fields.fuel_type is None
+    assert parsed.fields.manufacturing_year is None
+    assert parsed.fields.cubic_capacity is None
+    assert parsed.fields.unladen_weight is None
+    assert parsed.fields.gross_vehicle_weight is None

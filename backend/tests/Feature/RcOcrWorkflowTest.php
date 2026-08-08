@@ -175,6 +175,7 @@ class RcOcrWorkflowTest extends TestCase
         Http::fake([
             'http://ocr.internal/v1/ocr/rc' => Http::sequence()
                 ->push($this->paddlePayload())
+                ->push($this->tractorPayload())
                 ->push($this->tractorPayload()),
         ]);
         config(['services.paddleocr.url' => 'http://ocr.internal']);
@@ -196,14 +197,14 @@ class RcOcrWorkflowTest extends TestCase
             ->assertJsonPath('data.fields.owner_name', 'KARSHANBHAI')
             ->assertJsonPath('data.fields.father_or_spouse_name', 'GANESHBHAI KALA')
             ->assertJsonPath('data.fields.address', 'AT-KHODA, TA-THARAD, BANASKANTHA, 385565')
+            ->assertJsonPath('data.fields.vehicle_type', 'tractor')
             ->assertJsonPath('data.fields.vehicle_class', 'TRACTOR (AGRI)')
             ->assertJsonPath('data.fields.fuel_type', 'DIESEL')
             ->assertJsonPath('data.fields.seating_capacity', '1')
             ->assertJsonPath('data.fields.manufacturer', 'ESCORTS LTD')
-            ->assertJsonPath('data.fields.model', 'FARMTRAC 45')
+            ->assertJsonPath('data.fields.model', 'FARMTRAC45')
             ->assertJsonPath('data.fields.colour', 'BLUE')
             ->assertJsonPath('data.fields.vehicle_category', 'TRACTOR (OPEN)')
-            ->assertJsonPath('data.fields.cubic_capacity', '45')
             ->assertJsonPath('data.fields.number_of_cylinders', '3')
             ->assertJsonPath('data.fields.manufacturing_year', '2016')
             ->assertJsonPath('data.fields.financier', 'L AND T FINANCE LTD')
@@ -215,6 +216,7 @@ class RcOcrWorkflowTest extends TestCase
             ->assertJsonMissingPath('data.fields.manufacturing_month')
             ->assertJsonMissingPath('data.fields.wheel_base')
             ->assertJsonMissingPath('data.fields.horse_power')
+            ->assertJsonMissingPath('data.fields.cubic_capacity')
             ->assertJsonMissingPath('data.fields.unladen_weight')
             ->assertJsonMissingPath('data.fields.emission_norms');
 
@@ -237,6 +239,22 @@ class RcOcrWorkflowTest extends TestCase
             $motorcycle->json('data.fields.model_id'),
             $tractor->json('data.fields.model_id')
         );
+
+        $masterCount = DB::table('vehicle_masters')
+            ->where('tenant_id', $user->tenant_id)
+            ->count();
+        $repeated = $this->actingAs($user)->post('/api/v1/ocr', [
+            'document_type' => 'rc',
+            'images' => [UploadedFile::fake()->create('tractor-repeat.jpg', 100, 'image/jpeg')],
+        ])->assertOk();
+
+        $this->assertSame($tractor->json('data.fields.vehicle_type_id'), $repeated->json('data.fields.vehicle_type_id'));
+        $this->assertSame($tractor->json('data.fields.manufacturer_id'), $repeated->json('data.fields.manufacturer_id'));
+        $this->assertSame($tractor->json('data.fields.model_id'), $repeated->json('data.fields.model_id'));
+        $this->assertSame(
+            $masterCount,
+            DB::table('vehicle_masters')->where('tenant_id', $user->tenant_id)->count()
+        );
     }
 
     public function test_unresolved_valid_master_text_is_returned_without_an_id(): void
@@ -253,6 +271,27 @@ class RcOcrWorkflowTest extends TestCase
         $this->assertSame('FARMTRAC 45', $resolved['fields']['model']);
         $this->assertArrayNotHasKey('model_id', $resolved['fields']);
         $this->assertSame([], $resolved['masters']);
+    }
+
+    public function test_low_confidence_master_text_is_editable_but_not_created_and_invalid_fuel_is_rejected(): void
+    {
+        $user = User::factory()->create(['is_admin' => true]);
+
+        $resolved = app(VehicleMasterResolver::class)->resolveOcrFields(
+            ['manufacturer' => 'ESCORTS LTD', 'fuel_type' => 'USED'],
+            (string) $user->tenant_id,
+            (string) $user->id,
+            ['manufacturer' => 0.51, 'fuel_type' => 0.99],
+        );
+
+        $this->assertSame('ESCORTS LTD', $resolved['fields']['manufacturer']);
+        $this->assertArrayNotHasKey('manufacturer_id', $resolved['fields']);
+        $this->assertArrayNotHasKey('fuel_type', $resolved['fields']);
+        $this->assertSame([], $resolved['masters']);
+        $this->assertDatabaseMissing('vehicle_masters', [
+            'tenant_id' => $user->tenant_id,
+            'name' => 'USED',
+        ]);
     }
 
     public function test_commercial_weight_aliases_validate_and_legacy_fields_remain_compatible(): void
@@ -377,7 +416,7 @@ class RcOcrWorkflowTest extends TestCase
     {
         $fields = [
             'vehicle_number' => 'GJ08BB6056',
-            'registration_date' => '06/12/2016',
+            'registration_date' => '06/Dec/2016',
             'registration_valid_upto' => '05/12/2031',
             'chassis_number' => 'T052358130',
             'engine_number' => 'E2363463',
@@ -385,17 +424,13 @@ class RcOcrWorkflowTest extends TestCase
             'father_or_spouse_name' => 'GANESHBHAI KALA',
             'address' => 'AT-KHODA, TA-THARAD, BANASKANTHA, 385565',
             'vehicle_class' => 'TRACTOR (AGRI)',
-            'fuel_type' => 'DIESEL',
+            'fuel_type' => 'USED',
             'seating_capacity' => '1',
             'manufacturer' => 'ESCORTS LTD',
-            'model' => 'FARMTRAC 45',
+            'model' => 'FARMTRAC45',
             'colour' => 'BLUE',
             'body_type' => 'TRACTOR (OPEN)',
-            'cubic_capacity' => '45',
             'number_of_cylinders' => '3',
-            'manufacturing_month_year' => 'JANUARY 2016',
-            'manufacturing_month' => '01',
-            'manufacturing_year' => '2016',
             'financier' => 'L AND T FINANCE LTD',
             'registration_authority' => 'PALANPUR',
         ];

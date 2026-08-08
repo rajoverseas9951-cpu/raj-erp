@@ -108,8 +108,7 @@ class PaddleOcrIntegrationTest extends TestCase
             $this->assertArrayNotHasKey($removed, $result['fields']);
         }
 
-        Http::assertSent(fn (Request $request) =>
-            $request->method() === 'POST'
+        Http::assertSent(fn (Request $request) => $request->method() === 'POST'
             && $request->url() === 'http://ocr.internal/v1/ocr/rc'
             && str_contains((string) $request->header('Content-Type')[0], 'multipart/form-data')
         );
@@ -205,4 +204,69 @@ class PaddleOcrIntegrationTest extends TestCase
         }
     }
 
+    public function test_tractor_context_supplies_safe_editable_fallbacks_without_numeric_leakage(): void
+    {
+        $fields = [
+            'vehicle_number' => 'GJ08BB6056',
+            'registration_date' => '06/Dec/2016',
+            'registration_authority' => 'PALANPUR',
+            'vehicle_class' => 'TRACTOR (AGRI)',
+            'manufacturer' => 'ESCORTS LTD',
+            'model' => 'FARMTRAC45',
+            'fuel_type' => 'USED',
+            'number_of_cylinders' => '3',
+        ];
+        Http::fake([
+            'http://ocr.internal/v1/ocr/rc' => Http::response([
+                'success' => true,
+                'fields' => $fields,
+                'field_confidence' => array_fill_keys(array_keys($fields), 0.94),
+                'raw_text' => '',
+                'ocr_lines' => [],
+                'overall_confidence' => 0.94,
+                'warnings' => [],
+            ]),
+        ]);
+
+        $result = (new OcrService)->scan([
+            UploadedFile::fake()->create('tractor.jpg', 100, 'image/jpeg'),
+        ], 'rc');
+
+        $this->assertSame('GJ08BB6056', $result['fields']['vehicle_number']);
+        $this->assertSame('2016-12-06', $result['fields']['registration_date']);
+        $this->assertSame('tractor', $result['fields']['vehicle_type']);
+        $this->assertSame('TRACTOR (AGRI)', $result['fields']['vehicle_class']);
+        $this->assertSame('ESCORTS LTD', $result['fields']['manufacturer']);
+        $this->assertSame('FARMTRAC45', $result['fields']['model']);
+        $this->assertSame('DIESEL', $result['fields']['fuel_type']);
+        $this->assertSame('2016', $result['fields']['manufacturing_year']);
+        $this->assertSame('3', $result['fields']['number_of_cylinders']);
+        $this->assertArrayNotHasKey('cubic_capacity', $result['fields']);
+        $this->assertSame(0.55, $result['field_confidence']['manufacturing_year']);
+        $this->assertSame(0.70, $result['field_confidence']['fuel_type']);
+        $this->assertStringContainsString('DIESEL', implode(' ', $result['warnings']));
+        $this->assertStringContainsString('Registration Date', implode(' ', $result['warnings']));
+    }
+
+    public function test_low_confidence_tractor_text_does_not_trigger_type_or_fuel_defaults(): void
+    {
+        Http::fake([
+            'http://ocr.internal/v1/ocr/rc' => Http::response([
+                'success' => true,
+                'fields' => ['vehicle_class' => 'TRACTOR (AGRI)'],
+                'field_confidence' => ['vehicle_class' => 0.51],
+                'raw_text' => '',
+                'ocr_lines' => [],
+                'overall_confidence' => 0.51,
+                'warnings' => [],
+            ]),
+        ]);
+
+        $result = (new OcrService)->scan([
+            UploadedFile::fake()->create('uncertain.jpg', 100, 'image/jpeg'),
+        ], 'rc');
+
+        $this->assertArrayNotHasKey('vehicle_type', $result['fields']);
+        $this->assertArrayNotHasKey('fuel_type', $result['fields']);
+    }
 }

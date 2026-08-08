@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 // Node's built-in TypeScript runner requires the explicit extension.
 // @ts-expect-error TypeScript's bundler mode omits runtime `.ts` extensions in application code.
-import { applyOcrPrefill, buildVehicleFormPayload, findMatchingMasterId, getOcrMasterControlState, isCommercialVehicle, resolveOcrMasterIds } from "../lib/rc-ocr.ts";
+import { applyOcrPrefill, buildVehicleFormPayload, findMatchingMasterId, getOcrMasterControlState, isCommercialVehicle, mergeOcrMasterOptions, resolveOcrMasterIds } from "../lib/rc-ocr.ts";
 
 test("OCR prefill preserves customer and user-edited fields", () => {
   const current = {
@@ -136,6 +136,61 @@ test("valid OCR master text remains visible until its master ID resolves", () =>
   assert.equal(resolved.manufacturer_id, "escorts-id");
   assert.equal(resolved.model, "FARMTRAC 45");
   assert.equal(resolved.model_id, "farmtrac-45-id");
+});
+
+test("backend-created OCR masters merge into options and select immediately", () => {
+  const returned = {
+    rto_offices: { id: "pal-id", name: "PALANPUR" },
+    vehicle_types: { id: "tractor-id", name: "TRACTOR" },
+    vehicle_classes: { id: "class-id", name: "TRACTOR (AGRI)" },
+    body_types: { id: "body-id", name: "TRACTOR (OPEN)" },
+    manufacturers: { id: "escorts-id", name: "ESCORTS LTD" },
+    models: { id: "farmtrac-id", name: "FARMTRAC45", parent_id: "escorts-id" },
+    colours: { id: "blue-id", name: "BLUE" },
+    fuel_types: { id: "diesel-id", name: "DIESEL" },
+  };
+  const masterTypes = [
+    "rto_offices", "vehicle_types", "vehicle_classes", "body_types",
+    "manufacturers", "models", "colours", "fuel_types",
+  ] as const;
+  const fields = {
+    registration_authority: "PALANPUR",
+    rto_office_id: "pal-id",
+    vehicle_type: "tractor",
+    vehicle_type_id: "tractor-id",
+    vehicle_class: "TRACTOR (AGRI)",
+    vehicle_class_id: "class-id",
+    vehicle_category: "TRACTOR (OPEN)",
+    vehicle_category_id: "body-id",
+    manufacturer: "ESCORTS LTD",
+    manufacturer_id: "escorts-id",
+    model: "FARMTRAC45",
+    model_id: "farmtrac-id",
+    colour: "BLUE",
+    colour_id: "blue-id",
+    fuel_type: "DIESEL",
+    fuel_type_id: "diesel-id",
+  };
+
+  const options = mergeOcrMasterOptions({}, returned);
+  const visible = resolveOcrMasterIds(fields, options);
+  for (const type of masterTypes) {
+    assert.equal(options[type]?.length, 1);
+    assert.equal(options[type]?.[0]?.id, returned[type].id);
+  }
+  assert.equal(visible.vehicle_type_id, "tractor-id");
+  assert.equal(visible.manufacturer_id, "escorts-id");
+  assert.equal(visible.model_id, "farmtrac-id");
+  assert.equal(getOcrMasterControlState(
+    visible.model_id,
+    visible.model,
+    options.models ?? [],
+  ).visibleText, "FARMTRAC45");
+
+  const repeated = mergeOcrMasterOptions(options, returned);
+  for (const type of masterTypes) {
+    assert.equal(repeated[type]?.length, 1, `${type} must not duplicate`);
+  }
 });
 
 test("the Gujarat motorcycle values drive visible form inputs and selects", async () => {

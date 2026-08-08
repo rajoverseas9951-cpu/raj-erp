@@ -90,7 +90,7 @@ FIELD_RULES: tuple[FieldRule, ...] = (
     FieldRule(
         "fuel_type",
         _label(r"\b(?:TYPE\s+OF\s+)?FUEL(?:\s+TYPE)?\b"),
-        "text",
+        "fuel",
     ),
     FieldRule(
         "emission_norms",
@@ -114,7 +114,7 @@ FIELD_RULES: tuple[FieldRule, ...] = (
     FieldRule(
         "cubic_capacity",
         _label(r"\b(?:CUBIC\s+CAPACITY|CUBIC\s+CAP\.?|CC)\b"),
-        "number",
+        "capacity",
     ),
     FieldRule(
         "horse_power",
@@ -129,12 +129,12 @@ FIELD_RULES: tuple[FieldRule, ...] = (
     FieldRule(
         "number_of_cylinders",
         _label(r"\b(?:NO\.?\s*OF\s+CYLINDERS?|NUMBER\s+OF\s+CYLINDERS?)\b"),
-        "seats",
+        "cylinders",
     ),
     FieldRule(
         "unladen_weight",
         _label(r"\b(?:UNLADEN|ULW)\s*(?:WEIGHT|WT\.?)?\b"),
-        "number",
+        "weight",
     ),
     FieldRule(
         "gross_vehicle_weight",
@@ -142,7 +142,7 @@ FIELD_RULES: tuple[FieldRule, ...] = (
             r"\b(?:GROSS\s+(?:VEHICLE\s+)?WEIGHT|GROSS\s+WT\.?|GVW|"
             r"LADEN\s+(?:VEHICLE\s+)?WEIGHT)\b"
         ),
-        "number",
+        "weight",
     ),
     FieldRule(
         "registration_authority",
@@ -500,6 +500,25 @@ def _normalise_value(value: str, value_type: str) -> str | None:
             re.IGNORECASE,
         )
         return match.group(0).upper() if match else None
+    if value_type == "fuel":
+        upper = cleaned.upper()
+        if re.search(r"PETROL.*CNG|CNG.*PETROL|DUAL.*CNG", upper):
+            return "PETROL/CNG"
+        if re.search(r"PETROL.*LPG|LPG.*PETROL|DUAL.*LPG", upper):
+            return "PETROL/LPG"
+        for pattern, fuel in (
+            (r"\bDIESEL\b", "DIESEL"),
+            (r"\bPETROL\b", "PETROL"),
+            (r"\bCNG\b", "CNG"),
+            (r"\bLPG\b", "LPG"),
+            (r"\b(?:ELECTRIC|BATTERY|EV)\b", "ELECTRIC"),
+            (r"\bHYBRID\b", "HYBRID"),
+            (r"\bHYDROGEN\b", "HYDROGEN"),
+            (r"\bFLEX\s*FUEL\b", "FLEX FUEL"),
+        ):
+            if re.search(pattern, upper):
+                return fuel
+        return None
     if value_type in {"chassis", "engine"}:
         compact = re.sub(r"[^A-Z0-9]", "", cleaned.upper())
         minimum = 8 if value_type == "chassis" else 5
@@ -509,6 +528,29 @@ def _normalise_value(value: str, value_type: str) -> str | None:
     if value_type == "seats":
         match = re.search(r"\b\d{1,2}\b", cleaned)
         return match.group(0) if match else None
+    if value_type in {"capacity", "weight", "cylinders"}:
+        match = re.fullmatch(
+            r"\s*(?:\(\s*(?:CC|KG|KGS)\s*\)\s*)?"
+            r"(\d+(?:\.\d+)?)(\s*(?:CC|KG|KGS|CYLINDERS?)?)\s*",
+            cleaned,
+            re.IGNORECASE,
+        )
+        if not match:
+            return None
+        number = match.group(1)
+        numeric = float(number)
+        if value_type == "capacity" and not 20 <= numeric <= 20_000:
+            return None
+        if value_type == "weight" and not 20 <= numeric <= 100_000:
+            return None
+        if value_type == "cylinders" and not numeric.is_integer():
+            return None
+        if value_type == "cylinders" and not 1 <= int(numeric) <= 16:
+            return None
+        if value_type == "cylinders":
+            return str(int(numeric))
+        suffix = re.sub(r"\s+", " ", match.group(2).upper()).strip()
+        return f"{number} {suffix}".strip()
     if value_type == "number":
         match = _NUMBER_WITH_UNIT.search(cleaned)
         return re.sub(r"\s+", " ", match.group(0).upper()) if match else None

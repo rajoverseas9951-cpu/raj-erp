@@ -12,6 +12,7 @@ import {
   findMatchingMasterId,
   getOcrMasterControlState,
   isCommercialVehicle,
+  mergeOcrMasterOptions,
   resolveOcrMasterIds,
 } from "@/lib/rc-ocr";
 import { Vehicle, vehicleApi } from "@/lib/vehicles";
@@ -539,11 +540,16 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
           ) === i,
       );
       const result = await scanDocument("rc", unique);
+      const mergedMasters = mergeOcrMasterOptions(
+        masters,
+        result.masters,
+      ) as Record<VehicleMasterType, VehicleMaster[]>;
       const extracted = resolveOcrMasterIds(
         { ...result.fields },
-        masters,
+        mergedMasters,
         editedFields.current,
       );
+      setMasters(mergedMasters);
       console.info("rc_ocr_response", {
         fields: extracted,
         field_confidence: result.field_confidence ?? {},
@@ -573,20 +579,6 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
           ),
         ),
       );
-      if (result.masters) {
-        setMasters((current) => {
-          const next = { ...current };
-          for (const [type, master] of Object.entries(result.masters ?? {})) {
-            if (!master) continue;
-            const key = type as VehicleMasterType;
-            next[key] = [
-              ...next[key].filter((item) => item.id !== master.id),
-              master,
-            ];
-          }
-          return next;
-        });
-      }
       const count = Object.keys(extracted).length;
       setSuccess(
         count
