@@ -9,98 +9,30 @@ import {isCommercialVehicle} from '@/lib/rc-ocr';
 const quickOrder:VehicleModule[]=['insurance','puc','fitness','permit','tax','rto_process'];
 
 export default function VehicleProfilePage(){
- const {vehicleId}=useParams<{vehicleId:string}>();
- const router=useRouter();
- const [vehicle,setVehicle]=useState<Vehicle|null>(null);
- const [profile,setProfile]=useState<OperationalProfile|null>(null);
- const [error,setError]=useState('');
- const [mutating,setMutating]=useState(false);
+ const {vehicleId}=useParams<{vehicleId:string}>(); const router=useRouter();
+ const [vehicle,setVehicle]=useState<Vehicle|null>(null); const [profile,setProfile]=useState<OperationalProfile|null>(null); const [error,setError]=useState(''); const [mutating,setMutating]=useState(false);
  useEffect(()=>{Promise.all([vehicleApi.get(vehicleId),vehicleOperationsApi.profile(vehicleId)]).then(([v,p])=>{setVehicle(v);setProfile(p)}).catch(e=>setError(e instanceof Error?e.message:'Vehicle profile could not be loaded.'))},[vehicleId]);
  const age=useMemo(()=>vehicle?.manufacturing_year?Math.max(0,new Date().getFullYear()-vehicle.manufacturing_year):null,[vehicle]);
- if(error)return <main className="p-4 md:p-6"><div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</div></main>;
- if(!vehicle||!profile)return <main className="p-6 text-sm text-slate-500">Loading vehicle profile...</main>;
- const commercial=isCommercialVehicle(vehicle);
- const availableModules=new Set(Object.values(profile.applicability.groups).flat());
- const quickModules=quickOrder.filter(module=>availableModules.has(module));
+ if(error)return <main className="p-4"><div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</div></main>; if(!vehicle||!profile)return <main className="p-6 text-sm text-slate-500">Loading vehicle profile...</main>;
+ const commercial=isCommercialVehicle(vehicle), availableModules=new Set(Object.values(profile.applicability.groups).flat()), quickModules=quickOrder.filter(m=>availableModules.has(m));
  async function archive(){if(!confirm('Archive this vehicle? History will remain available.'))return;setMutating(true);try{await vehicleApi.archive(vehicle!.id);router.push('/vehicles');router.refresh()}catch(e){setError(e instanceof Error?e.message:'Vehicle could not be archived.')}finally{setMutating(false)}}
- const owner=`${vehicle.customer?.first_name||''} ${vehicle.customer?.last_name||''}`.trim()||'Customer not linked';
- const description=[vehicle.manufacturer,vehicle.model].filter(Boolean).join(' · ')||clean(vehicle.vehicle_category)||'Vehicle';
- const visual=vehicleVisual(vehicle);
-
- return <main className="min-h-screen bg-[#f5f8fd] text-[#0b1f46]">
-  <div className="mx-auto max-w-7xl px-3 py-3 sm:px-5 sm:py-5 md:px-7">
-   <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
-    <a href="/vehicles" className="inline-flex items-center gap-2 text-base font-black text-[#0b1f46] sm:text-xl">← <span>Vehicle Profile</span></a>
-    <div className="flex gap-2"><a href={`/vehicles/${vehicle.id}/edit`} className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-bold shadow-sm">✎ Edit</a><button disabled={mutating} onClick={()=>void archive()} className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-sm font-bold text-amber-700 disabled:opacity-50">▣ Archive</button><a href="/vehicles" className="hidden rounded-xl bg-[#082653] px-4 py-2 text-sm font-bold text-white shadow-sm sm:inline-flex">All Vehicles</a></div>
-   </header>
-
-   <section className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_18px_50px_rgba(29,55,95,.08)]">
-    <div className="grid lg:grid-cols-[230px_1fr_260px] lg:items-stretch">
-     <div className="flex items-center justify-center border-b border-slate-100 bg-[linear-gradient(145deg,#fbfdff,#f1f6ff)] p-5 lg:border-b-0 lg:border-r">
-      <div className="relative flex min-h-40 w-full max-w-[190px] flex-col items-center justify-center rounded-[24px] border border-slate-200 bg-white px-4 py-5 shadow-sm">
-       <div className="text-[72px] leading-none drop-shadow-sm" aria-label={visual.label}>{visual.icon}</div>
-       <p className="mt-3 max-w-full truncate text-center text-[11px] font-black uppercase tracking-[.12em] text-slate-500">{visual.label}</p>
-       <span className="mt-3 rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-emerald-700">Active</span>
-      </div>
-     </div>
-
-     <div className="p-5 sm:p-7">
-      <div className="flex flex-wrap items-center gap-3"><h1 className="text-3xl font-black tracking-tight sm:text-4xl">{vehicle.vehicle_number}</h1><span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase text-emerald-700">Active</span></div>
-      <div className="mt-6 grid gap-4 text-sm sm:text-base"><Identity icon="♙" value={owner}/><Identity icon="⌕" value={vehicle.customer?.mobile||'Mobile not available'}/><Identity icon={visual.smallIcon} value={`${description}${vehicle.fuel_type?` · ${clean(vehicle.fuel_type)}`:''}`}/></div>
-     </div>
-
-     <div className="grid grid-cols-3 border-t border-slate-100 bg-[#fbfcfe] lg:grid-cols-1 lg:border-l lg:border-t-0">
-      <MiniFact icon="▣" label="Vehicle Age" value={age===null?'—':`${age} Year${age===1?'':'s'}`}/>
-      <MiniFact icon="▦" label="Registration Date" value={formatDate(vehicle.registration_date)}/>
-      <MiniFact icon="🏛" label="RTO" value={vehicle.registration_authority||'—'}/>
-     </div>
-    </div>
-
-    <nav className="flex gap-1 overflow-x-auto border-t border-slate-100 px-3 py-2 sm:px-5">
-     <Tab href="#overview" label="Overview" active/>
-     {availableModules.has('insurance')&&<Tab href={operationHref(vehicle.id,'insurance')} label="Insurance"/>}
-     {(availableModules.has('fitness')||availableModules.has('permit')||availableModules.has('puc'))&&<Tab href="#quick-actions" label="Compliance"/>}
-     {availableModules.has('rto_process')&&<Tab href={operationHref(vehicle.id,'rto_process')} label="RTO"/>}
-     {availableModules.has('payment')&&<Tab href={operationHref(vehicle.id,'payment')} label="Payments"/>}
-    </nav>
-   </section>
-
-   <section id="overview" className="mt-4 grid grid-cols-3 gap-2 sm:gap-3"><Metric tone="blue" label="Total Billed" value={`₹${profile.balances.billed.toFixed(2)}`} note="All time"/><Metric tone="green" label="Total Received" value={`₹${profile.balances.received.toFixed(2)}`} note="All time"/><Metric tone="red" label="Outstanding" value={`₹${profile.balances.outstanding.toFixed(2)}`} note="Pending balance"/></section>
-
-   {quickModules.length>0&&<section id="quick-actions" className="mt-4 rounded-[22px] border border-slate-200 bg-white p-4 shadow-sm sm:p-6"><h2 className="text-lg font-black sm:text-xl">Quick Actions</h2><div className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-6">{quickModules.map(module=><QuickAction key={module} label={moduleLabels[module]} href={operationHref(vehicle.id,module)} status={profile.modules[module]?.status}/>)}</div></section>}
-
-   <section className="mt-4 overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm">
-    <div className="border-b border-slate-100 px-4 py-4 sm:px-6"><h2 className="text-lg font-black sm:text-xl">Vehicle Details</h2></div>
-    <dl className="grid sm:grid-cols-2">
-      <Info icon="🏛" k="Registration Authority" v={vehicle.registration_authority}/><Info icon={visual.smallIcon} k="Vehicle Class" v={vehicle.vehicle_class}/><Info icon="🚚" k="Vehicle Type" v={clean(vehicle.vehicle_type)}/><Info icon="▣" k="Category" v={clean(vehicle.vehicle_category)}/><Info icon="⌘" k="Chassis Number" v={vehicle.chassis_number} mono/><Info icon="⚙" k="Engine Number" v={vehicle.engine_number} mono/><Info icon="▦" k="Manufacturing Year" v={vehicle.manufacturing_year}/><Info icon="●" k="Colour" v={vehicle.colour}/><Info icon="♿" k="Seating Capacity" v={vehicle.seating_capacity}/><Info icon="⚖" k="Unladen Weight (kg)" v={vehicle.unladen_weight}/>{commercial&&<Info icon="⚖" k="Laden / Gross Vehicle Weight (kg)" v={vehicle.gross_weight}/>}<Info icon="₹" k="Financier" v={vehicle.financier}/>
-    </dl>
-   </section>
-  </div>
- </main>;
+ const owner=`${vehicle.customer?.first_name||''} ${vehicle.customer?.last_name||''}`.trim()||'Customer not linked'; const description=[vehicle.manufacturer,vehicle.model].filter(Boolean).join(' · ')||clean(vehicle.vehicle_category)||'Vehicle'; const visual=vehicleVisual(vehicle);
+ return <main className="min-h-screen bg-[#f5f8fd] text-[#0b1f46]"><div className="mx-auto max-w-7xl px-3 py-3 sm:px-5 sm:py-5 md:px-7">
+  <header className="mb-4 flex flex-wrap items-center justify-between gap-3"><a href="/vehicles" className="inline-flex items-center gap-2 text-base font-black sm:text-xl">← <span>Vehicle Profile</span></a><div className="flex gap-2"><a href={`/vehicles/${vehicle.id}/edit`} className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-bold shadow-sm">✎ Edit</a><button disabled={mutating} onClick={()=>void archive()} className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-sm font-bold text-amber-700">▣ Archive</button></div></header>
+  <section className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_18px_50px_rgba(29,55,95,.08)]"><div className="grid lg:grid-cols-[260px_1fr_260px]">
+   <div className="flex items-center justify-center border-b border-slate-100 bg-[linear-gradient(145deg,#fbfdff,#eef5ff)] p-5 lg:border-b-0 lg:border-r"><div className="relative flex min-h-44 w-full max-w-[220px] flex-col items-center justify-center rounded-[24px] border border-slate-200 bg-white px-4 py-5 shadow-sm"><VehicleSilhouette kind={visual.kind}/><p className="mt-2 max-w-full truncate text-center text-xs font-black uppercase tracking-[.1em] text-slate-600">{visual.label}</p><p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-blue-500">{visual.family}</p><span className="mt-3 rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase text-emerald-700">● Active</span></div></div>
+   <div className="p-5 sm:p-7"><div className="flex flex-wrap items-center gap-3"><h1 className="text-3xl font-black tracking-tight sm:text-4xl">{vehicle.vehicle_number}</h1></div><div className="mt-6 grid gap-4"><Identity icon="♙" value={owner}/><Identity icon="☎" value={vehicle.customer?.mobile||'Mobile not available'}/><Identity icon={visual.icon} value={`${description}${vehicle.fuel_type?` · ${clean(vehicle.fuel_type)}`:''}`}/></div></div>
+   <div className="grid grid-cols-3 border-t border-slate-100 bg-[#fbfcfe] lg:grid-cols-1 lg:border-l lg:border-t-0"><MiniFact label="Vehicle Age" value={age===null?'—':`${age} Year${age===1?'':'s'}`}/><MiniFact label="Registration Date" value={formatDate(vehicle.registration_date)}/><MiniFact label="RTO" value={vehicle.registration_authority||'—'}/></div>
+  </div><nav className="flex gap-1 overflow-x-auto border-t border-slate-100 px-3 py-2 sm:px-5"><Tab href="#overview" label="Overview" active/>{availableModules.has('insurance')&&<Tab href={operationHref(vehicle.id,'insurance')} label="Insurance"/>}{(availableModules.has('fitness')||availableModules.has('permit')||availableModules.has('puc'))&&<Tab href="#quick-actions" label="Compliance"/>}{availableModules.has('rto_process')&&<Tab href={operationHref(vehicle.id,'rto_process')} label="RTO"/>}</nav></section>
+  <section id="overview" className="mt-4 grid grid-cols-3 gap-2"><Metric label="Total Billed" value={`₹${profile.balances.billed.toFixed(2)}`}/><Metric label="Total Received" value={`₹${profile.balances.received.toFixed(2)}`}/><Metric label="Outstanding" value={`₹${profile.balances.outstanding.toFixed(2)}`}/></section>
+  {quickModules.length>0&&<section id="quick-actions" className="mt-4 rounded-[22px] border border-slate-200 bg-white p-4 shadow-sm sm:p-6"><h2 className="text-lg font-black">Quick Actions</h2><div className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-6">{quickModules.map(m=><QuickAction key={m} label={moduleLabels[m]} href={operationHref(vehicle.id,m)} status={profile.modules[m]?.status}/>)}</div></section>}
+  <section className="mt-4 overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-100 px-4 py-4 sm:px-6"><h2 className="text-lg font-black">Vehicle Details</h2></div><dl className="grid sm:grid-cols-2"><Info k="Registration Authority" v={vehicle.registration_authority}/><Info k="Vehicle Class" v={vehicle.vehicle_class}/><Info k="Vehicle Type" v={clean(vehicle.vehicle_type)}/><Info k="Category" v={clean(vehicle.vehicle_category)}/><Info k="Chassis Number" v={vehicle.chassis_number}/><Info k="Engine Number" v={vehicle.engine_number}/><Info k="Manufacturing Year" v={vehicle.manufacturing_year}/><Info k="Colour" v={vehicle.colour}/><Info k="Seating Capacity" v={vehicle.seating_capacity}/><Info k="Unladen Weight (kg)" v={vehicle.unladen_weight}/>{commercial&&<Info k="Laden / GVW (kg)" v={vehicle.gross_weight}/>}<Info k="Financier" v={vehicle.financier}/></dl></section>
+ </div></main>;
 }
 
-function clean(value?:string){return value?value.replaceAll('_',' ').replaceAll('-',' ').replace(/\b\w/g,c=>c.toUpperCase()):'—'}
-function formatDate(value?:string){if(!value)return'—';const d=new Date(value);return Number.isNaN(d.getTime())?value:d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}
-
-function vehicleVisual(vehicle:Vehicle){
- const hay=[vehicle.vehicle_type,vehicle.vehicle_category,vehicle.vehicle_class,vehicle.model,vehicle.manufacturer].filter(Boolean).join(' ').toLowerCase();
- if(/ambulance/.test(hay))return{icon:'🚑',smallIcon:'🚑',label:vehicle.model||'Ambulance'};
- if(/tractor/.test(hay))return{icon:'🚜',smallIcon:'🚜',label:vehicle.model||'Tractor'};
- if(/auto|rickshaw|3wn|three wheel|three_wheel/.test(hay))return{icon:'🛺',smallIcon:'🛺',label:vehicle.model||'Auto Rickshaw'};
- if(/bus|school bus|omni bus/.test(hay))return{icon:'🚌',smallIcon:'🚌',label:vehicle.model||'Bus'};
- if(/truck|hgv|goods carrier|goods_carrier|lorry|tipper|dumper/.test(hay))return{icon:'🚛',smallIcon:'🚛',label:vehicle.model||'Goods Vehicle'};
- if(/pickup|pick up|pick_up|lgv|lcv/.test(hay))return{icon:'🛻',smallIcon:'🛻',label:vehicle.model||'Pickup'};
- if(/motor cycle|motorcycle|m-cycle|2wn|two wheel|bike/.test(hay))return{icon:'🏍️',smallIcon:'🏍️',label:vehicle.model||'Motorcycle'};
- if(/scooter|scooty/.test(hay))return{icon:'🛵',smallIcon:'🛵',label:vehicle.model||'Scooter'};
- if(/taxi|cab/.test(hay))return{icon:'🚕',smallIcon:'🚕',label:vehicle.model||'Taxi'};
- if(/van/.test(hay))return{icon:'🚐',smallIcon:'🚐',label:vehicle.model||'Van'};
- return{icon:'🚗',smallIcon:'🚗',label:vehicle.model||'Car'};
-}
-
-function Identity({icon,value}:{icon:string;value:string}){return <div className="flex items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-lg bg-blue-50 text-sm">{icon}</span><span className="font-semibold text-slate-700">{value}</span></div>}
-function MiniFact({icon,label,value}:{icon:string;label:string;value:string}){return <div className="min-w-0 border-r border-slate-100 p-3 last:border-r-0 lg:border-b lg:border-r-0 lg:p-5 lg:last:border-b-0"><div className="flex items-start gap-2 lg:gap-3"><span className="hidden h-8 w-8 shrink-0 place-items-center rounded-lg bg-blue-50 text-sm sm:grid">{icon}</span><div className="min-w-0"><p className="text-[9px] font-bold uppercase tracking-wide text-slate-400 sm:text-[10px]">{label}</p><p className="mt-1 truncate text-xs font-black text-slate-900 sm:text-sm">{value}</p></div></div></div>}
-function Tab({href,label,active=false}:{href:string;label:string;active?:boolean}){return <a href={href} className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-bold ${active?'bg-blue-50 text-blue-700':'text-slate-600 hover:bg-slate-50 hover:text-slate-950'}`}>{label}</a>}
-function Metric({label,value,note,tone}:{label:string;value:string;note:string;tone:'blue'|'green'|'red'}){const styles={blue:'border-blue-100 bg-gradient-to-br from-blue-50 to-white',green:'border-emerald-100 bg-gradient-to-br from-emerald-50 to-white',red:'border-rose-100 bg-gradient-to-br from-rose-50 to-white'}[tone];return <div className={`rounded-[18px] border p-3 shadow-sm sm:p-5 ${styles}`}><p className="text-[10px] font-bold text-slate-500 sm:text-sm">{label}</p><p className="mt-1 text-base font-black sm:mt-2 sm:text-2xl">{value}</p><p className="mt-1 hidden text-xs text-slate-400 sm:block">{note}</p></div>}
-function QuickAction({label,href,status}:{label:string;href:string;status?:string}){const added=status&&status!=='not_added';return <a href={href} className="group rounded-2xl border border-slate-200 bg-white px-2 py-3 text-center transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"><div className="mx-auto grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-lg">{actionIcon(label)}</div><p className="mt-2 truncate text-[11px] font-black sm:text-xs">{label}</p><p className={`mt-1 text-[8px] font-black uppercase tracking-wide ${added?'text-emerald-600':'text-slate-400'}`}>{added?'Added':'Not Added'}</p></a>}
-function actionIcon(label:string){if(label.toLowerCase().includes('insurance'))return'🛡️';if(label.toLowerCase().includes('puc'))return'🌿';if(label.toLowerCase().includes('fitness'))return'✓';if(label.toLowerCase().includes('permit'))return'📄';if(label.toLowerCase().includes('tax'))return'₹';if(label.toLowerCase().includes('rto'))return'🏛️';return'•'}
-function Info({icon,k,v,mono=false}:{icon:string;k:string;v?:string|number;mono?:boolean}){return <div className="flex min-w-0 items-center gap-3 border-b border-slate-100 px-4 py-4 sm:px-6"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-blue-50 text-sm">{icon}</span><div className="min-w-0"><dt className="text-[10px] font-bold text-slate-400">{k}</dt><dd className={`mt-1 break-words text-sm font-black text-slate-800 ${mono?'font-mono tracking-tight':''}`}>{v===0?0:v||'—'}</dd></div></div>}
+type VehicleKind='hatchback'|'sedan'|'suv'|'pickup'|'truck'|'bus'|'bike'|'scooter'|'auto'|'tractor'|'van';
+function vehicleVisual(v:Vehicle){const h=[v.vehicle_type,v.vehicle_category,v.vehicle_class,v.model,v.manufacturer].filter(Boolean).join(' ').toLowerCase();let kind:VehicleKind='sedan',family='CAR',icon='🚗';if(/swift|alto|wagon|baleno|i10|i20|hatch/.test(h)){kind='hatchback';family='HATCHBACK'}else if(/pickup|pick up|bolero pickup|camper|dost|intra|yodha|lgv|lcv/.test(h)){kind='pickup';family='PICKUP';icon='🛻'}else if(/truck|hgv|goods carrier|lorry|tipper|dumper/.test(h)){kind='truck';family='TRUCK';icon='🚛'}else if(/bus/.test(h)){kind='bus';family='BUS';icon='🚌'}else if(/tractor/.test(h)){kind='tractor';family='TRACTOR';icon='🚜'}else if(/auto|rickshaw|three wheel|3wn/.test(h)){kind='auto';family='AUTO RICKSHAW';icon='🛺'}else if(/scooter|scooty|activa|jupiter|access/.test(h)){kind='scooter';family='SCOOTER';icon='🛵'}else if(/motor cycle|motorcycle|bike|2wn|splendor|shine|pulsar/.test(h)){kind='bike';family='MOTORCYCLE';icon='🏍️'}else if(/van|omni|eeco/.test(h)){kind='van';family='VAN';icon='🚐'}else if(/suv|scorpio|creta|brezza|venue|nexon|fortuner|thar|xuv/.test(h)){kind='suv';family='SUV'}return{kind,family,icon,label:[v.manufacturer,v.model].filter(Boolean).join(' ')||family}}
+function VehicleSilhouette({kind}:{kind:VehicleKind}){const paths:Record<VehicleKind,string>={hatchback:'M18 58h8l9-22h47l24 22h8v21H18z M42 40h35l18 18H34z',sedan:'M12 61h13l12-20h48l20 20h13v18H12z M43 45h37l15 16H32z',suv:'M13 57h14l9-23h55l17 23h10v22H13z M42 39h43l12 18H34z',pickup:'M10 57h13l11-20h39l13 20h34v22H10z M40 42h29l10 15H32z',truck:'M8 35h66v42H8z M74 48h27l18 18v11H74z',bus:'M8 27h108v50H8z M18 35h19v20H18z M42 35h19v20H42z M66 35h19v20H66z M90 35h16v20H90z',bike:'M25 72a14 14 0 1 0 0-1m72 1a14 14 0 1 0 0-1M25 71l24-28h25l23 28M49 43l15 28H25m39 0 12-39',scooter:'M28 72a13 13 0 1 0 0-1m66 1a13 13 0 1 0 0-1M28 71h37l13-37h17M65 71h29M77 34h17',auto:'M16 49h14l12-21h43l22 21h10v28H16z M46 34h34l16 15H37z',tractor:'M20 69a17 17 0 1 0 0-1m77 3a11 11 0 1 0 0-1M37 69h49V44H58V27H42v42m44-18h20l9 21',van:'M13 39h72l26 20v19H13z M84 44v20h20M24 47h25v17H24z'};return <svg viewBox="0 0 128 96" className="h-28 w-full max-w-[190px] text-[#174ea6]" fill="currentColor" aria-hidden="true"><path d={paths[kind]} opacity=".12"/><path d={paths[kind]} fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/><circle cx={kind==='bike'||kind==='scooter'?25:31} cy="77" r="9" fill="white" stroke="currentColor" strokeWidth="4"/><circle cx={kind==='bike'?97:kind==='scooter'?94:kind==='tractor'?97:96} cy="77" r="9" fill="white" stroke="currentColor" strokeWidth="4"/></svg>}
+function clean(v?:string){return v?v.replaceAll('_',' ').replaceAll('-',' ').replace(/\b\w/g,c=>c.toUpperCase()):'—'} function formatDate(v?:string){if(!v)return'—';const d=new Date(v);return Number.isNaN(d.getTime())?v:d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
+function Identity({icon,value}:{icon:string;value:string}){return <div className="flex items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-lg bg-blue-50">{icon}</span><span className="font-semibold text-slate-700">{value}</span></div>} function MiniFact({label,value}:{label:string;value:string}){return <div className="min-w-0 border-r border-slate-100 p-3 last:border-r-0 lg:border-b lg:border-r-0 lg:p-5"><p className="text-[9px] font-bold uppercase text-slate-400">{label}</p><p className="mt-1 truncate text-xs font-black sm:text-sm">{value}</p></div>} function Tab({href,label,active=false}:{href:string;label:string;active?:boolean}){return <a href={href} className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-bold ${active?'bg-blue-50 text-blue-700':'text-slate-600'}`}>{label}</a>}
+function Metric({label,value}:{label:string;value:string}){return <div className="rounded-[18px] border border-slate-200 bg-white p-3 shadow-sm sm:p-5"><p className="text-[10px] font-bold text-slate-500 sm:text-sm">{label}</p><p className="mt-1 text-base font-black sm:text-2xl">{value}</p></div>} function QuickAction({label,href,status}:{label:string;href:string;status?:string}){const added=status&&status!=='not_added';return <a href={href} className="rounded-2xl border border-slate-200 px-2 py-3 text-center"><div className="text-lg">{label.includes('Insurance')?'🛡️':label.includes('PUC')?'🌿':label.includes('Fitness')?'✓':label.includes('Permit')?'📄':label.includes('Tax')?'₹':'🏛️'}</div><p className="mt-2 truncate text-[11px] font-black">{label}</p><p className={`mt-1 text-[8px] font-black uppercase ${added?'text-emerald-600':'text-slate-400'}`}>{added?'Added':'Not Added'}</p></a>} function Info({k,v}:{k:string;v?:string|number}){return <div className="min-w-0 border-b border-slate-100 px-4 py-4 sm:px-6"><dt className="text-[10px] font-bold text-slate-400">{k}</dt><dd className="mt-1 break-words text-sm font-black text-slate-800">{v===0?0:v||'—'}</dd></div>}
