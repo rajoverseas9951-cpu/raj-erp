@@ -11,42 +11,62 @@ class VehicleModuleApplicabilityService
 {
     public const GROUPS = [
         'core' => ['vehicle_details', 'insurance', 'puc'],
-        'compliance' => ['fitness', 'permit', 'tax', 'counter_tax', 'hsrp', 'sld'],
-        'operations' => ['rto_process', 'transfer'],
-        'finance' => ['payment', 'agent_payment', 'other_payment'],
+        'compliance' => ['fitness', 'permit', 'hsrp', 'sld', 'vltd'],
+        'operations' => ['rto_process'],
+        'finance' => ['payment'],
     ];
 
     public function modules(Vehicle $vehicle): array
     {
         $text = strtoupper(implode(' ', array_filter([
-            $vehicle->vehicle_type, $vehicle->vehicle_class, $vehicle->vehicle_category,
+            $vehicle->vehicle_type,
+            $vehicle->vehicle_class,
+            $vehicle->vehicle_category,
+            $vehicle->manufacturer,
+            $vehicle->model,
         ])));
 
-        $twoWheeler = (bool) preg_match('/TWO.?WHEEL|M.?CYCLE|MOTOR.?CYCLE|SCOOTER|BIKE/', $text);
-        $nonTransport = (bool) preg_match('/NON[- ]?TRANSPORT|LMV.?NT/', $text);
-        $privateCar = ((bool) preg_match('/PRIVATE|MOTOR CAR/', $text) || $nonTransport) && ! preg_match('/TAXI|CAB|PASSENGER/', $text);
-        $agriTractor = str_contains($text, 'TRACTOR') && (bool) preg_match('/AGRI|AGRICULT|NON.?TRANSPORT/', $text);
-        $passenger = (bool) preg_match('/TAXI|CAB|MAXI|PASSENGER|BUS/', $text);
-        $goods = (bool) preg_match('/GOODS|TRUCK|PICK.?UP|PICKUP|CARRIER|HGV|LGV|TRAILER/', $text);
-        $transport = ! $agriTractor && ! $nonTransport && ($passenger || $goods || (bool) preg_match('/COMMERCIAL|TRANSPORT/', $text));
+        $twoWheeler = (bool) preg_match('/TWO.?WHEEL|2W|2WN|M.?CYCLE|MOTOR.?CYCLE|SCOOTER|SCOOTY|BIKE/', $text);
+        $privateCar = (bool) preg_match('/PRIVATE|MOTOR.?CAR|LMV.?NT|NON[- ]?TRANSPORT|HATCHBACK|SEDAN|SUV/', $text)
+            && ! preg_match('/TAXI|CAB|PASSENGER|LPV|PSV/', $text);
 
-        $enabled = array_fill_keys(['vehicle_details', 'insurance', 'puc', 'hsrp', 'rto_process', 'payment', 'transfer'], true);
-        $enabled['other_payment'] = true;
-        if ($transport) {
-            $enabled += ['fitness' => true, 'permit' => true, 'tax' => true, 'agent_payment' => true];
-            $enabled['counter_tax'] = $goods || $passenger;
-            $enabled['sld'] = $goods || $passenger;
+        // LGV / pickup gets the basic private-vehicle workflow plus Fitness.
+        $lgvPickup = (bool) preg_match('/\bLGV\b|\bLCV\b|PICK.?UP|PICKUP|BOLERO.?PICKUP|GOODS.?CARRIER.?LGV/', $text)
+            && ! preg_match('/\bHGV\b|\bHGVT\b|HEAVY/', $text);
+
+        // Passenger commercial and heavy vehicles use the full commercial workflow.
+        $passengerCommercial = (bool) preg_match('/\bLPV\b|TAXI|CAB|PASSENGER|PSV|MAXI|BUS/', $text);
+        $heavyCommercial = (bool) preg_match('/\bHGV\b|\bHGVT\b|HEAVY|TRUCK|LORRY|TIPPER|DUMPER|TRAILER/', $text);
+        $fullCommercial = $passengerCommercial || $heavyCommercial;
+
+        // Every supported road vehicle starts with the same five operational services.
+        $enabled = array_fill_keys([
+            'vehicle_details',
+            'insurance',
+            'puc',
+            'hsrp',
+            'rto_process',
+            'payment',
+        ], true);
+
+        if ($lgvPickup || $fullCommercial) {
+            $enabled['fitness'] = true;
         }
-        if ($twoWheeler || $privateCar || $agriTractor) {
-            foreach (['fitness', 'permit', 'tax', 'counter_tax', 'sld', 'agent_payment'] as $module) {
-                $enabled[$module] = false;
-            }
+
+        if ($fullCommercial) {
+            $enabled['sld'] = true;
+            $enabled['vltd'] = true;
+            $enabled['permit'] = true;
         }
 
         if (Schema::hasTable('vehicle_module_overrides')) {
-            $overrides = DB::table('vehicle_module_overrides')->where('tenant_id', $vehicle->tenant_id)
-                ->where('vehicle_id', $vehicle->id)->whereNull('deleted_at')->get()
+            $overrides = DB::table('vehicle_module_overrides')
+                ->where('tenant_id', $vehicle->tenant_id)
+                ->where('vehicle_id', $vehicle->id)
+                ->whereNull('deleted_at')
+                ->get()
                 ->all();
+
             foreach ($overrides as $override) {
                 $enabled[$override->module] = (bool) $override->enabled;
             }
@@ -57,7 +77,17 @@ class VehicleModuleApplicabilityService
             $groups[$group] = array_values(array_filter($modules, fn ($module) => $enabled[$module] ?? false));
         }
 
-        return ['classification' => compact('twoWheeler', 'privateCar', 'agriTractor', 'passenger', 'goods', 'transport'), 'groups' => $groups];
+        return [
+            'classification' => compact(
+                'twoWheeler',
+                'privateCar',
+                'lgvPickup',
+                'passengerCommercial',
+                'heavyCommercial',
+                'fullCommercial'
+            ),
+            'groups' => $groups,
+        ];
     }
 
     public static function status(?string $expiryDate, bool $exists = true, int $windowDays = 30): string
