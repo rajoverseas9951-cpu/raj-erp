@@ -1,136 +1,49 @@
 "use client";
+
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/dashboard/Icon";
 import { DashboardPeriod, DashboardSummary, getDashboardSummary } from "@/lib/dashboard-api";
-import { dashboardSession } from "@/lib/dashboard";
 import { BRAND } from "@/config/brand";
 import { DASHBOARD_REFRESH_EVENT } from "@/lib/dashboard-refresh";
 import { DASHBOARD_PERIODS, dashboardPeriodLabel } from "@/lib/dashboard-periods";
 
 const kpis = [
-  [
-    "customers",
-    "Total Customers (All Time)",
-    "customers",
-    false,
-    "from-cyan-400 to-blue-600",
-  ],
-  [
-    "vehicles",
-    "Current Active Vehicles",
-    "vehicle",
-    false,
-    "from-violet-400 to-indigo-700",
-  ],
-  [
-    "active_policies",
-    "Current Active Policies",
-    "shield",
-    false,
-    "from-emerald-400 to-teal-700",
-  ],
-  [
-    "expiring_policies",
-    "Expiring Soon",
-    "clock",
-    false,
-    "from-amber-300 to-orange-600",
-  ],
-  [
-    "payments_received",
-    "Payments Received",
-    "rupee",
-    true,
-    "from-rose-400 to-pink-700",
-  ],
-  [
-    "outstanding_amount",
-    "Outstanding Amount",
-    "rupee",
-    true,
-    "from-orange-400 to-rose-600",
-  ],
-  [
-    "revenue",
-    "Revenue",
-    "reports",
-    true,
-    "from-blue-400 to-indigo-700",
-  ],
-  [
-    "gross_commission",
-    "Gross Commission Earned",
-    "reports",
-    true,
-    "from-cyan-400 to-blue-700",
-  ],
-  [
-    "company_cost",
-    "Company Cost",
-    "wallet",
-    true,
-    "from-fuchsia-400 to-purple-700",
-  ],
-  [
-    "gross_profit",
-    "Gross Profit",
-    "reports",
-    true,
-    "from-emerald-400 to-cyan-700",
-  ],
-  [
-    "expenses",
-    "Expenses",
-    "wallet",
-    true,
-    "from-fuchsia-400 to-purple-700",
-  ],
-  [
-    "net_result",
-    "Net Profit",
-    "building",
-    true,
-    "from-sky-400 to-cyan-700",
-  ],
-  [
-    "agent_commission",
-    "Agent Commission",
-    "customers",
-    true,
-    "from-teal-400 to-emerald-700",
-  ],
-  [
-    "tds",
-    "TDS / Other Deductions",
-    "payments",
-    true,
-    "from-amber-400 to-orange-700",
-  ],
-  [
-    "renewal_count",
-    "Renewals",
-    "clock",
-    false,
-    "from-indigo-400 to-violet-700",
-  ],
+  ["customers", "Customers", "customers", false, "from-cyan-400 to-blue-600"],
+  ["vehicles", "Active Vehicles", "vehicle", false, "from-blue-500 to-indigo-600"],
+  ["active_policies", "Active Policies", "shield", false, "from-emerald-400 to-teal-600"],
+  ["expiring_policies", "Expiring Soon", "clock", false, "from-amber-400 to-orange-600"],
+  ["payments_received", "Payments Received", "rupee", true, "from-cyan-400 to-sky-600"],
+  ["outstanding_amount", "Outstanding", "rupee", true, "from-orange-400 to-rose-600"],
+  ["revenue", "Revenue", "reports", true, "from-blue-400 to-indigo-700"],
+  ["gross_commission", "Gross Commission", "reports", true, "from-violet-400 to-purple-700"],
+  ["company_cost", "Company Cost", "wallet", true, "from-fuchsia-400 to-purple-700"],
+  ["gross_profit", "Gross Profit", "reports", true, "from-emerald-400 to-cyan-700"],
+  ["expenses", "Expenses", "wallet", true, "from-rose-400 to-pink-700"],
+  ["net_result", "Net Profit", "building", true, "from-sky-400 to-cyan-700"],
+  ["agent_commission", "Agent Commission", "customers", true, "from-teal-400 to-emerald-700"],
+  ["tds", "TDS / Deductions", "payments", true, "from-amber-400 to-orange-700"],
+  ["renewal_count", "Renewals", "clock", false, "from-indigo-400 to-violet-700"],
 ] as const;
+
 const quick = [
-  ["Add Customer", "/customers/new", "customers", "from-cyan-300 to-blue-600"],
-  ["Add Vehicle", "/vehicles/new", "vehicle", "from-blue-400 to-indigo-700"],
-  ["Add Policy", "/vehicles", "shield", "from-violet-400 to-purple-700"],
-  ["Add Payment", "/accounts", "credit", "from-amber-200 to-amber-500"],
-  ["Add RTO Work", "/vehicles", "building", "from-cyan-400 to-teal-600"],
-  ["Add Expense", "/accounts", "wallet", "from-indigo-400 to-violet-700"],
-  ["Open Masters", "/masters", "grid", "from-blue-300 to-cyan-600"],
-];
+  ["Add Customer", "/customers/new", "customers", "New customer"],
+  ["Add Vehicle", "/vehicles/new", "vehicle", "RC & vehicle"],
+  ["Add Policy", "/vehicles", "shield", "Issue policy"],
+  ["Add Payment", "/accounts", "credit", "Receive money"],
+  ["RTO Work", "/vehicles", "building", "Start process"],
+  ["Add Expense", "/accounts", "wallet", "Book expense"],
+  ["Masters", "/masters", "grid", "Manage setup"],
+] as const;
+
 const money = (value: number) =>
   new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
-    maximumFractionDigits: 2,
-    notation: value >= 100000 ? "compact" : "standard",
+    maximumFractionDigits: 0,
+    notation: Math.abs(value) >= 100000 ? "compact" : "standard",
   }).format(value);
+
 export default function DashboardPage() {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
   const [data, setData] = useState<DashboardSummary>();
@@ -141,6 +54,7 @@ export default function DashboardPage() {
   const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
   const requestRef = useRef<AbortController | null>(null);
+
   const refresh = useCallback(() => {
     if (period === "custom" && (!dateFrom || !dateTo || dateFrom > dateTo)) {
       setError("Select a valid inclusive custom date range.");
@@ -152,7 +66,10 @@ export default function DashboardPage() {
     setRefreshing(true);
     setError("");
     return getDashboardSummary({ period, dateFrom, dateTo }, controller.signal)
-      .then((summary) => { setData(summary); setLastUpdated(new Date()); })
+      .then((summary) => {
+        setData(summary);
+        setLastUpdated(new Date());
+      })
       .catch((e) => {
         if (e instanceof DOMException && e.name === "AbortError") return;
         if (e instanceof Error && e.message === "AUTH_REQUIRED") {
@@ -162,18 +79,31 @@ export default function DashboardPage() {
         }
         setError(e instanceof Error ? e.message : "Dashboard could not refresh.");
       })
-      .finally(() => { if (requestRef.current === controller) { setRefreshing(false); requestRef.current = null; } });
+      .finally(() => {
+        if (requestRef.current === controller) {
+          setRefreshing(false);
+          requestRef.current = null;
+        }
+      });
   }, [period, dateFrom, dateTo]);
+
   useEffect(() => {
     void refresh();
     const onFocus = () => void refresh();
-    const onVisible = () => { if (document.visibilityState === "visible") void refresh(); };
+    const onVisible = () => document.visibilityState === "visible" && void refresh();
     window.addEventListener("focus", onFocus);
     window.addEventListener("pageshow", onFocus);
     window.addEventListener(DASHBOARD_REFRESH_EVENT, onFocus);
     document.addEventListener("visibilitychange", onVisible);
-    return () => { requestRef.current?.abort(); window.removeEventListener("focus", onFocus); window.removeEventListener("pageshow", onFocus); window.removeEventListener(DASHBOARD_REFRESH_EVENT, onFocus); document.removeEventListener("visibilitychange", onVisible); };
+    return () => {
+      requestRef.current?.abort();
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("pageshow", onFocus);
+      window.removeEventListener(DASHBOARD_REFRESH_EVENT, onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [refresh]);
+
   const date = new Intl.DateTimeFormat("en-IN", {
     weekday: "long",
     day: "numeric",
@@ -181,273 +111,118 @@ export default function DashboardPage() {
     year: "numeric",
   }).format(new Date());
   const selectedPeriodLabel = dashboardPeriodLabel(period);
+  const health = useMemo(() => {
+    const active = data?.kpis.active_policies.value ?? 0;
+    const expiring = data?.kpis.expiring_policies.value ?? 0;
+    if (!active) return 0;
+    return Math.max(0, Math.min(100, Math.round(((active - expiring) / active) * 100)));
+  }, [data]);
+
   return (
-    <div className="mx-auto max-w-[1680px] space-y-6 p-4 sm:p-6 lg:p-8">
-      <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_85%_15%,rgba(35,211,255,.28),transparent_26%),radial-gradient(circle_at_8%_90%,rgba(124,58,237,.25),transparent_30%),linear-gradient(135deg,#030712_0%,#0b153b_48%,#163da4_100%)] p-6 text-white shadow-[0_28px_80px_-32px_rgba(15,47,150,.8)] sm:p-8">
-        <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.08)_1px,transparent_1px)] [background-size:42px_42px]" />
-        <div className="relative flex flex-wrap items-end justify-between gap-5">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[.22em] text-cyan-200">
-              {date}
-            </p>
-            <h1 className="mt-3 text-3xl font-black tracking-[-.04em] sm:text-5xl">
-              Your business.
-              <br />
-              <span className="bg-gradient-to-r from-cyan-300 via-blue-200 to-violet-300 bg-clip-text text-transparent">
-                In complete control.
-              </span>
-            </h1>
-            <p className="mt-3 max-w-xl text-sm text-blue-100/70">
-              Live policy, revenue, renewal and operations intelligence for {BRAND.productName}.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3"><div className="text-right text-xs text-blue-100/70"><span className="block font-bold text-white">{refreshing?"Refreshing…":"Live data"}</span><span>{lastUpdated?`Last updated ${lastUpdated.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}`:"Waiting for first update"}</span></div><button type="button" disabled={refreshing} onClick={()=>void refresh()} className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-bold shadow-inner backdrop-blur-xl transition hover:bg-white/20 disabled:opacity-60">{refreshing?"Refreshing…":"Refresh"}</button></div>
-        </div>
-      </section>
-      <section className="sticky top-3 z-20 flex flex-wrap items-end gap-3 rounded-2xl border border-blue-200 bg-white/95 p-4 shadow-lg shadow-blue-950/10 backdrop-blur" aria-label="Dashboard period filters">
-        <div className="mr-2"><p className="text-xs font-black uppercase tracking-[.16em] text-blue-600">Dashboard period</p><p className="mt-1 text-lg font-black text-slate-950">{selectedPeriodLabel}</p></div>
-        <label className="text-xs font-bold uppercase tracking-wide text-slate-500">Select Period<select aria-label="Select dashboard period" value={period} onChange={event=>setPeriod(event.target.value as DashboardPeriod)} className="mt-1 block min-w-52 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900">{DASHBOARD_PERIODS.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-        {period==="custom"&&<><label className="text-xs font-bold uppercase tracking-wide text-slate-500">From<input type="date" value={dateFrom} max={dateTo} onChange={event=>setDateFrom(event.target.value)} className="mt-1 block rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900"/></label><label className="text-xs font-bold uppercase tracking-wide text-slate-500">To<input type="date" value={dateTo} min={dateFrom} onChange={event=>setDateTo(event.target.value)} className="mt-1 block rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900"/></label></>}
-        <p className="ml-auto text-xs text-slate-500">Timezone: <strong>Asia/Kolkata</strong>{data?.period.from&&<> · {data.period.from} to {data.period.to}</>}</p>
-      </section>
-      <QuickActions />
-      {error && <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-800"><span>{error} Existing dashboard values are retained.</span><button type="button" onClick={()=>void refresh()} className="rounded-lg bg-amber-700 px-3 py-2 text-xs font-bold text-white">Retry</button></div>}
-      {!data && refreshing && <div role="status" className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-semibold text-blue-800">Loading {selectedPeriodLabel.toLowerCase()} dashboard data…</div>}
-      {data && !error && data.revenue.current === 0 && data.revenue.expenses === 0 && data.kpis.payments_received.value === 0 && <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No financial activity was found for {selectedPeriodLabel.toLowerCase()}.</div>}
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {kpis.map(([key, label, icon, isMoney, tone]) => {
-          const item = data?.kpis[key];
-          return (
-            <article
-              key={key}
-              className="group relative overflow-hidden rounded-[24px] border border-slate-200/80 bg-white p-5 shadow-[0_16px_45px_-30px_rgba(15,23,42,.45)] transition duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900"
-            >
-              <div
-                className={`absolute -right-8 -top-8 h-28 w-28 rounded-full bg-gradient-to-br ${tone} opacity-[.08] blur-xl transition group-hover:opacity-20`}
-              />
-              <div className="relative flex items-center justify-between">
-                <span
-                  className={`grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br ${tone} text-white shadow-lg`}
-                >
-                  <Icon name={icon} className="h-5 w-5" />
-                </span>
-                {item?.growth !== null && item?.growth !== undefined && (
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-[11px] font-black ${item.growth >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}
-                  >
-                    {item.growth >= 0 ? "↗" : "↘"} {Math.abs(item.growth)}%
-                  </span>
-                )}
+    <main className="min-h-screen bg-[#f4f7fb] pb-10 dark:bg-[#050914]">
+      <div className="mx-auto max-w-[1700px] space-y-5 p-4 sm:p-6 lg:p-8">
+        <section className="relative overflow-hidden rounded-[30px] bg-[#07132f] text-white shadow-[0_24px_80px_-36px_rgba(2,20,70,.9)]">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_15%,rgba(37,99,235,.55),transparent_25%),radial-gradient(circle_at_92%_85%,rgba(6,182,212,.32),transparent_24%),linear-gradient(120deg,#07132f_15%,#0b1f4d_55%,#123da5_100%)]" />
+          <div className="absolute inset-0 opacity-[.12] [background-image:linear-gradient(rgba(255,255,255,.18)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.18)_1px,transparent_1px)] [background-size:44px_44px]" />
+          <div className="relative grid gap-8 p-6 sm:p-8 xl:grid-cols-[1.45fr_.55fr] xl:items-center">
+            <div>
+              <div className="flex flex-wrap items-center gap-2 text-[11px] font-black uppercase tracking-[.18em] text-cyan-200">
+                <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5">Executive command center</span>
+                <span className="text-blue-200/70">{date}</span>
               </div>
-              <p className="relative mt-5 text-xs font-bold uppercase tracking-wider text-slate-400">
-                {isMoney ? `${selectedPeriodLabel} ${label}` : label}
+              <h1 className="mt-5 max-w-4xl text-3xl font-black leading-[.98] tracking-[-.05em] sm:text-5xl lg:text-6xl">
+                Everything that matters,
+                <span className="block bg-gradient-to-r from-white via-cyan-200 to-blue-300 bg-clip-text text-transparent">one clear view.</span>
+              </h1>
+              <p className="mt-4 max-w-2xl text-sm leading-6 text-blue-100/70 sm:text-base">
+                Live insurance, renewal, revenue and operations intelligence for {BRAND.productName}.
               </p>
-              <p className="relative mt-1 text-2xl font-black tracking-tight">
-                {item ? (
-                  isMoney ? (
-                    money(item.value)
-                  ) : (
-                    item.value.toLocaleString("en-IN")
-                  )
-                ) : (
-                  <span className="inline-block h-7 w-24 animate-pulse rounded bg-slate-100" />
-                )}
-              </p>
-            </article>
-          );
-        })}
-      </section>
-      <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-        <Panel title={`${selectedPeriodLabel} financial overview`} copy="Gross commission and deductions for the selected period">
-          <div className="mt-5 grid grid-cols-3 gap-3">
-            {[
-              [selectedPeriodLabel, data?.revenue.current],
-              ["Previous", data?.revenue.previous],
-              ["Outstanding", data?.revenue.outstanding],
-            ].map(([l, v]) => (
-              <div
-                key={String(l)}
-                className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800"
-              >
-                <p className="text-xs text-slate-500">{l}</p>
-                <p className="mt-1 font-black">{money(Number(v ?? 0))}</p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link href="/vehicles/new" className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-[#0b1f4d] shadow-lg shadow-blue-950/20 transition hover:-translate-y-0.5">+ Add Vehicle</Link>
+                <Link href="/customers/new" className="rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-black text-white backdrop-blur transition hover:bg-white/15">+ Add Customer</Link>
               </div>
-            ))}
+            </div>
+            <div className="rounded-[24px] border border-white/12 bg-white/[.08] p-5 backdrop-blur-xl">
+              <div className="flex items-center justify-between">
+                <div><p className="text-xs font-bold uppercase tracking-[.16em] text-blue-200/70">Portfolio health</p><p className="mt-2 text-4xl font-black">{health}%</p></div>
+                <div className="grid h-14 w-14 place-items-center rounded-2xl bg-emerald-400/15 text-emerald-300"><Icon name="shield" className="h-7 w-7" /></div>
+              </div>
+              <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-emerald-300" style={{ width: `${health}%` }} /></div>
+              <div className="mt-5 flex items-end justify-between gap-4 border-t border-white/10 pt-4">
+                <div><p className="text-[11px] uppercase tracking-wider text-blue-200/60">Status</p><p className="mt-1 text-sm font-bold">{refreshing ? "Refreshing live data…" : "Live & connected"}</p></div>
+                <div className="text-right"><p className="text-[11px] uppercase tracking-wider text-blue-200/60">Last update</p><p className="mt-1 text-sm font-bold">{lastUpdated ? lastUpdated.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "—"}</p></div>
+              </div>
+            </div>
           </div>
-          {(data?.revenue.trend.length ?? 0) > 0 ? <Trend rows={data?.revenue.trend ?? []} /> : <p className="mt-6 rounded-xl bg-slate-50 p-6 text-center text-sm text-slate-500">No accounting activity is available for this period.</p>}
-        </Panel>
-        <Panel title="Renewal pipeline" copy="Policies requiring attention">
-          <div className="mt-5 space-y-3">
-            {[
-              ["Next 7 days", "7"],
-              ["Next 15 days", "15"],
-              ["Next 30 days", "30"],
-              ["Expired", "expired"],
-              ["Renewed", "renewed"],
-            ].map(([label, key], i) => (
-              <Meter
-                key={key}
-                label={label}
-                value={data?.renewals[key] ?? 0}
-                tone={i === 3 ? "rose" : i === 4 ? "emerald" : "blue"}
-              />
-            ))}
+        </section>
+
+        <section className="flex flex-wrap items-end gap-3 rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="mr-2 min-w-44"><p className="text-[10px] font-black uppercase tracking-[.18em] text-blue-600">Reporting period</p><p className="mt-1 text-lg font-black text-slate-950 dark:text-white">{selectedPeriodLabel}</p></div>
+          <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Period<select value={period} onChange={(e) => setPeriod(e.target.value as DashboardPeriod)} className="mt-1 block min-w-52 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold normal-case tracking-normal text-slate-900 outline-none transition focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white">{DASHBOARD_PERIODS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+          {period === "custom" && <><label className="text-[10px] font-black uppercase tracking-wider text-slate-400">From<input type="date" value={dateFrom} max={dateTo} onChange={(e) => setDateFrom(e.target.value)} className="mt-1 block rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold normal-case text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" /></label><label className="text-[10px] font-black uppercase tracking-wider text-slate-400">To<input type="date" value={dateTo} min={dateFrom} onChange={(e) => setDateTo(e.target.value)} className="mt-1 block rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold normal-case text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" /></label></>}
+          <button type="button" disabled={refreshing} onClick={() => void refresh()} className="ml-auto rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-black text-white transition hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-600">{refreshing ? "Refreshing…" : "Refresh data"}</button>
+        </section>
+
+        <QuickActions />
+
+        {error && <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">{error} <button onClick={() => void refresh()} className="ml-2 font-black underline">Retry</button></div>}
+
+        <section>
+          <div className="mb-3 flex items-end justify-between"><div><p className="text-[10px] font-black uppercase tracking-[.18em] text-blue-600">Live business pulse</p><h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950 dark:text-white">Key performance</h2></div><p className="hidden text-xs text-slate-400 sm:block">Updated in real time from your ERP</p></div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            {kpis.map(([key, label, icon, isMoney, tone]) => {
+              const item = data?.kpis[key];
+              return <article key={key} className="group relative overflow-hidden rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-[0_12px_32px_-24px_rgba(15,23,42,.5)] transition duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
+                <div className={`absolute -right-10 -top-10 h-24 w-24 rounded-full bg-gradient-to-br ${tone} opacity-[.09] blur-2xl transition group-hover:opacity-20`} />
+                <div className="relative flex items-start justify-between gap-3"><span className={`grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br ${tone} text-white shadow-md`}><Icon name={icon} className="h-4.5 w-4.5" /></span>{item?.growth !== null && item?.growth !== undefined && <span className={`rounded-full px-2 py-1 text-[10px] font-black ${item.growth >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>{item.growth >= 0 ? "↗" : "↘"} {Math.abs(item.growth)}%</span>}</div>
+                <p className="relative mt-4 text-[10px] font-black uppercase tracking-[.12em] text-slate-400">{isMoney ? `${selectedPeriodLabel} · ${label}` : label}</p>
+                <p className="relative mt-1.5 text-2xl font-black tracking-[-.03em] text-slate-950 dark:text-white">{item ? (isMoney ? money(item.value) : item.value.toLocaleString("en-IN")) : <span className="inline-block h-7 w-24 animate-pulse rounded bg-slate-100" />}</p>
+              </article>;
+            })}
           </div>
-        </Panel>
-      </section>
-      <section className="grid gap-6 lg:grid-cols-2">
-        <Panel
-          title="Policy performance"
-          copy="Portfolio mix from saved policies"
-        >
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {Object.entries({
-              New: "new",
-              Renewals: "renewals",
-              Comprehensive: "comprehensive",
-              "Third party": "third_party",
-              "Two-wheeler": "two_wheeler",
-              "Private car": "private_car",
-              Commercial: "commercial",
-            }).map(([label, key]) => (
-              <Mini key={key} label={label} value={data?.policies[key] ?? 0} />
-            ))}
-          </div>
-        </Panel>
-        <Panel title="Work status" copy="Operational follow-ups">
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            {Object.entries({
-              "PUC due": "puc_due",
-              "Fitness due": "fitness_due",
-              "Permit due": "permit_due",
-              "Payment follow-up": "payment_follow_up",
-            }).map(([label, key]) => (
-              <Mini key={key} label={label} value={data?.work[key] ?? 0} />
-            ))}
-          </div>
-        </Panel>
-      </section>
-    </div>
+        </section>
+
+        <section className="grid gap-5 xl:grid-cols-[1.55fr_.75fr]">
+          <Panel title="Financial performance" copy={`${selectedPeriodLabel} revenue, previous comparison and outstanding`}>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">{[[selectedPeriodLabel, data?.revenue.current], ["Previous", data?.revenue.previous], ["Outstanding", data?.revenue.outstanding]].map(([l, v]) => <div key={String(l)} className="rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950"><p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{l}</p><p className="mt-2 text-xl font-black text-slate-950 dark:text-white">{money(Number(v ?? 0))}</p></div>)}</div>
+            {(data?.revenue.trend.length ?? 0) > 0 ? <Trend rows={data?.revenue.trend ?? []} /> : <Empty text="No accounting activity available for this period." />}
+          </Panel>
+          <Panel title="Renewal radar" copy="Policies requiring immediate attention">
+            <div className="mt-5 space-y-4">{[["Next 7 days", "7"], ["Next 15 days", "15"], ["Next 30 days", "30"], ["Expired", "expired"], ["Renewed", "renewed"]].map(([label, key], i) => <Meter key={key} label={label} value={data?.renewals[key] ?? 0} tone={i === 3 ? "rose" : i === 4 ? "emerald" : "blue"} />)}</div>
+          </Panel>
+        </section>
+
+        <section className="grid gap-5 lg:grid-cols-2">
+          <Panel title="Policy portfolio" copy="Current mix across saved policies"><div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">{Object.entries({ New: "new", Renewals: "renewals", Comprehensive: "comprehensive", "Third party": "third_party", "Two-wheeler": "two_wheeler", "Private car": "private_car", Commercial: "commercial" }).map(([label, key]) => <Mini key={key} label={label} value={data?.policies[key] ?? 0} />)}</div></Panel>
+          <Panel title="Operations watchlist" copy="Compliance and payment follow-ups"><div className="mt-5 grid grid-cols-2 gap-3">{Object.entries({ "PUC due": "puc_due", "Fitness due": "fitness_due", "Permit due": "permit_due", "Payment follow-up": "payment_follow_up" }).map(([label, key]) => <Mini key={key} label={label} value={data?.work[key] ?? 0} />)}</div></Panel>
+        </section>
+      </div>
+    </main>
   );
 }
+
 function QuickActions() {
-  return (
-    <section className="-mt-1">
-      <div className="mb-3 flex items-end justify-between">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[.18em] text-blue-600">
-            Move faster
-          </p>
-          <h2 className="mt-1 text-xl font-black">Quick actions</h2>
-        </div>
-        <Link href="/masters" className="text-xs font-bold text-blue-600">
-          All tools →
-        </Link>
-      </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
-        {quick.map(([label, href, icon, tone], index) => (
-          <Link
-            key={label}
-            href={href}
-            className="group relative min-h-48 overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(145deg,#050816,#0c1430_58%,#111d42)] p-4 text-white shadow-[0_20px_45px_-24px_rgba(2,8,23,.85)] transition duration-300 hover:-translate-y-1.5 hover:border-cyan-300/30 hover:shadow-[0_26px_55px_-25px_rgba(30,64,175,.75)]"
-          >
-            <span
-              className={`absolute -right-10 -top-10 h-28 w-28 rounded-full bg-gradient-to-br ${tone} opacity-20 blur-2xl transition group-hover:opacity-40`}
-            />
-            <span
-              className={`relative grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br ${tone} text-white shadow-[0_10px_30px_-10px_rgba(59,130,246,.9)] transition group-hover:scale-110 group-hover:rotate-3`}
-            >
-              <Icon
-                name={icon}
-                className={`h-5 w-5 ${index === 3 ? "text-slate-950" : ""}`}
-              />
-            </span>
-            <p className="relative mt-5 text-sm font-black tracking-tight">
-              {label}
-            </p>
-            <span className="relative mt-3 block text-[10px] font-bold uppercase tracking-[.14em] text-slate-500 transition group-hover:text-cyan-300">
-              Open workspace →
-            </span>
-          </Link>
-        ))}
-      </div>
-    </section>
-  );
+  return <section><div className="mb-3 flex items-end justify-between"><div><p className="text-[10px] font-black uppercase tracking-[.18em] text-blue-600">One-click workspace</p><h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950 dark:text-white">Quick actions</h2></div><Link href="/masters" className="text-xs font-black text-blue-600">View all →</Link></div><div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">{quick.map(([label, href, icon, copy]) => <Link key={label} href={href} className="group rounded-[20px] border border-slate-200/80 bg-white p-4 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900"><span className="grid h-10 w-10 place-items-center rounded-xl bg-[#0b1f4d] text-white transition group-hover:bg-blue-600"><Icon name={icon} className="h-4.5 w-4.5" /></span><p className="mt-4 text-sm font-black text-slate-950 dark:text-white">{label}</p><p className="mt-1 text-[11px] text-slate-400">{copy}</p></Link>)}</div></section>;
 }
-function Panel({
-  title,
-  copy,
-  children,
-}: {
-  title: string;
-  copy: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
-      <h2 className="font-black">{title}</h2>
-      <p className="mt-1 text-xs text-slate-500">{copy}</p>
-      {children}
-    </article>
-  );
+
+function Panel({ title, copy, children }: { title: string; copy: string; children: React.ReactNode }) {
+  return <article className="rounded-[24px] border border-slate-200/80 bg-white p-5 shadow-[0_18px_50px_-36px_rgba(15,23,42,.55)] dark:border-slate-800 dark:bg-slate-900 sm:p-6"><div className="flex items-start justify-between gap-4"><div><h2 className="text-lg font-black tracking-tight text-slate-950 dark:text-white">{title}</h2><p className="mt-1 text-xs leading-5 text-slate-400">{copy}</p></div><span className="mt-1 h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_0_5px_rgba(52,211,153,.12)]" /></div>{children}</article>;
 }
+
 function Mini({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-xl border border-slate-100 p-4 dark:border-slate-800">
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className="mt-1 text-xl font-black">{value.toLocaleString("en-IN")}</p>
-    </div>
-  );
+  return <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:bg-white hover:shadow-sm dark:border-slate-800 dark:bg-slate-950"><p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{label}</p><p className="mt-2 text-xl font-black text-slate-950 dark:text-white">{value.toLocaleString("en-IN")}</p></div>;
 }
-function Meter({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number;
-  tone: string;
-}) {
-  const color =
-    tone === "rose"
-      ? "bg-rose-500"
-      : tone === "emerald"
-        ? "bg-emerald-500"
-        : "bg-blue-600";
-  return (
-    <div>
-      <div className="flex justify-between text-sm">
-        <span>{label}</span>
-        <strong>{value}</strong>
-      </div>
-      <div className="mt-2 h-1.5 rounded-full bg-slate-100">
-        <div
-          className={`h-full rounded-full ${color}`}
-          style={{
-            width: `${Math.min(100, value ? Math.max(8, value * 5) : 0)}%`,
-          }}
-        />
-      </div>
-    </div>
-  );
+
+function Meter({ label, value, tone }: { label: string; value: number; tone: string }) {
+  const color = tone === "rose" ? "from-rose-500 to-orange-400" : tone === "emerald" ? "from-emerald-500 to-cyan-400" : "from-blue-600 to-cyan-400";
+  return <div><div className="flex items-center justify-between text-sm"><span className="font-semibold text-slate-600 dark:text-slate-300">{label}</span><strong className="text-slate-950 dark:text-white">{value}</strong></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className={`h-full rounded-full bg-gradient-to-r ${color}`} style={{ width: `${Math.min(100, value ? Math.max(8, value * 5) : 0)}%` }} /></div></div>;
 }
+
 function Trend({ rows }: { rows: { month: string; revenue: number }[] }) {
   const max = Math.max(1, ...rows.map((x) => x.revenue));
-  return (
-    <div className="mt-6 flex h-44 items-end gap-3">
-      {rows.map((row) => (
-        <div
-          key={row.month}
-          className="flex h-full flex-1 flex-col justify-end text-center"
-        >
-          <div
-            title={money(row.revenue)}
-            className="min-h-1 rounded-t-lg bg-gradient-to-t from-blue-700 to-cyan-400"
-            style={{ height: `${Math.max(3, (row.revenue / max) * 100)}%` }}
-          />
-          <span className="mt-2 text-[11px] text-slate-400">{row.month}</span>
-        </div>
-      ))}
-    </div>
-  );
+  return <div className="mt-6 flex h-48 items-end gap-2 sm:gap-3">{rows.map((row) => <div key={row.month} className="flex h-full flex-1 flex-col justify-end text-center"><div className="group relative flex h-full items-end"><div title={money(row.revenue)} className="w-full rounded-t-xl bg-gradient-to-t from-[#123da5] via-blue-500 to-cyan-300 transition group-hover:brightness-110" style={{ height: `${Math.max(4, (row.revenue / max) * 100)}%` }} /></div><span className="mt-2 text-[10px] font-bold text-slate-400">{row.month}</span></div>)}</div>;
+}
+
+function Empty({ text }: { text: string }) {
+  return <div className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm font-semibold text-slate-400 dark:border-slate-800 dark:bg-slate-950">{text}</div>;
 }
