@@ -30,16 +30,14 @@ class VehicleModuleApplicabilityService
         $privateCar = (bool) preg_match('/PRIVATE|MOTOR.?CAR|LMV.?NT|NON[- ]?TRANSPORT|HATCHBACK|SEDAN|SUV/', $text)
             && ! preg_match('/TAXI|CAB|PASSENGER|LPV|PSV/', $text);
 
-        // LGV / pickup gets the basic private-vehicle workflow plus Fitness.
+        // LGV / pickup gets the basic private-vehicle workflow plus Fitness only.
         $lgvPickup = (bool) preg_match('/\bLGV\b|\bLCV\b|PICK.?UP|PICKUP|BOLERO.?PICKUP|GOODS.?CARRIER.?LGV/', $text)
             && ! preg_match('/\bHGV\b|\bHGVT\b|HEAVY/', $text);
 
-        // Passenger commercial and heavy vehicles use the full commercial workflow.
         $passengerCommercial = (bool) preg_match('/\bLPV\b|TAXI|CAB|PASSENGER|PSV|MAXI|BUS/', $text);
-        $heavyCommercial = (bool) preg_match('/\bHGV\b|\bHGVT\b|HEAVY|TRUCK|LORRY|TIPPER|DUMPER|TRAILER/', $text);
+        $heavyCommercial = (bool) preg_match('/\bHGV\b|\bHGVT\b|\bGT\b|HEAVY|TRUCK|LORRY|TIPPER|DUMPER|TRAILER/', $text);
         $fullCommercial = $passengerCommercial || $heavyCommercial;
 
-        // Every supported road vehicle starts with the same five operational services.
         $enabled = array_fill_keys([
             'vehicle_details',
             'insurance',
@@ -56,6 +54,17 @@ class VehicleModuleApplicabilityService
         if ($fullCommercial) {
             $enabled['sld'] = true;
             $enabled['vltd'] = true;
+        }
+
+        // Permit is intentionally NOT a generic commercial module.
+        // Never show it for two-wheelers, private cars, LGV/LCV or pickups.
+        // It applies to taxi/LPV/passenger commercial and HGV/HGVT/GT/truck/bus/heavy classes.
+        $permitApplicable = ! $twoWheeler
+            && ! $privateCar
+            && ! $lgvPickup
+            && ($passengerCommercial || $heavyCommercial);
+
+        if ($permitApplicable) {
             $enabled['permit'] = true;
         }
 
@@ -84,7 +93,8 @@ class VehicleModuleApplicabilityService
                 'lgvPickup',
                 'passengerCommercial',
                 'heavyCommercial',
-                'fullCommercial'
+                'fullCommercial',
+                'permitApplicable'
             ),
             'groups' => $groups,
         ];
