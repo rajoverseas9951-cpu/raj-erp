@@ -15,7 +15,6 @@ class VehicleMasterResolver
         'body_types' => ['vehicle_category', 'vehicle_category_id'],
         'manufacturers' => ['manufacturer', 'manufacturer_id'],
         'models' => ['model', 'model_id'],
-        'variants' => ['variant', 'variant_id'],
         'colours' => ['colour', 'colour_id'],
         'fuel_types' => ['fuel_type', 'fuel_type_id'],
     ];
@@ -38,7 +37,6 @@ class VehicleMasterResolver
             $created = [];
             $warnings = [];
             $manufacturerId = null;
-            $modelId = null;
 
             foreach (self::FIELD_MAP as $type => [$nameField, $idField]) {
                 $name = trim((string) ($resolvedFields[$nameField] ?? ''));
@@ -47,10 +45,9 @@ class VehicleMasterResolver
                 }
                 $parentId = match ($type) {
                     'models' => $manufacturerId,
-                    'variants' => $modelId,
                     default => null,
                 };
-                if (in_array($type, ['models', 'variants'], true) && ! $parentId) {
+                if ($type === 'models' && ! $parentId) {
                     $warnings[] = "OCR {$nameField} was retained as text until its parent master resolves.";
                     Log::debug('ocr.rc.master_skipped', [
                         'type' => $type,
@@ -85,9 +82,6 @@ class VehicleMasterResolver
 
                 if ($type === 'manufacturers') {
                     $manufacturerId = $master->id;
-                }
-                if ($type === 'models') {
-                    $modelId = $master->id;
                 }
             }
 

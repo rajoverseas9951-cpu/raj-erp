@@ -216,3 +216,34 @@ def test_sequential_rc_requests_never_share_parsed_fields() -> None:
     assert "ROYAL FINANCE THARAD" not in tractor["raw_text"]
     assert "97.20" not in tractor["raw_text"]
     assert "109" not in tractor["raw_text"]
+
+
+def test_commercial_rc_returns_unladen_and_gross_weight_independently() -> None:
+    class CommercialEngine:
+        def recognize(self, image, source: str) -> list[OCRLine]:
+            return [
+                OCRLine(
+                    text="Vehicle Class: LIGHT GOODS VEHICLE",
+                    confidence=0.96,
+                    source=source,
+                ),
+                OCRLine(
+                    text="Unladen Weight (Kg) / GVW (Kg)",
+                    confidence=0.95,
+                    source=source,
+                ),
+                OCRLine(text="1780 / 3490", confidence=0.94, source=source),
+            ]
+
+    app = create_app(Settings(), engine_factory=lambda settings: CommercialEngine())
+    with TestClient(app) as client:
+        response = client.post(
+            "/v1/ocr/rc",
+            files={"combined": ("commercial.png", png_bytes(), "image/png")},
+        )
+
+    assert response.status_code == 200
+    fields = response.json()["fields"]
+    assert fields["unladen_weight"] == "1780"
+    assert fields["gross_vehicle_weight"] == "3490"
+    assert fields["unladen_weight"] != fields["gross_vehicle_weight"]

@@ -128,7 +128,7 @@ FIELD_RULES: tuple[FieldRule, ...] = (
     ),
     FieldRule(
         "number_of_cylinders",
-        _label(r"\b(?:NO\.?\s+OF\s+CYLINDERS?|NUMBER\s+OF\s+CYLINDERS?)\b"),
+        _label(r"\b(?:NO\.?\s*OF\s+CYLINDERS?|NUMBER\s+OF\s+CYLINDERS?)\b"),
         "seats",
     ),
     FieldRule(
@@ -138,7 +138,10 @@ FIELD_RULES: tuple[FieldRule, ...] = (
     ),
     FieldRule(
         "gross_vehicle_weight",
-        _label(r"\b(?:GROSS\s+VEHICLE\s+WEIGHT|GROSS\s+WT\.?|GVW)\b"),
+        _label(
+            r"\b(?:GROSS\s+(?:VEHICLE\s+)?WEIGHT|GROSS\s+WT\.?|GVW|"
+            r"LADEN\s+(?:VEHICLE\s+)?WEIGHT)\b"
+        ),
         "number",
     ),
     FieldRule(
@@ -264,6 +267,11 @@ def _candidates_for_rule(
         if not match:
             continue
 
+        # Combined RC technical/weight headers are positional columns. Generic
+        # label extraction would otherwise reuse the first number for every field.
+        if _is_combined_header(rule.field, text):
+            continue
+
         remainder = _clean_remainder(text[match.end() :])
         remainder = _truncate_at_another_label(remainder)
         value = _normalise_value(remainder, rule.value_type)
@@ -379,13 +387,25 @@ def _grouped_layout_candidates(
                     candidates.append((value, confidence))
 
         technical_fields = ("cubic_capacity", "horse_power", "wheel_base")
-        if rule.field in technical_fields and all(
-            field_labels[field].search(current) for field in technical_fields
+        if rule.field in technical_fields and _has_all_labels(
+            current, technical_fields, field_labels
         ):
             numbers = re.findall(r"\d+(?:\.\d+)?", following)
             if len(numbers) >= 3:
                 value = _normalise_value(
                     numbers[technical_fields.index(rule.field)], rule.value_type
+                )
+                if value:
+                    candidates.append((value, confidence))
+
+        weight_fields = ("unladen_weight", "gross_vehicle_weight")
+        if rule.field in weight_fields and _has_all_labels(
+            current, weight_fields, field_labels
+        ):
+            numbers = re.findall(r"\d+(?:\.\d+)?", following)
+            if len(numbers) >= 2:
+                value = _normalise_value(
+                    numbers[weight_fields.index(rule.field)], rule.value_type
                 )
                 if value:
                     candidates.append((value, confidence))
@@ -409,6 +429,27 @@ def _grouped_layout_candidates(
                 candidates.append((str(grouped[rule.field]), confidence))
 
     return candidates
+
+
+def _has_all_labels(
+    text: str,
+    fields: Sequence[str],
+    field_labels: dict[str, re.Pattern[str]],
+) -> bool:
+    return all(field_labels[field].search(text) for field in fields)
+
+
+def _is_combined_header(field: str, text: str) -> bool:
+    field_labels = {item.field: item.label for item in FIELD_RULES}
+    technical_fields = ("cubic_capacity", "horse_power", "wheel_base")
+    weight_fields = ("unladen_weight", "gross_vehicle_weight")
+    return (
+        field in technical_fields
+        and _has_all_labels(text, technical_fields, field_labels)
+    ) or (
+        field in weight_fields
+        and _has_all_labels(text, weight_fields, field_labels)
+    )
 
 
 def _contains_label(value: str) -> bool:

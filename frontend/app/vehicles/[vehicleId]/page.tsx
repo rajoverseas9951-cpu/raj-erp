@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Vehicle, vehicleApi } from '@/lib/vehicles';
+import { isCommercialVehicle } from '@/lib/rc-ocr';
 
 function tabsFor(v:Vehicle){
  const text=`${v.vehicle_type??''} ${v.vehicle_class??''} ${v.vehicle_category??''}`.toLowerCase();
@@ -26,18 +27,19 @@ export default function VehicleProfilePage(){
  if(error)return <main className="p-6"><div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</div></main>;
  if(!v)return <main className="p-6">Loading vehicle...</main>;
  const tabs=tabsFor(v);
+ const commercial=isCommercialVehicle(v);
  async function archive(){if(!confirm('Archive this vehicle? It will leave active lists while history remains available.'))return;setMutating(true);setError('');try{await vehicleApi.archive(v!.id);router.push('/vehicles');router.refresh()}catch(e){setError(e instanceof Error?e.message:'Vehicle could not be archived.')}finally{setMutating(false)}}
  async function remove(){if(!confirm('Permanently delete this vehicle? This is allowed only when no linked records exist.'))return;setMutating(true);setError('');try{await vehicleApi.remove(v!.id);router.push('/vehicles');router.refresh()}catch(e){setError(e instanceof Error?e.message:'Vehicle could not be deleted.')}finally{setMutating(false)}}
  return <main className="space-y-6 p-6">
   <section className="overflow-hidden rounded-3xl bg-gradient-to-r from-slate-950 via-slate-900 to-blue-900 p-7 text-white shadow-xl">
    <div className="flex flex-wrap items-start justify-between gap-5">
-    <div><p className="text-sm font-semibold tracking-[.2em] text-blue-200">VEHICLE PROFILE</p><h1 className="mt-2 text-4xl font-black">{v.vehicle_number}</h1><p className="mt-2 text-lg text-slate-200">{v.customer?.first_name} {v.customer?.last_name} · {v.customer?.mobile}</p><p className="mt-1 text-sm text-slate-400">{v.manufacturer} {v.model} {v.variant} · {v.fuel_type}</p></div>
+    <div><p className="text-sm font-semibold tracking-[.2em] text-blue-200">VEHICLE PROFILE</p><h1 className="mt-2 text-4xl font-black">{v.vehicle_number}</h1><p className="mt-2 text-lg text-slate-200">{v.customer?.first_name} {v.customer?.last_name} · {v.customer?.mobile}</p><p className="mt-1 text-sm text-slate-400">{v.manufacturer} {v.model} · {v.fuel_type}</p></div>
     <div className="flex flex-wrap gap-2"><a className="rounded-xl bg-white px-5 py-3 font-semibold text-slate-900" href={`/vehicles/${v.id}/edit`}>Edit Vehicle</a><button disabled={mutating} onClick={()=>void archive()} className="rounded-xl bg-amber-500 px-5 py-3 font-semibold text-slate-950 disabled:opacity-50">Archive Vehicle</button><button disabled={mutating} onClick={()=>void remove()} className="rounded-xl bg-rose-600 px-5 py-3 font-semibold text-white disabled:opacity-50">Permanent Delete</button><a className="rounded-xl border border-white/30 px-5 py-3 font-semibold" href="/vehicles">All Vehicles</a></div>
    </div>
   </section>
   <nav className="flex flex-wrap gap-2 rounded-2xl border bg-white p-3 shadow-sm">{tabs.map(t=><a key={t} href={tabHref(v.id,t)} className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${t==='Overview'?'bg-blue-700 text-white':'hover:bg-blue-50 hover:text-blue-700'}`}>{t}</a>)}</nav>
   <section className="grid gap-4 md:grid-cols-5"><Card title="Insurance" value={v.insurance_status}/><Card title="PUC" value={v.puc_status}/>{tabs.includes('Fitness')&&<Card title="Fitness" value={v.fitness_status}/>} {tabs.includes('Permit')&&<Card title="Permit" value={v.permit_status}/>} {tabs.includes('Tax')&&<Card title="Tax" value={v.tax_status}/>}</section>
-  <section className="rounded-2xl border bg-white p-6 shadow-sm"><h2 className="text-xl font-bold">Vehicle Overview</h2><dl className="mt-5 grid gap-5 md:grid-cols-3"><Info k="Registration Authority" v={v.registration_authority}/><Info k="Vehicle Class" v={v.vehicle_class}/><Info k="Vehicle Type" v={v.vehicle_type}/><Info k="Category" v={v.vehicle_category}/><Info k="Chassis Number" v={v.chassis_number}/><Info k="Engine Number" v={v.engine_number}/><Info k="Manufacturing Year" v={v.manufacturing_year}/><Info k="Colour" v={v.colour}/><Info k="Seating Capacity" v={v.seating_capacity}/><Info k="Financier" v={v.financier}/></dl></section>
+  <section className="rounded-2xl border bg-white p-6 shadow-sm"><h2 className="text-xl font-bold">Vehicle Overview</h2><dl className="mt-5 grid gap-5 md:grid-cols-3"><Info k="Registration Authority" v={v.registration_authority}/><Info k="Vehicle Class" v={v.vehicle_class}/><Info k="Vehicle Type" v={v.vehicle_type}/><Info k="Category" v={v.vehicle_category}/><Info k="Chassis Number" v={v.chassis_number}/><Info k="Engine Number" v={v.engine_number}/><Info k="Manufacturing Year" v={v.manufacturing_year}/><Info k="Colour" v={v.colour}/><Info k="Seating Capacity" v={v.seating_capacity}/><Info k="Unladen Weight (kg)" v={v.unladen_weight}/>{commercial&&<Info k="Laden / Gross Vehicle Weight (kg)" v={v.gross_weight}/>}<Info k="Financier" v={v.financier}/></dl></section>
  </main>;
 }
 function Card({title,value}:{title:string;value?:string}){return <div className="rounded-2xl border bg-white p-5 shadow-sm"><p className="text-sm text-slate-500">{title}</p><p className="mt-1 text-xl font-bold capitalize">{(value||'Not Added').replaceAll('_',' ')}</p></div>}

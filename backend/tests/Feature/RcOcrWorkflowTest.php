@@ -32,26 +32,20 @@ class RcOcrWorkflowTest extends TestCase
         ])->assertOk()
             ->assertJsonPath('data.fields.vehicle_number', 'GJ08DH9235')
             ->assertJsonPath('data.fields.registration_date', '2024-08-09')
-            ->assertJsonPath('data.fields.registration_valid_upto', '2039-08-08')
             ->assertJsonPath('data.fields.owner_name', 'RABARI NARSEGBHAI')
             ->assertJsonMissingPath('data.fields.customer_id')
             ->assertJsonPath('data.fields.manufacturer', 'HERO MOTOCORP LTD')
-            ->assertJsonPath('data.fields.model', 'SPLENDOR+')
-            ->assertJsonPath('data.fields.variant', 'DRS')
+            ->assertJsonPath('data.fields.model', 'SPLENDOR PLUS')
             ->assertJsonPath('data.fields.financier', 'ROYAL FINANCE THARAD')
             ->assertJsonPath('data.fields.number_of_cylinders', '1')
-            ->assertJsonPath('data.fields.manufacturing_month', '02')
             ->assertJsonPath('data.fields.manufacturing_year', '2024')
             ->assertJsonPath('data.fields.cubic_capacity', '97.20')
-            ->assertJsonPath('data.fields.horse_power', '7.91')
-            ->assertJsonPath('data.fields.wheel_base', '1236')
             ->assertJsonPath('data.field_confidence.vehicle_category', 0.79);
 
         $fields = $first->json('data.fields');
         $expected = [
             'vehicle_number' => 'GJ08DH9235',
             'registration_date' => '2024-08-09',
-            'registration_valid_upto' => '2039-08-08',
             'owner_name' => 'RABARI NARSEGBHAI',
             'father_or_spouse_name' => 'SAVABHAI',
             'ownership_type' => 'INDIVIDUAL',
@@ -62,19 +56,14 @@ class RcOcrWorkflowTest extends TestCase
             'vehicle_type' => 'two_wheeler',
             'vehicle_class' => 'M-CYCLE/SCOOTER (2WN)',
             'manufacturer' => 'HERO MOTOCORP LTD',
-            'model' => 'SPLENDOR+',
-            'variant' => 'DRS',
+            'model' => 'SPLENDOR PLUS',
             'vehicle_category' => 'SOLO WITH PILLION',
             'fuel_type' => 'PETROL',
-            'emission_norms' => 'BHARAT STAGE VI',
             'colour' => 'BLACK GREY STRIPE',
-            'manufacturing_month' => '02',
             'manufacturing_year' => '2024',
             'seating_capacity' => '2',
             'unladen_weight' => '109',
             'cubic_capacity' => '97.20',
-            'horse_power' => '7.91',
-            'wheel_base' => '1236',
             'number_of_cylinders' => '1',
             'chassis_number' => 'MBLHAW236R5B01749',
             'engine_number' => 'HA11E8R5B53325',
@@ -83,19 +72,26 @@ class RcOcrWorkflowTest extends TestCase
         foreach ($expected as $field => $value) {
             $this->assertSame($value, $fields[$field] ?? null, $field);
         }
-        $this->assertGreaterThanOrEqual(25, count($expected));
+        $this->assertGreaterThanOrEqual(20, count($expected));
         $this->assertNotSame('GJ08175196', $fields['manufacturer']);
         $this->assertNotSame('GJ08175196', $fields['vehicle_category']);
-        $this->assertNotSame($fields['address'], $fields['emission_norms']);
         $manufacturer = DB::table('vehicle_masters')->where('id', $fields['manufacturer_id'])->first();
         $model = DB::table('vehicle_masters')->where('id', $fields['model_id'])->first();
-        $variant = DB::table('vehicle_masters')->where('id', $fields['variant_id'])->first();
 
         $this->assertSame('HERO MOTOCORP', $manufacturer->name);
         $this->assertSame($manufacturer->id, $model->parent_id);
-        $this->assertSame($model->id, $variant->parent_id);
-        $this->assertSame('OCR', $variant->source);
-        $this->assertSame('active', $variant->status);
+        $this->assertSame('SPLENDOR PLUS', $model->name);
+        $this->assertDatabaseMissing('vehicle_masters', [
+            'tenant_id' => $user->tenant_id,
+            'type' => 'variants',
+            'name' => 'DRS',
+        ]);
+        foreach ([
+            'variant', 'variant_id', 'registration_valid_upto', 'manufacturing_month',
+            'horse_power', 'wheel_base', 'emission_norms', 'payment_due',
+        ] as $removed) {
+            $this->assertArrayNotHasKey($removed, $fields);
+        }
 
         $countAfterFirst = DB::table('vehicle_masters')->where('tenant_id', $user->tenant_id)->count();
         $second = $this->actingAs($user)->post('/api/v1/ocr', [
@@ -105,7 +101,6 @@ class RcOcrWorkflowTest extends TestCase
 
         $this->assertSame($fields['manufacturer_id'], $second->json('data.fields.manufacturer_id'));
         $this->assertSame($fields['model_id'], $second->json('data.fields.model_id'));
-        $this->assertSame($fields['variant_id'], $second->json('data.fields.variant_id'));
         $this->assertSame(
             $countAfterFirst,
             DB::table('vehicle_masters')->where('tenant_id', $user->tenant_id)->count()
@@ -139,10 +134,10 @@ class RcOcrWorkflowTest extends TestCase
             ->assertJsonPath('data.customer_id', $customer->id)
             ->assertJsonPath('data.manufacturer_id', $fields['manufacturer_id'])
             ->assertJsonPath('data.model_id', $fields['model_id'])
-            ->assertJsonPath('data.variant_id', $fields['variant_id'])
             ->assertJsonPath('data.cubic_capacity', '97.20')
             ->assertJsonPath('data.number_of_cylinders', 1)
-            ->assertJsonPath('data.registration_valid_upto', '2039-08-08T00:00:00.000000Z');
+            ->assertJsonPath('data.variant_id', null)
+            ->assertJsonPath('data.registration_valid_upto', null);
     }
 
     public function test_ocr_master_creation_is_tenant_isolated(): void
@@ -196,7 +191,6 @@ class RcOcrWorkflowTest extends TestCase
         ])->assertOk()
             ->assertJsonPath('data.fields.vehicle_number', 'GJ08BB6056')
             ->assertJsonPath('data.fields.registration_date', '2016-12-06')
-            ->assertJsonPath('data.fields.registration_valid_upto', '2031-12-05')
             ->assertJsonPath('data.fields.chassis_number', 'T052358130')
             ->assertJsonPath('data.fields.engine_number', 'E2363463')
             ->assertJsonPath('data.fields.owner_name', 'KARSHANBHAI')
@@ -211,13 +205,14 @@ class RcOcrWorkflowTest extends TestCase
             ->assertJsonPath('data.fields.vehicle_category', 'TRACTOR (OPEN)')
             ->assertJsonPath('data.fields.cubic_capacity', '45')
             ->assertJsonPath('data.fields.number_of_cylinders', '3')
-            ->assertJsonPath('data.fields.manufacturing_month', '01')
             ->assertJsonPath('data.fields.manufacturing_year', '2016')
             ->assertJsonPath('data.fields.financier', 'L AND T FINANCE LTD')
             ->assertJsonPath('data.fields.registration_authority', 'PALANPUR')
             ->assertJsonPath('data.fields.district', 'PALANPUR')
             ->assertJsonPath('data.fields.state', 'Gujarat')
             ->assertJsonMissingPath('data.fields.variant')
+            ->assertJsonMissingPath('data.fields.registration_valid_upto')
+            ->assertJsonMissingPath('data.fields.manufacturing_month')
             ->assertJsonMissingPath('data.fields.wheel_base')
             ->assertJsonMissingPath('data.fields.horse_power')
             ->assertJsonMissingPath('data.fields.unladen_weight')
@@ -258,6 +253,74 @@ class RcOcrWorkflowTest extends TestCase
         $this->assertSame('FARMTRAC 45', $resolved['fields']['model']);
         $this->assertArrayNotHasKey('model_id', $resolved['fields']);
         $this->assertSame([], $resolved['masters']);
+    }
+
+    public function test_commercial_weight_aliases_validate_and_legacy_fields_remain_compatible(): void
+    {
+        $user = User::factory()->create(['is_admin' => true]);
+        $customer = Customer::create([
+            'tenant_id' => $user->tenant_id,
+            'customer_code' => 'CUS-COMMERCIAL',
+            'first_name' => 'Commercial',
+            'last_name' => 'Owner',
+            'mobile' => '9999999913',
+        ]);
+        $payload = [
+            'customer_id' => $customer->id,
+            'vehicle_number' => 'GJ08CV3490',
+            'vehicle_type' => 'goods_transport',
+            'vehicle_class' => 'LIGHT GOODS VEHICLE',
+            'vehicle_category' => 'PICKUP TRUCK',
+            'chassis_number' => 'MA1AB2CD3EF456789',
+            'engine_number' => 'ENG1234567',
+            'unladen_weight' => 1780,
+            'insurance_status' => 'not_added',
+            'fitness_status' => 'not_added',
+            'permit_status' => 'not_added',
+            'tax_status' => 'not_added',
+            'puc_status' => 'not_added',
+        ];
+
+        $this->actingAs($user)->postJson('/api/v1/vehicles', $payload)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['gross_weight']);
+
+        $created = $this->actingAs($user)->postJson('/api/v1/vehicles', [
+            ...$payload,
+            'gross_vehicle_weight' => 3490,
+            'variant' => 'LEGACY VARIANT',
+            'manufacturing_month' => 2,
+            'registration_valid_upto' => '2039-08-08',
+            'horse_power' => 7.91,
+            'wheel_base' => 1236,
+            'emission_norms' => 'BHARAT STAGE VI',
+            'payment_due' => 500,
+        ])->assertCreated()
+            ->assertJsonPath('data.unladen_weight', 1780)
+            ->assertJsonPath('data.gross_weight', 3490)
+            ->assertJsonPath('data.variant', null)
+            ->assertJsonPath('data.registration_valid_upto', null);
+
+        $vehicleId = $created->json('data.id');
+        DB::table('vehicles')->where('id', $vehicleId)->update([
+            'variant' => 'LEGACY VARIANT',
+            'manufacturing_month' => 2,
+            'registration_valid_upto' => '2039-08-08',
+            'horse_power' => 7.91,
+            'wheel_base' => 1236,
+            'emission_norms' => 'BHARAT STAGE VI',
+            'payment_due' => 500,
+        ]);
+
+        $this->actingAs($user)->getJson("/api/v1/vehicles/{$vehicleId}")
+            ->assertOk()
+            ->assertJsonPath('data.variant', 'LEGACY VARIANT')
+            ->assertJsonPath('data.manufacturing_month', 2)
+            ->assertJsonPath('data.registration_valid_upto', '2039-08-08T00:00:00.000000Z')
+            ->assertJsonPath('data.horse_power', '7.91')
+            ->assertJsonPath('data.wheel_base', 1236)
+            ->assertJsonPath('data.emission_norms', 'BHARAT STAGE VI')
+            ->assertJsonPath('data.payment_due', '500.00');
     }
 
     /** @return array<string, mixed> */

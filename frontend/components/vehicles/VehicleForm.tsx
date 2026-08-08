@@ -8,8 +8,10 @@ import { Customer, customerApi } from "@/lib/customers";
 import { scanDocument } from "@/lib/ocr";
 import {
   applyOcrPrefill,
+  buildVehicleFormPayload,
   findMatchingMasterId,
   getOcrMasterControlState,
+  isCommercialVehicle,
   resolveOcrMasterIds,
 } from "@/lib/rc-ocr";
 import { Vehicle, vehicleApi } from "@/lib/vehicles";
@@ -23,7 +25,6 @@ const initial: Values = {
   customer_id: "",
   vehicle_number: "",
   registration_date: "",
-  registration_valid_upto: "",
   registration_authority: "",
   rto_office_id: "",
   state: "Gujarat",
@@ -34,10 +35,7 @@ const initial: Values = {
   vehicle_category: "",
   manufacturer: "",
   model: "",
-  variant: "",
-  variant_id: "",
   manufacturing_year: "",
-  manufacturing_month: "",
   colour: "",
   fuel_type: "",
   manufacturer_id: "",
@@ -51,9 +49,6 @@ const initial: Values = {
   gross_weight: "",
   unladen_weight: "",
   number_of_cylinders: "",
-  emission_norms: "",
-  horse_power: "",
-  wheel_base: "",
   chassis_number: "",
   engine_number: "",
   financier: "",
@@ -69,7 +64,6 @@ const initial: Values = {
   national_permit_expiry: "",
   tax_expiry: "",
   counter_tax_expiry: "",
-  payment_due: "0",
 };
 function clean(v: string) {
   return v
@@ -239,7 +233,6 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
   const [values, setValues] = useState<Values>(() => {
     const dates = [
       "registration_date",
-      "registration_valid_upto",
       "insurance_expiry",
       "puc_expiry",
       "fitness_expiry",
@@ -346,7 +339,6 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
     masters.body_types,
     masters.manufacturers,
     masters.models,
-    masters.variants,
     masters.colours,
     masters.fuel_types,
   ]);
@@ -393,10 +385,9 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
     }
   }
   async function loadMasters() {
-    type NonModelMaster = Exclude<VehicleMasterType, "models">;
+    type NonModelMaster = Exclude<VehicleMasterType, "models" | "variants">;
     const types: NonModelMaster[] = [
       "manufacturers",
-      "variants",
       "colours",
       "vehicle_types",
       "vehicle_classes",
@@ -512,8 +503,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
       setMany({
         [idField]: created.id,
         [nameField]: created.name,
-        ...(masterModal === "manufacturers" ? { model_id: "", model: "", variant_id: "", variant: "" } : {}),
-        ...(masterModal === "models" ? { variant_id: "", variant: "" } : {}),
+        ...(masterModal === "manufacturers" ? { model_id: "", model: "" } : {}),
       });
       setMasterModal(undefined);
       setSuccess(`${created.name} added and selected.`);
@@ -619,32 +609,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
     setSaving(true);
     setError("");
     try {
-      const body = {
-        ...values,
-        hypothecation: Boolean(values.financier),
-        manufacturing_year: values.manufacturing_year
-          ? Number(values.manufacturing_year)
-          : null,
-        manufacturing_month: values.manufacturing_month
-          ? Number(values.manufacturing_month)
-          : null,
-        seating_capacity: values.seating_capacity
-          ? Number(values.seating_capacity)
-          : null,
-        cubic_capacity: values.cubic_capacity
-          ? Number(values.cubic_capacity)
-          : null,
-        gross_weight: values.gross_weight ? Number(values.gross_weight) : null,
-        unladen_weight: values.unladen_weight
-          ? Number(values.unladen_weight)
-          : null,
-        number_of_cylinders: values.number_of_cylinders
-          ? Number(values.number_of_cylinders)
-          : null,
-        horse_power: values.horse_power ? Number(values.horse_power) : null,
-        wheel_base: values.wheel_base ? Number(values.wheel_base) : null,
-        payment_due: Number(values.payment_due || 0),
-      };
+      const body = buildVehicleFormPayload(values);
       const saved = vehicle?.id
         ? await vehicleApi.update(vehicle.id, body)
         : await vehicleApi.create(body);
@@ -655,7 +620,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
       setSaving(false);
     }
   }
-  const commercial = ["lgv", "hgv", "taxi"].includes(values.vehicle_type),
+  const commercial = isCommercialVehicle(values),
     hgv = values.vehicle_type === "hgv",
     taxi = values.vehicle_type === "taxi";
   const customerOptions = useMemo(
@@ -885,13 +850,6 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
               onChange={(v) => set("registration_date", v)}
               confidence={confidence("registration_date")}
             />
-            <Input
-              label="Registration Validity"
-              type="date"
-              value={values.registration_valid_upto}
-              onChange={(v) => set("registration_valid_upto", v)}
-              confidence={confidence("registration_valid_upto")}
-            />
             <MasterSelect
               label="Registration Authority / RTO"
               value={values.rto_office_id}
@@ -979,8 +937,6 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
                     manufacturer: item?.name ?? "",
                     model_id: "",
                     model: "",
-                    variant_id: "",
-                    variant: "",
                   });
                 }
               }}
@@ -998,8 +954,6 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
                 setMany({
                   model_id: id,
                   model: item?.name ?? "",
-                  variant_id: "",
-                  variant: "",
                 });
               }}
               options={masters.models}
@@ -1016,35 +970,12 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
               confidence={confidence("model")}
               unresolvedText={values.model}
             />
-            <MasterSelect
-              label="Variant"
-              value={values.variant_id}
-              onChange={(id) => {
-                const item = masters.variants.find((row) => row.id === id);
-                setMany({ variant_id: id, variant: item?.name ?? "" });
-              }}
-              options={masters.variants.filter((row) => row.parent_id === values.model_id)}
-              add={() => values.model_id ? setMasterModal("variants") : setError("Select a model before adding a variant.")}
-              loading={masterLoading}
-              disabled={!values.model_id}
-              placeholder="Select Variant"
-              emptyLabel="No variants found"
-              confidence={confidence("variant")}
-              unresolvedText={values.variant}
-            />
             <Input
               label="Manufacturing Year"
               type="number"
               value={values.manufacturing_year}
               onChange={(v) => set("manufacturing_year", v)}
               confidence={confidence("manufacturing_year")}
-            />
-            <Input
-              label="Manufacturing Month"
-              type="number"
-              value={values.manufacturing_month}
-              onChange={(v) => set("manufacturing_month", v)}
-              confidence={confidence("manufacturing_month")}
             />
             <MasterSelect
               label="Colour"
@@ -1103,11 +1034,12 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
             {commercial && (
               <>
                 <Input
-                  label="Gross Weight"
+                  label="Laden Weight / Gross Vehicle Weight (kg)"
                   type="number"
                   value={values.gross_weight}
                   onChange={(v) => set("gross_weight", v)}
                   confidence={confidence("gross_weight")}
+                  required
                 />
               </>
             )}
@@ -1137,37 +1069,10 @@ export function VehicleForm({ vehicle }: { vehicle?: Partial<Vehicle> }) {
               confidence={confidence("number_of_cylinders")}
             />
             <Input
-              label="Emission Norms"
-              value={values.emission_norms}
-              onChange={(v) => set("emission_norms", v)}
-              confidence={confidence("emission_norms")}
-            />
-            <Input
-              label="Horse Power (BHP/kW)"
-              type="number"
-              step="0.01"
-              value={values.horse_power}
-              onChange={(v) => set("horse_power", v)}
-              confidence={confidence("horse_power")}
-            />
-            <Input
-              label="Wheel Base (mm)"
-              type="number"
-              value={values.wheel_base}
-              onChange={(v) => set("wheel_base", v)}
-              confidence={confidence("wheel_base")}
-            />
-            <Input
               label="Financier / Hypothecation"
               value={values.financier}
               onChange={(v) => set("financier", v)}
               confidence={confidence("financier")}
-            />
-            <Input
-              label="Payment Due"
-              type="number"
-              value={values.payment_due}
-              onChange={(v) => set("payment_due", v)}
             />
           </Card>
         </div>

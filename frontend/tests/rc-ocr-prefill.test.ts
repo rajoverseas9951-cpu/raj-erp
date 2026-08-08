@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 // Node's built-in TypeScript runner requires the explicit extension.
 // @ts-expect-error TypeScript's bundler mode omits runtime `.ts` extensions in application code.
-import { applyOcrPrefill, findMatchingMasterId, getOcrMasterControlState, resolveOcrMasterIds } from "../lib/rc-ocr.ts";
+import { applyOcrPrefill, buildVehicleFormPayload, findMatchingMasterId, getOcrMasterControlState, isCommercialVehicle, resolveOcrMasterIds } from "../lib/rc-ocr.ts";
 
 test("OCR prefill preserves customer and user-edited fields", () => {
   const current = {
@@ -83,11 +83,11 @@ test("a tractor scan cannot inherit motorcycle OCR values", () => {
   assert.equal(tractor.financier, "L AND T FINANCE LTD");
   assert.equal(tractor.cubic_capacity, "45");
   assert.equal(tractor.unladen_weight, "");
-  assert.equal(tractor.emission_norms, "");
-  assert.equal(tractor.variant, "");
-  assert.equal(tractor.variant_id, "");
-  assert.equal(tractor.horse_power, "");
-  assert.equal(tractor.wheel_base, "");
+  assert.equal(tractor.emission_norms, undefined);
+  assert.equal(tractor.variant, undefined);
+  assert.equal(tractor.variant_id, undefined);
+  assert.equal(tractor.horse_power, undefined);
+  assert.equal(tractor.wheel_base, undefined);
 });
 
 test("manual fields remain protected while other OCR fields reset", () => {
@@ -142,7 +142,6 @@ test("the Gujarat motorcycle values drive visible form inputs and selects", asyn
   const expected = {
     vehicle_number: "GJ08DH9235",
     registration_date: "2024-08-09",
-    registration_valid_upto: "2039-08-08",
     registration_authority: "BANASKANTHA",
     state: "Gujarat",
     district: "BANASKANTHA",
@@ -150,21 +149,16 @@ test("the Gujarat motorcycle values drive visible form inputs and selects", asyn
     vehicle_class: "M-CYCLE/SCOOTER (2WN)",
     vehicle_category: "SOLO WITH PILLION",
     manufacturer: "HERO MOTOCORP LTD",
-    model: "SPLENDOR+",
-    variant: "DRS",
+    model: "SPLENDOR PLUS",
     colour: "BLACK GREY STRIPE",
     fuel_type: "PETROL",
-    manufacturing_month: "02",
     manufacturing_year: "2024",
     seating_capacity: "2",
     unladen_weight: "109",
     cubic_capacity: "97.20",
-    horse_power: "7.91",
-    wheel_base: "1236",
     number_of_cylinders: "1",
     chassis_number: "MBLHAW236R5B01749",
     engine_number: "HA11E8R5B53325",
-    emission_norms: "BHARAT STAGE VI",
     financier: "ROYAL FINANCE THARAD",
   };
   const previousRc = applyOcrPrefill(
@@ -180,35 +174,34 @@ test("the Gujarat motorcycle values drive visible form inputs and selects", asyn
   );
   const beforeMasters = applyOcrPrefill(previousRc, expected, new Set());
 
-  assert.equal(Object.keys(expected).length, 26);
+  assert.equal(Object.keys(expected).length, 20);
   for (const [field, value] of Object.entries(expected)) {
     assert.equal(beforeMasters[field], value, `${field} input value`);
   }
   assert.equal(beforeMasters.customer_id, "explicit-customer");
   assert.notEqual(beforeMasters.manufacturer, "GJ08175196");
   assert.notEqual(beforeMasters.vehicle_category, "GJ08175196");
-  assert.notEqual(beforeMasters.emission_norms, beforeMasters.address);
   assert.equal(beforeMasters.cubic_capacity, "97.20");
-  assert.equal(beforeMasters.horse_power, "7.91");
   assert.equal(beforeMasters.unladen_weight, "109");
+  for (const field of [
+    "variant", "variant_id", "manufacturing_month", "registration_valid_upto",
+    "horse_power", "wheel_base", "emission_norms", "payment_due",
+  ]) {
+    assert.equal(beforeMasters[field], undefined, `${field} must not prefill`);
+  }
 
   const directInputs = [
     "vehicle_number",
     "registration_date",
-    "registration_valid_upto",
     "state",
     "district",
-    "manufacturing_month",
     "manufacturing_year",
     "seating_capacity",
     "unladen_weight",
     "cubic_capacity",
-    "horse_power",
-    "wheel_base",
     "number_of_cylinders",
     "chassis_number",
     "engine_number",
-    "emission_norms",
     "financier",
   ];
   const formSource = readFileSync(
@@ -218,6 +211,19 @@ test("the Gujarat motorcycle values drive visible form inputs and selects", asyn
   for (const field of directInputs) {
     assert.match(formSource, new RegExp(`value=\\{values\\.${field}\\}`));
   }
+  for (const label of [
+    "Variant", "Manufacturing Month", "Registration Validity", "Horse Power",
+    "Wheel Base", "Emission Norms", "Payment Due",
+  ]) {
+    assert.doesNotMatch(formSource, new RegExp(`label=["']${label}`));
+  }
+  const detailsSource = readFileSync(
+    new URL("../app/vehicles/[vehicleId]/page.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.doesNotMatch(detailsSource, /v\.variant/);
+  assert.match(detailsSource, /Unladen Weight \(kg\)/);
+  assert.match(detailsSource, /commercial&&<Info k="Laden \/ Gross Vehicle Weight \(kg\)"/);
 
   const unresolvedManufacturer = getOcrMasterControlState(
     "",
@@ -234,7 +240,6 @@ test("the Gujarat motorcycle values drive visible form inputs and selects", asyn
     body_types: [{ id: "body-id", name: "SOLO WITH PILLION" }],
     manufacturers: [{ id: "make-id", name: "HERO MOTOCORP" }],
     models: [{ id: "model-id", name: "SPLENDOR PLUS", parent_id: "make-id" }],
-    variants: [{ id: "variant-id", name: "DRS", parent_id: "model-id" }],
     colours: [{ id: "colour-id", name: "BLACK GREY STRIPE" }],
     fuel_types: [{ id: "fuel-id", name: "PETROL" }],
   });
@@ -246,7 +251,6 @@ test("the Gujarat motorcycle values drive visible form inputs and selects", asyn
     vehicle_category_id: "body-id",
     manufacturer_id: "make-id",
     model_id: "model-id",
-    variant_id: "variant-id",
     colour_id: "colour-id",
     fuel_type_id: "fuel-id",
   };
@@ -260,6 +264,53 @@ test("the Gujarat motorcycle values drive visible form inputs and selects", asyn
   );
   assert.equal(selectedModel.visibleText, "SPLENDOR PLUS");
   assert.equal(selectedModel.fallbackLabel, "");
+
+  const payload = buildVehicleFormPayload({
+    ...beforeMasters,
+    registration_valid_upto: "2039-08-08",
+    variant: "DRS",
+    manufacturing_month: "02",
+    horse_power: "7.91",
+    wheel_base: "1236",
+    emission_norms: "BHARAT STAGE VI",
+    payment_due: "500",
+  });
+  for (const field of [
+    "variant", "manufacturing_month", "registration_valid_upto", "horse_power",
+    "wheel_base", "emission_norms", "payment_due",
+  ]) {
+    assert.equal(field in payload, false, `${field} must not submit`);
+  }
+});
+
+test("commercial vehicles show and submit unladen and gross weight independently", () => {
+  const commercial = applyOcrPrefill(
+    { customer_id: "customer-id" },
+    {
+      vehicle_type: "goods_transport",
+      vehicle_class: "LIGHT GOODS VEHICLE",
+      vehicle_category: "PICKUP TRUCK",
+      unladen_weight: "1780",
+      gross_weight: "3490",
+    },
+    new Set(),
+  );
+
+  assert.equal(isCommercialVehicle(commercial), true);
+  assert.equal(commercial.unladen_weight, "1780");
+  assert.equal(commercial.gross_weight, "3490");
+  const payload = buildVehicleFormPayload(commercial);
+  assert.equal(payload.unladen_weight, 1780);
+  assert.equal(payload.gross_weight, 3490);
+
+  assert.equal(isCommercialVehicle({ vehicle_type: "private_car" }), false);
+  const privatePayload = buildVehicleFormPayload({
+    vehicle_type: "private_car",
+    unladen_weight: "1090",
+    gross_weight: "1400",
+  });
+  assert.equal(privatePayload.unladen_weight, 1090);
+  assert.equal("gross_weight" in privatePayload, false);
 });
 
 test("the complete tractor prefill survives delayed dependent master loading", async () => {
@@ -281,7 +332,6 @@ test("the complete tractor prefill survives delayed dependent master loading", a
   const expected = {
     vehicle_number: "GJ08BB6056",
     registration_date: "2016-12-06",
-    registration_valid_upto: "2031-12-05",
     registration_authority: "PALANPUR",
     state: "Gujarat",
     district: "PALANPUR",
@@ -292,7 +342,6 @@ test("the complete tractor prefill survives delayed dependent master loading", a
     model: "FARMTRAC 45",
     fuel_type: "DIESEL",
     colour: "BLUE",
-    manufacturing_month: "01",
     manufacturing_year: "2016",
     seating_capacity: "1",
     cubic_capacity: "45",
@@ -312,11 +361,11 @@ test("the complete tractor prefill survives delayed dependent master loading", a
   }
   assert.equal(beforeMasters.manufacturer_id, "");
   assert.equal(beforeMasters.model_id, "");
-  assert.equal(beforeMasters.variant, "");
-  assert.equal(beforeMasters.wheel_base, "");
-  assert.equal(beforeMasters.horse_power, "");
+  assert.equal(beforeMasters.variant, undefined);
+  assert.equal(beforeMasters.wheel_base, undefined);
+  assert.equal(beforeMasters.horse_power, undefined);
   assert.equal(beforeMasters.unladen_weight, "");
-  assert.equal(beforeMasters.emission_norms, "");
+  assert.equal(beforeMasters.emission_norms, undefined);
   assert.notEqual(beforeMasters.fuel_type, "USED");
   assert.notEqual(beforeMasters.financier, "ROYAL FINANCE THARAD");
 

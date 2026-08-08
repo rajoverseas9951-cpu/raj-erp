@@ -14,7 +14,6 @@ export type OcrMasterKind =
 export const OCR_PREFILL_FIELDS = [
   "vehicle_number",
   "registration_date",
-  "registration_valid_upto",
   "registration_authority",
   "rto_office_id",
   "state",
@@ -29,10 +28,7 @@ export const OCR_PREFILL_FIELDS = [
   "manufacturer_id",
   "model",
   "model_id",
-  "variant",
-  "variant_id",
   "manufacturing_year",
-  "manufacturing_month",
   "colour",
   "colour_id",
   "fuel_type",
@@ -42,9 +38,6 @@ export const OCR_PREFILL_FIELDS = [
   "gross_weight",
   "unladen_weight",
   "number_of_cylinders",
-  "emission_norms",
-  "horse_power",
-  "wheel_base",
   "chassis_number",
   "engine_number",
   "financier",
@@ -111,7 +104,6 @@ const MASTER_BINDINGS: ReadonlyArray<{
   { type: "body_types", nameField: "vehicle_category", idField: "vehicle_category_id" },
   { type: "manufacturers", nameField: "manufacturer", idField: "manufacturer_id" },
   { type: "models", nameField: "model", idField: "model_id", parentIdField: "manufacturer_id" },
-  { type: "variants", nameField: "variant", idField: "variant_id", parentIdField: "model_id" },
   { type: "colours", nameField: "colour", idField: "colour_id" },
   { type: "fuel_types", nameField: "fuel_type", idField: "fuel_type_id" },
 ];
@@ -176,10 +168,97 @@ export function applyOcrPrefill(
     if (!OCR_PREFILL_SET.has(field) || editedFields.has(field) || value === "") {
       continue;
     }
-    next[field] = ["registration_date", "registration_valid_upto"].includes(field)
+    next[field] = field === "registration_date"
       ? normalizeOcrDate(String(value))
       : String(value);
   }
   next.customer_id = current.customer_id;
   return next;
+}
+
+const COMMERCIAL_VEHICLE_PATTERN =
+  /\b(?:COMMERCIAL|GOODS?|TRANSPORT|HGV|LGV|MGV|HMV|TRUCK|LORRY|TRAILER|PICK\s*UP|PICKUP|BUS|TAXI|CAB|MAXI|PSV|PASSENGER|STAGE\s+CARRIAGE|CONTRACT\s+CARRIAGE)\b/i;
+
+export function isCommercialVehicle(values: {
+  vehicle_type?: string;
+  vehicle_class?: string;
+  vehicle_category?: string;
+}): boolean {
+  return COMMERCIAL_VEHICLE_PATTERN.test(
+    [values.vehicle_type, values.vehicle_class, values.vehicle_category]
+      .filter(Boolean)
+      .join(" ")
+      .replaceAll("_", " "),
+  );
+}
+
+const VEHICLE_FORM_FIELDS = [
+  "customer_id",
+  "vehicle_number",
+  "registration_date",
+  "registration_authority",
+  "rto_office_id",
+  "state",
+  "district",
+  "vehicle_type",
+  "vehicle_type_id",
+  "vehicle_class",
+  "vehicle_class_id",
+  "vehicle_category",
+  "vehicle_category_id",
+  "manufacturer",
+  "manufacturer_id",
+  "model",
+  "model_id",
+  "manufacturing_year",
+  "colour",
+  "colour_id",
+  "fuel_type",
+  "fuel_type_id",
+  "seating_capacity",
+  "cubic_capacity",
+  "unladen_weight",
+  "number_of_cylinders",
+  "chassis_number",
+  "engine_number",
+  "financier",
+  "insurance_status",
+  "fitness_status",
+  "permit_status",
+  "tax_status",
+  "puc_status",
+  "insurance_expiry",
+  "puc_expiry",
+  "fitness_expiry",
+  "permit_expiry",
+  "national_permit_expiry",
+  "tax_expiry",
+  "counter_tax_expiry",
+] as const;
+
+const NUMERIC_VEHICLE_FORM_FIELDS = new Set([
+  "manufacturing_year",
+  "seating_capacity",
+  "cubic_capacity",
+  "unladen_weight",
+  "number_of_cylinders",
+]);
+
+export function buildVehicleFormPayload(
+  values: VehicleFormValues,
+): Record<string, string | number | boolean | null> {
+  const payload: Record<string, string | number | boolean | null> = {};
+  for (const field of VEHICLE_FORM_FIELDS) {
+    const value = values[field] ?? "";
+    payload[field] = NUMERIC_VEHICLE_FORM_FIELDS.has(field)
+      ? value === "" ? null : Number(value)
+      : value;
+  }
+  if (isCommercialVehicle(values)) {
+    payload.gross_weight = values.gross_weight
+      ? Number(values.gross_weight)
+      : null;
+  }
+  payload.hypothecation = Boolean(values.financier);
+  return payload;
 }

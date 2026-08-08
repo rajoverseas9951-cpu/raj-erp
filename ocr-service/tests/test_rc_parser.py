@@ -221,3 +221,24 @@ def test_spatial_columns_pair_each_label_with_the_value_below_it() -> None:
     assert parsed.fields.registration_valid_upto == "08-08-2039"
     assert parsed.fields.number_of_cylinders == "1"
     assert parsed.fields.financier == "ROYAL FINANCE THARAD"
+
+
+def test_commercial_combined_weight_columns_remain_independent() -> None:
+    parsed = parse_rc(
+        [
+            line("Vehicle Class: LIGHT GOODS VEHICLE", 0.96),
+            line("Unladen Weight (Kg) / Gross Vehicle Weight (Kg)", 0.95),
+            line("1780 / 3490", 0.94),
+            line("No. of Cylinders: 4", 0.93),
+            line("Financier: COMMERCIAL FINANCE LTD", 0.92),
+            line("Chassis No: MA1AB2CD3EF456789", 0.96),
+            line("Engine No: ENG1234567", 0.95),
+        ]
+    )
+
+    assert parsed.fields.unladen_weight == "1780"
+    assert parsed.fields.gross_vehicle_weight == "3490"
+    assert parsed.fields.number_of_cylinders == "4"
+    assert parsed.fields.financier == "COMMERCIAL FINANCE LTD"
+    assert parsed.fields.chassis_number == "MA1AB2CD3EF456789"
+    assert parsed.fields.engine_number == "ENG1234567"

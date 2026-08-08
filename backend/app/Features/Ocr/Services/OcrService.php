@@ -143,8 +143,7 @@ class OcrService
         foreach ([
             'vehicle_number', 'registration_authority', 'chassis_number', 'engine_number',
             'owner_name', 'father_or_spouse_name', 'ownership_type', 'address',
-            'manufacturer', 'model', 'variant', 'vehicle_class', 'body_type', 'colour',
-            'emission_norms', 'financier',
+            'manufacturer', 'model', 'vehicle_class', 'body_type', 'colour', 'financier',
         ] as $key) {
             $value = $source[$key] ?? null;
             if (is_string($value) && trim($value) !== '') $fields[$key] = trim($value);
@@ -156,10 +155,13 @@ class OcrService
         }
         foreach ([
             'owner_name', 'father_or_spouse_name', 'ownership_type', 'manufacturer',
-            'model', 'variant', 'vehicle_class', 'body_type', 'colour',
-            'registration_authority', 'emission_norms', 'financier',
+            'model', 'vehicle_class', 'body_type', 'colour',
+            'registration_authority', 'financier',
         ] as $key) {
             if (isset($fields[$key])) $fields[$key] = strtoupper($this->clean($fields[$key]));
+        }
+        if (isset($fields['model'])) {
+            $fields['model'] = $this->normaliseModel($fields['model']);
         }
         if (isset($fields['body_type'])) {
             $fields['vehicle_category'] = $fields['body_type'];
@@ -174,11 +176,6 @@ class OcrService
         if (is_string($registrationDate) && ($date = $this->normaliseDate($registrationDate))) {
             $fields['registration_date'] = $date;
         }
-        $registrationValidity = $source['registration_valid_upto'] ?? null;
-        if (is_string($registrationValidity) && ($date = $this->normaliseDate($registrationValidity))) {
-            $fields['registration_valid_upto'] = $date;
-        }
-
         $fuel = $source['fuel_type'] ?? null;
         if (is_string($fuel) && trim($fuel) !== '') {
             $fields['fuel_type'] = $this->normaliseFuel($fuel);
@@ -189,8 +186,6 @@ class OcrService
             'cubic_capacity' => 'cubic_capacity',
             'unladen_weight' => 'unladen_weight',
             'gross_vehicle_weight' => 'gross_weight',
-            'horse_power' => 'horse_power',
-            'wheel_base' => 'wheel_base',
             'number_of_cylinders' => 'number_of_cylinders',
         ] as $sourceKey => $targetKey) {
             $value = $source[$sourceKey] ?? null;
@@ -199,10 +194,6 @@ class OcrService
             }
         }
 
-        $manufacturingMonth = $source['manufacturing_month'] ?? null;
-        if (is_string($manufacturingMonth) && preg_match('/\b(0?[1-9]|1[0-2])\b/', $manufacturingMonth, $match)) {
-            $fields['manufacturing_month'] = str_pad($match[1], 2, '0', STR_PAD_LEFT);
-        }
         $manufacturingYear = $source['manufacturing_year'] ?? null;
         if (is_string($manufacturingYear) && preg_match('/\b(?:19|20)\d{2}\b/', $manufacturingYear, $match)) {
             $fields['manufacturing_year'] = $match[0];
@@ -211,15 +202,6 @@ class OcrService
             if (is_string($manufactured) && preg_match('/\b(?:19|20)\d{2}\b/', $manufactured, $match)) {
                 $fields['manufacturing_year'] = $match[0];
             }
-            if (is_string($manufactured) && preg_match('/\b(0?[1-9]|1[0-2])[.\/-](?:19|20)\d{2}\b/', $manufactured, $match)) {
-                $fields['manufacturing_month'] = str_pad($match[1], 2, '0', STR_PAD_LEFT);
-            }
-        }
-
-        if (isset($fields['model']) && ! isset($fields['variant'])
-            && preg_match('/^(.+?)\s*\(([^()]{1,30})\)$/', $fields['model'], $match)) {
-            $fields['model'] = trim($match[1]);
-            $fields['variant'] = trim($match[2]);
         }
 
         $class = strtolower($fields['vehicle_class'] ?? '');
@@ -237,17 +219,34 @@ class OcrService
     {
         $mapping = [
             'body_type' => ['vehicle_category'],
-            'manufacturing_month_year' => ['manufacturing_month', 'manufacturing_year'],
+            'manufacturing_month_year' => ['manufacturing_year'],
             'gross_vehicle_weight' => ['gross_weight'],
+        ];
+        $allowed = [
+            'vehicle_number', 'registration_date', 'registration_authority', 'chassis_number',
+            'engine_number', 'owner_name', 'father_or_spouse_name', 'ownership_type', 'address',
+            'manufacturer', 'model', 'vehicle_class', 'vehicle_category', 'body_type', 'colour',
+            'financier', 'fuel_type', 'seating_capacity', 'cubic_capacity', 'unladen_weight',
+            'gross_weight', 'number_of_cylinders', 'manufacturing_year', 'state', 'district',
+            'vehicle_type',
         ];
         $confidence = [];
         foreach ($source as $field => $value) {
             if (! is_string($field) || ! is_numeric($value)) continue;
             foreach ($mapping[$field] ?? [$field] as $target) {
+                if (! in_array($target, $allowed, true)) continue;
                 $confidence[$target] = max(0.0, min(1.0, (float) $value));
             }
         }
         return $confidence;
+    }
+
+    private function normaliseModel(string $value): string
+    {
+        $value = (string) preg_replace('/\s*\([^()]{1,30}\)\s*$/', '', $value);
+        $value = str_replace('+', ' PLUS ', $value);
+
+        return strtoupper($this->clean($value));
     }
 
     private function normaliseFuel(string $value): string

@@ -88,21 +88,25 @@ class PaddleOcrIntegrationTest extends TestCase
 
         $this->assertSame('GJ16DM9932', $result['fields']['vehicle_number']);
         $this->assertSame('2022-08-07', $result['fields']['registration_date']);
-        $this->assertSame('2039-08-08', $result['fields']['registration_valid_upto']);
         $this->assertSame('RTO AHMEDABAD', $result['fields']['registration_authority']);
         $this->assertSame('RTO AHMEDABAD', $result['fields']['district']);
         $this->assertSame('1197', $result['fields']['cubic_capacity']);
+        $this->assertSame('865', $result['fields']['unladen_weight']);
         $this->assertSame('1335', $result['fields']['gross_weight']);
+        $this->assertNotSame($result['fields']['unladen_weight'], $result['fields']['gross_weight']);
         $this->assertSame('HATCHBACK', $result['fields']['vehicle_category']);
         $this->assertSame('4', $result['fields']['number_of_cylinders']);
-        $this->assertSame('88.50', $result['fields']['horse_power']);
-        $this->assertSame('2450', $result['fields']['wheel_base']);
         $this->assertSame('2019', $result['fields']['manufacturing_year']);
-        $this->assertSame('08', $result['fields']['manufacturing_month']);
         $this->assertSame('private_car', $result['fields']['vehicle_type']);
         $this->assertSame(['Confirm all fields before saving.'], $result['warnings']);
         $this->assertSame(0.93, $result['overall_confidence']);
         $this->assertSame(0.78, $result['field_confidence']['vehicle_category']);
+        foreach ([
+            'variant', 'registration_valid_upto', 'manufacturing_month', 'horse_power',
+            'wheel_base', 'emission_norms', 'payment_due',
+        ] as $removed) {
+            $this->assertArrayNotHasKey($removed, $result['fields']);
+        }
 
         Http::assertSent(fn (Request $request) =>
             $request->method() === 'POST'
@@ -162,7 +166,6 @@ class PaddleOcrIntegrationTest extends TestCase
         $expected = [
             'vehicle_number' => 'GJ08DH9235',
             'registration_date' => '2024-08-09',
-            'registration_valid_upto' => '2039-08-08',
             'owner_name' => 'RABARI NARSEGBHAI',
             'father_or_spouse_name' => 'SAVABHAI',
             'ownership_type' => 'INDIVIDUAL',
@@ -173,19 +176,14 @@ class PaddleOcrIntegrationTest extends TestCase
             'vehicle_type' => 'two_wheeler',
             'vehicle_class' => 'M-CYCLE/SCOOTER (2WN)',
             'manufacturer' => 'HERO MOTOCORP LTD',
-            'model' => 'SPLENDOR+',
-            'variant' => 'DRS',
+            'model' => 'SPLENDOR PLUS',
             'vehicle_category' => 'SOLO WITH PILLION',
             'fuel_type' => 'PETROL',
-            'emission_norms' => 'BHARAT STAGE VI',
             'colour' => 'BLACK GREY STRIPE',
-            'manufacturing_month' => '02',
             'manufacturing_year' => '2024',
             'seating_capacity' => '2',
             'unladen_weight' => '109',
             'cubic_capacity' => '97.20',
-            'horse_power' => '7.91',
-            'wheel_base' => '1236',
             'number_of_cylinders' => '1',
             'chassis_number' => 'MBLHAW236R5B01749',
             'engine_number' => 'HA11E8R5B53325',
@@ -194,13 +192,17 @@ class PaddleOcrIntegrationTest extends TestCase
         foreach ($expected as $field => $value) {
             $this->assertSame($value, $result['fields'][$field] ?? null, $field);
         }
-        $this->assertGreaterThanOrEqual(25, count($expected));
+        $this->assertGreaterThanOrEqual(20, count($expected));
         $this->assertNotSame('GJ08175196', $result['fields']['manufacturer']);
         $this->assertNotSame('GJ08175196', $result['fields']['vehicle_category']);
-        $this->assertNotSame($result['fields']['address'], $result['fields']['emission_norms']);
         $this->assertSame('97.20', $result['fields']['cubic_capacity']);
-        $this->assertSame('7.91', $result['fields']['horse_power']);
         $this->assertSame('109', $result['fields']['unladen_weight']);
+        foreach ([
+            'variant', 'registration_valid_upto', 'manufacturing_month', 'horse_power',
+            'wheel_base', 'emission_norms', 'payment_due',
+        ] as $removed) {
+            $this->assertArrayNotHasKey($removed, $result['fields']);
+        }
     }
 
 }
