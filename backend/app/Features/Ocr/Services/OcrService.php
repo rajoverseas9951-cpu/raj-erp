@@ -400,8 +400,8 @@ class OcrService
 
         return match (true) {
             preg_match('/ELECTRIC|BATTERY|\bEV\b/', $value) === 1 => 'ELECTRIC',
-            preg_match('/PETROL.*CNG|CNG.*PETROL|DUAL.*CNG/', $value) === 1 => 'PETROL/CNG',
-            preg_match('/PETROL.*LPG|LPG.*PETROL|DUAL.*LPG/', $value) === 1 => 'PETROL/LPG',
+            preg_match('/PETROL.*CNG|CNG.*PETROL|DUAL.*CNG/', $value) === 1 => 'PETROL+CNG',
+            preg_match('/PETROL.*LPG|LPG.*PETROL|DUAL.*LPG/', $value) === 1 => 'PETROL+LPG',
             preg_match('/\bCNG\b/', $value) === 1 => 'CNG',
             preg_match('/\bDIESEL\b/', $value) === 1 => 'DIESEL',
             preg_match('/\bPETROL\b/', $value) === 1 => 'PETROL',
@@ -512,7 +512,10 @@ class OcrService
             $fields['vehicle_number'] = strtoupper((string) preg_replace('/[^A-Z0-9]/i', '', $match[0]));
         }
 
-        $registrationDate = $this->labelValue($lines, '/(?:date\s*of\s*(?:regn|registration)|regn\.?\s*date|registration\s*date)/i');
+        $registrationDate = $this->labelValue(
+            $lines,
+            '/(?:date\s*of\s*(?:regn|reg\.?|registration)|(?:regn|reg\.?|registration)\s*date)/i'
+        );
         if ($date = $this->normaliseDate($registrationDate)) {
             $fields['registration_date'] = $date;
         }
@@ -522,19 +525,63 @@ class OcrService
             $fields['chassis_number'] = $chassis;
         }
 
-        $engine = $this->identifier($this->labelValue($lines, '/(?:engine\s*\/\s*motor|engine|motor)\s*(?:no|number|num)?\.?/i'));
+        $engine = $this->identifier($this->labelValue(
+            $lines,
+            '/(?:engine\s*\/\s*motor|engine|motor)\s*(?:no|number|num)\.?/i'
+        ));
         if (preg_match('/^[A-Z0-9]{6,25}$/', $engine)) {
             $fields['engine_number'] = $engine;
         }
 
         $this->setTextField($fields, 'vehicle_class', $this->labelValue($lines, '/(?:vehicle\s*class|class\s*of\s*vehicle)/i'), 3, 80);
+        $this->setTextField($fields, 'owner_name', $this->labelValue($lines, '/(?:owner(?:\'?s)?\s*name|name\s+of\s+owner)/i'), 2, 100);
         $this->setTextField($fields, 'manufacturer', $this->labelValue($lines, '/(?:maker\'?s?\s*(?:name)?|manufacturer|manufactured\s*by)/i'), 2, 100);
         $this->setTextField($fields, 'model', $this->labelValue($lines, '/(?:model\s*(?:name)?|maker\'?s?\s*classification)/i'), 2, 100);
         $this->setTextField($fields, 'colour', $this->labelValue($lines, '/colou?r/i'), 2, 50);
+        $this->setTextField($fields, 'body_type', $this->labelValue($lines, '/body\s*type/i'), 2, 80);
+        $this->setTextField($fields, 'registration_authority', $this->labelValue($lines, '/(?:registering|registration)\s+authority/i'), 2, 80);
+        if (isset($fields['manufacturer'])) {
+            $fields['manufacturer'] = (string) preg_replace(
+                '/\bSUZUKIINDIA\b/i',
+                'SUZUKI INDIA',
+                $fields['manufacturer']
+            );
+        }
+        if (isset($fields['model'])) {
+            $fields['model'] = $this->normaliseModel($fields['model']);
+        }
+        if (isset($fields['body_type'])) {
+            $fields['body_type'] = $this->collapseRepeatedAdjacentPhrase($fields['body_type']);
+        }
 
-        if (preg_match('/\b(PETROL|DIESEL|CNG|LPG|ELECTRIC|BATTERY|EV|HYBRID)\b/i', $joined, $match)) {
-            $fuel = strtolower($match[1]);
-            $fields['fuel_type'] = preg_match('/electric|battery|ev/i', $fuel) ? 'electric' : $fuel;
+        foreach ([
+            'seating_capacity' => '/(?:seating|seat)\s*(?:capacity|cap\.?)?/i',
+            'cubic_capacity' => '/(?:cubic\s*(?:capacity|cap\.?)|\bcc\b)/i',
+            'number_of_cylinders' => '/(?:cylinders?\s+no\.?|no\.?\s*of\s+cylinders?|number\s+of\s+cylinders?)/i',
+        ] as $field => $label) {
+            $value = $this->labelValue($lines, $label, 1);
+            if (($number = $this->normaliseNumericField($field, $value)) !== null) {
+                $fields[$field] = $number;
+            }
+        }
+
+        $manufactured = $this->labelValue(
+            $lines,
+            '/(?:month\s*(?:[-\/&]|and)?\s*(?:yr\.?|year)\s+of\s+mfg\.?|'
+            .'mfg\.?\s+month\s*(?:[-\/&]|and)?\s*(?:yr\.?|year)|'
+            .'month\s*\/\s*year\s+of\s+manufacture|manufacturing\s*(?:date|month\s*year)?)/i',
+            1
+        );
+        if (preg_match('/\b((?:19|20)\d{2})\b/', $manufactured, $match)) {
+            $fields['manufacturing_year'] = $match[1];
+        } elseif (isset($fields['registration_date'])
+            && preg_match('/\b((?:19|20)\d{2})\b/', $fields['registration_date'], $match)) {
+            $fields['manufacturing_year'] = $match[1];
+        }
+
+        $fuelValue = $this->labelValue($lines, '/fuel(?:\s*(?:type|used))?/i', 1);
+        if (($fuel = $this->normaliseFuel($fuelValue)) !== null) {
+            $fields['fuel_type'] = str_contains($fuel, '+') ? $fuel : strtolower($fuel);
         }
 
         $classAndText = strtolower(($fields['vehicle_class'] ?? '').' '.$joined);
@@ -614,7 +661,7 @@ class OcrService
     /** @param array<int, string> $lines */
     private function labelValue(array $lines, string $label, int $lookAhead = 3): string
     {
-        $blocked = '/regn|registration|chassis|chasis|engine|motor|owner|fuel|address|vehicle\s*class|maker|manufacturer|model|colou?r|body\s*type|seating|unladen|cubic|financier|authority/i';
+        $blocked = '/regn|registration|chassis|chasis|engine|motor|owner|fuel|address|vehicle\s*class|maker|manufacturer|model|colou?r|body\s*type|seating|cylinders?|unladen|gross|cubic|wheel\s*base|month|mfg|manufacturing|financier|authority/i';
 
         foreach ($lines as $index => $line) {
             if (! preg_match($label, $line)) {
@@ -628,7 +675,13 @@ class OcrService
 
             for ($offset = 1; $offset <= $lookAhead; $offset++) {
                 $candidate = $this->clean($lines[$index + $offset] ?? '');
-                if ($candidate !== '' && ! preg_match($blocked, $candidate)) {
+                if ($candidate === '') {
+                    continue;
+                }
+                if (preg_match($blocked, $candidate)) {
+                    break;
+                }
+                if ($candidate !== '') {
                     return $candidate;
                 }
             }

@@ -313,7 +313,7 @@ class PaddleOcrIntegrationTest extends TestCase
             'vehicle_class' => 'MOTOR CAR',
             'vehicle_type' => 'private_car',
             'owner_name' => 'KIRANGIRI',
-            'fuel_type' => 'PETROL/CNG',
+            'fuel_type' => 'PETROL+CNG',
             'manufacturer' => 'MARUTI SUZUKI INDIA LTD',
             'model' => 'ALTO 800 LXI',
             'colour' => 'SILVER',
@@ -329,6 +329,8 @@ class PaddleOcrIntegrationTest extends TestCase
         foreach ($expected as $field => $value) {
             $this->assertSame($value, $result['fields'][$field] ?? null, $field);
         }
+        $this->assertSame(0.95, $result['field_confidence']['manufacturing_year']);
+        $this->assertStringNotContainsString('Registration Date', implode(' ', $result['warnings']));
         $this->assertNotSame('3', $result['fields']['seating_capacity']);
         $this->assertNotSame('5', $result['fields']['number_of_cylinders']);
     }

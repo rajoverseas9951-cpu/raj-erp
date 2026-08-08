@@ -204,7 +204,7 @@ test("old Gujarat smart-card values remain distinct and select canonical masters
       manufacturer: "MARUTI SUZUKI INDIA LTD",
       model: "ALTO 800 LXI",
       vehicle_category: "SALOON",
-      fuel_type: "PETROL/CNG",
+      fuel_type: "PETROL+CNG",
       seating_capacity: "5",
       cubic_capacity: "796",
       number_of_cylinders: "3",

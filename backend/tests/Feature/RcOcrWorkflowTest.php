@@ -325,7 +325,7 @@ class RcOcrWorkflowTest extends TestCase
             'vehicle_class' => 'MOTOR CAR',
             'vehicle_type' => 'private_car',
             'owner_name' => 'KIRANGIRI',
-            'fuel_type' => 'PETROL/CNG',
+            'fuel_type' => 'PETROL+CNG',
             'manufacturer' => 'MARUTI SUZUKI INDIA LTD',
             'model' => 'ALTO 800 LXI',
             'colour' => 'SILVER',
