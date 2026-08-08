@@ -95,6 +95,16 @@ jobs:
             else
               printf 'PADDLEOCR_TIMEOUT=100\n' >> .env
             fi
+            if grep -q '^CORS_ALLOWED_ORIGINS=' .env; then
+              sed -i 's#^CORS_ALLOWED_ORIGINS=.*#CORS_ALLOWED_ORIGINS=https://erp.vimawallah.com,https://raj-erp.vercel.app#' .env
+            else
+              printf 'CORS_ALLOWED_ORIGINS=https://erp.vimawallah.com,https://raj-erp.vercel.app\n' >> .env
+            fi
+            if grep -q '^FRONTEND_URL=' .env; then
+              sed -i 's#^FRONTEND_URL=.*#FRONTEND_URL=https://erp.vimawallah.com#' .env
+            else
+              printf 'FRONTEND_URL=https://erp.vimawallah.com\n' >> .env
+            fi
             composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
             php artisan migrate --force
             php artisan optimize:clear
@@ -118,6 +128,12 @@ jobs:
             docker compose -f "$APP_DIR/ocr-service/compose.production.yml" ps
             curl --fail --silent --show-error http://127.0.0.1:8081/health
             curl --fail --silent --show-error https://erp.vimawallah.com/api/health
+            CORS_PREFLIGHT="$(curl --fail --silent --show-error --dump-header - --output /dev/null --request OPTIONS \
+              https://erp.vimawallah.com/api/v1/auth/login \
+              --header 'Origin: https://raj-erp.vercel.app' \
+              --header 'Access-Control-Request-Method: POST' \
+              --header 'Access-Control-Request-Headers: authorization,content-type')"
+            printf '%s\n' "$CORS_PREFLIGHT" | tr -d '\r' | grep -Fxi 'access-control-allow-origin: https://raj-erp.vercel.app'
             LOGIN_HTML="$(curl --fail --silent --show-error https://erp.vimawallah.com/login)"
 
             ASSET_PATH="$(printf '%s' "$LOGIN_HTML" | grep -oE '/_next/static/[^\"[:space:]]+\.(css|js)' | head -n 1 || true)"
