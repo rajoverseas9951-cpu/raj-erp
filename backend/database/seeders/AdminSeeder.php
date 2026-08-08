@@ -14,7 +14,7 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
         $tenant = env('ADMIN_TENANT_ID', '00000000-0000-4000-8000-000000000001');
-        $permissions = collect(['users.view','users.create','users.update','users.delete','roles.view','audit.view','customer.view','customer.create','customer.update','customer.delete','customer.bulk','customer.export','vehicle.view','vehicle.create','vehicle.update','vehicle.delete','vehicle.bulk','vehicle.export'])
+        $permissions = collect(['users.view', 'users.create', 'users.update', 'users.delete', 'roles.view', 'audit.view', 'customer.view', 'customer.create', 'customer.update', 'customer.delete', 'customer.bulk', 'customer.export', 'vehicle.view', 'vehicle.create', 'vehicle.update', 'vehicle.delete', 'vehicle.bulk', 'vehicle.export', 'vehicle.financial.view', 'vehicle.financial.edit', 'vehicle.documents'])
             ->map(fn ($name) => Permission::updateOrCreate(['name' => $name], ['description' => ucfirst(str_replace('.', ' ', $name))]));
         $role = Role::updateOrCreate(['tenant_id' => $tenant, 'slug' => 'administrator'], ['name' => 'Administrator']);
         $role->permissions()->sync($permissions->pluck('id'));
