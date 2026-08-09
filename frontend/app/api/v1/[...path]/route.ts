@@ -81,7 +81,8 @@ async function proxy(request: NextRequest, context: Context) {
     responseHeaders.set(key, Array.isArray(value) ? value.join(', ') : String(value));
   }
 
-  return new NextResponse(result.body, {
+  const responseBody = new Uint8Array(result.body);
+  return new NextResponse(responseBody, {
     status: result.status,
     headers: responseHeaders,
   });
