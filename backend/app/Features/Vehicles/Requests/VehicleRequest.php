@@ -56,6 +56,9 @@ class VehicleRequest extends FormRequest
             'engine_number' => ['required', 'string', 'max:120'],
             'hypothecation' => ['boolean'],
             'financier' => ['nullable', 'string', 'max:200'],
+            'broker_agent_enabled' => ['boolean'],
+            'broker_name' => [Rule::requiredIf($this->boolean('broker_agent_enabled')), 'nullable', 'string', 'max:200'],
+            'agent_name' => [Rule::requiredIf($this->boolean('broker_agent_enabled')), 'nullable', 'string', 'max:200'],
             'insurance_status' => ['required', 'in:not_added,active,expired,expiring_soon'],
             'fitness_status' => ['required', 'in:not_added,valid,expired,expiring_soon'],
             'permit_status' => ['required', 'in:not_added,valid,expired,expiring_soon'],
@@ -78,6 +81,12 @@ class VehicleRequest extends FormRequest
             if ($alias !== null && $alias !== '') {
                 $this->merge(['gross_weight' => $alias]);
             }
+        }
+
+        $enabled = $this->boolean('broker_agent_enabled');
+        $this->merge(['broker_agent_enabled' => $enabled]);
+        if (! $enabled) {
+            $this->merge(['broker_name' => null, 'agent_name' => null]);
         }
     }
 
