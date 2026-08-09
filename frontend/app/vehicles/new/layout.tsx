@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
+import VehicleBrokerAgentBridge from "@/components/vehicles/VehicleBrokerAgentBridge";
 
 export default function NewVehicleLayout({ children }: { children: ReactNode }) {
   return (
     <div className="vehicle-new-footer-sync">
       {children}
+      <VehicleBrokerAgentBridge />
       <style>{`
         .vehicle-new-footer-sync .vehicle-onboarding form > div.fixed {
           position: sticky !important;
