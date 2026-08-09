@@ -2,7 +2,7 @@ import { authenticatedRequest } from '@/lib/api-client';
 import {apiUrl} from '@/lib/api-url';
 import {bearerRequestInit} from '@/lib/bearer-request';
 
-export type VehicleModule = 'vehicle_details'|'insurance'|'puc'|'fitness'|'permit'|'tax'|'counter_tax'|'hsrp'|'sld'|'vltd'|'rto_process'|'transfer'|'payment'|'agent_payment'|'other_payment';
+export type VehicleModule = 'vehicle_details'|'insurance'|'puc'|'fitness'|'permit'|'tax'|'counter_tax'|'hsrp'|'sld'|'vltd'|'renewal_registration'|'rto_process'|'transfer'|'payment'|'agent_payment'|'other_payment';
 export type OperationDocument={id:string;original_name:string;mime_type:string;size_bytes:number};
 export type OperationalRecord = Record<string, unknown> & {id:string; derived_status?:string;documents?:OperationDocument[]};
 export type OperationalProfile = {
@@ -10,7 +10,7 @@ export type OperationalProfile = {
   modules:Partial<Record<VehicleModule,{count:number;status:string;current?:OperationalRecord}>>;
   balances:{billed:number;received:number;outstanding:number};
 };
-export const moduleLabels:Record<VehicleModule,string>={vehicle_details:'Vehicle Details',insurance:'Insurance',puc:'PUC',fitness:'Fitness',permit:'Permit',tax:'Tax',counter_tax:'Counter Tax',hsrp:'HSRP',sld:'SLD',vltd:'VLTD',rto_process:'RTO Process',transfer:'Transfer Process',payment:'Payment Process',agent_payment:'Agent Payment',other_payment:'Other Payment'};
+export const moduleLabels:Record<VehicleModule,string>={vehicle_details:'Vehicle Details',insurance:'Insurance',puc:'PUC',fitness:'Fitness',permit:'Permit',tax:'Tax',counter_tax:'Counter Tax',hsrp:'HSRP',sld:'SLD',vltd:'VLTD',renewal_registration:'Renewal Registration',rto_process:'RTO Process',transfer:'Transfer Process',payment:'Payment Process',agent_payment:'Agent Payment',other_payment:'Other Payment'};
 export const vehicleOperationsApi={
  profile:(vehicleId:string)=>authenticatedRequest<OperationalProfile>(`/vehicles/${vehicleId}/operational-profile`),
  list:(vehicleId:string,module:VehicleModule)=>authenticatedRequest<OperationalRecord[]>(`/vehicles/${vehicleId}/operations/${module}`),
@@ -25,5 +25,6 @@ export const vehicleOperationsApi={
 export function operationHref(vehicleId:string,module:VehicleModule){
  if(module==='vehicle_details')return `/vehicles/${vehicleId}`;
  if(module==='insurance')return `/vehicles/${vehicleId}/insurance`;
+ if(module==='renewal_registration')return `/vehicles/${vehicleId}/operations/rto_process?mode=renewal-registration`;
  return `/vehicles/${vehicleId}/operations/${module}`;
 }
