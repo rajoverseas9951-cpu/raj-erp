@@ -46,6 +46,9 @@ export type Vehicle = {
   engine_number: string;
   hypothecation: boolean;
   financier?: string;
+  broker_agent_enabled?: boolean;
+  broker_name?: string;
+  agent_name?: string;
   insurance_status: string;
   fitness_status: string;
   permit_status: string;
@@ -79,6 +82,15 @@ export type VehicleTimelineEvent = {
 };
 export type VehiclePagination = { current_page: number; last_page: number; per_page: number; total: number };
 export type VehicleListResponse = { data: Vehicle[]; links?: unknown; meta?: VehiclePagination; current_page?: number; last_page?: number; per_page?: number; total?: number };
+export type VehicleBrokerAgentDraft = { broker_agent_enabled: boolean; broker_name: string; agent_name: string };
+
+let brokerAgentDraft: VehicleBrokerAgentDraft | null = null;
+export function setVehicleBrokerAgentDraft(draft: VehicleBrokerAgentDraft | null) { brokerAgentDraft = draft; }
+function withBrokerAgentDraft(body: unknown) {
+  if (!brokerAgentDraft || !body || typeof body !== 'object' || Array.isArray(body)) return body;
+  return { ...(body as Record<string, unknown>), ...brokerAgentDraft };
+}
+
 async function mutateVehicle<T>(path: string, init: RequestInit): Promise<T> {
   const result = await authenticatedRequest<T>(path, init);
   invalidateDashboard();
@@ -97,13 +109,13 @@ export const vehicleApi = {
   create: (body: unknown) =>
     mutateVehicle<Vehicle>("/vehicles", {
       method: "POST",
-      body: JSON.stringify(body),
-    }),
+      body: JSON.stringify(withBrokerAgentDraft(body)),
+    }).finally(() => setVehicleBrokerAgentDraft(null)),
   update: (id: string, body: unknown) =>
     mutateVehicle<Vehicle>(`/vehicles/${id}`, {
       method: "PUT",
-      body: JSON.stringify(body),
-    }),
+      body: JSON.stringify(withBrokerAgentDraft(body)),
+    }).finally(() => setVehicleBrokerAgentDraft(null)),
   archive: (id: string) =>
     mutateVehicle<Vehicle>(`/vehicles/${id}/archive`, { method: "POST" }),
   remove: (id: string) =>
