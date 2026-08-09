@@ -98,6 +98,9 @@ class VehicleMasterResolver
                     continue;
                 }
                 $resolvedFields[$idField] = $master->id;
+                if ($type === 'vehicle_types') {
+                    $resolvedFields[$nameField] = $this->canonicalVehicleTypeValue((string) ($master->code ?: $master->name));
+                }
                 $masters[$type] = (array) $master;
                 if ($wasCreated) {
                     $created[$type] = $master->id;
@@ -154,12 +157,7 @@ class VehicleMasterResolver
         $normalized = (string) preg_replace('/[^A-Z0-9]+/', '', $upper);
 
         return match ($type) {
-            'vehicle_types' => match (true) {
-                preg_match('/^(?:TWOWHEELER|2WHEELER|MOTORCYCLE|SCOOTER)$/', $normalized) === 1 => 'TWOWHEELER',
-                preg_match('/^(?:PRIVATECAR|MOTORCAR|LMV)$/', $normalized) === 1 => 'PRIVATECAR',
-                preg_match('/^(?:TRACTOR|AGRICULTURALTRACTOR|AGRITRACTOR)$/', $normalized) === 1 => 'TRACTOR',
-                default => $normalized,
-            },
+            'vehicle_types' => $this->canonicalVehicleTypeMatchKey($normalized),
             default => $normalized,
         };
     }
@@ -188,7 +186,7 @@ class VehicleMasterResolver
             ], true),
             'vehicle_types' => in_array($normalized, [
                 'TWOWHEELER', 'PRIVATECAR', 'LGV', 'HGV', 'TAXI', 'TRACTOR',
-                'COMMERCIAL', 'GOODSVEHICLE', 'TRANSPORT', 'BUS',
+                'COMMERCIAL', 'GOODSVEHICLE', 'TRANSPORT', 'BUS', 'THREEWHEELER',
             ], true),
             'manufacturers', 'models', 'vehicle_classes', 'body_types',
             'colours', 'rto_offices' => preg_match('/[A-Z]/', $value) === 1,
@@ -210,6 +208,42 @@ class VehicleMasterResolver
         ]));
     }
 
+    private function canonicalVehicleTypeMatchKey(string $normalized): string
+    {
+        return match (true) {
+            preg_match('/^(?:TWOWHEELER|2WHEELER|2W|TW|MOTORCYCLE|MOTORCYCLEWITHGEAR|MOTORCYCLEWITHOUTGEAR|MCWG|MCWOG|SCOOTER|MOPED)$/', $normalized) === 1 => 'TWOWHEELER',
+            preg_match('/^(?:PRIVATECAR|PRIVATECARLMV|MOTORCAR|CAR|LMVNT|LMVNONTRANSPORT|NONTRANSPORTLMV)$/', $normalized) === 1 => 'PRIVATECAR',
+            preg_match('/^(?:THREEWHEELER|3WHEELER|3W|AUTORICKSHAW|AUTO|ERICKSHAW|ERICKSHAW)$/', $normalized) === 1 => 'THREEWHEELER',
+            preg_match('/^(?:LGV|LGVT|LCV|LIGHTGOODSVehicle|LIGHTGOODSVEHICLE|LIGHTCOMMERCIALVEHICLE|PICKUP|PICKUPVAN|GOODSLCV)$/', $normalized) === 1 => 'LGV',
+            preg_match('/^(?:HGV|HGVT|HGMV|HEAVYGOODSVEHICLE|HEAVYGOODS|HEAVYTRUCK|TRUCK|TIPPER|DUMPER|TRAILER)$/', $normalized) === 1 => 'HGV',
+            preg_match('/^(?:TAXI|CAB|MOTORCAB|MAXICAB|LPV|LMVTR|LMVTRANSPORT|PASSENGERVEHICLE|CONTRACTCARRIAGE)$/', $normalized) === 1 => 'TAXI',
+            preg_match('/^(?:BUS|OMNIBUS|STAGECARRIAGE|SCHOOLBUS|PSV|PASSENGERBUS)$/', $normalized) === 1 => 'BUS',
+            preg_match('/^(?:TRACTOR|AGRICULTURALTRACTOR|AGRITRACTOR|TRACTORNONTRANSPORT)$/', $normalized) === 1 => 'TRACTOR',
+            preg_match('/^(?:GOODSVEHICLE|GOODS|GV|GT)$/', $normalized) === 1 => 'GOODSVEHICLE',
+            preg_match('/^(?:COMMERCIAL|COMMERCIALVEHICLE|CV)$/', $normalized) === 1 => 'COMMERCIAL',
+            preg_match('/^(?:TRANSPORT|TRANSPORTVEHICLE|TR)$/', $normalized) === 1 => 'TRANSPORT',
+            default => $normalized,
+        };
+    }
+
+    private function canonicalVehicleTypeValue(string $value): string
+    {
+        return match ($this->canonicalVehicleTypeMatchKey($this->normalizeName($value))) {
+            'TWOWHEELER' => 'two_wheeler',
+            'PRIVATECAR' => 'private_car',
+            'THREEWHEELER' => 'three_wheeler',
+            'LGV' => 'lgv',
+            'HGV' => 'hgv',
+            'TAXI' => 'taxi',
+            'BUS' => 'bus',
+            'TRACTOR' => 'tractor',
+            'GOODSVEHICLE' => 'goods_vehicle',
+            'COMMERCIAL' => 'commercial',
+            'TRANSPORT' => 'transport',
+            default => Str::snake(Str::lower(trim($value))),
+        };
+    }
+
     /** @return array{0:object|null,1:bool} */
     private function resolveOne(
         string $tenantId,
@@ -226,7 +260,8 @@ class VehicleMasterResolver
         $parentId ? $query->where('parent_id', $parentId) : $query->whereNull('parent_id');
 
         $existing = $query->get()->first(
-            fn (object $master) => $this->matchingName($type, (string) $master->name) === $target
+            fn (object $master) => $this->matchingName($type, (string) ($master->code ?: $master->name)) === $target
+                || $this->matchingName($type, (string) $master->name) === $target
         );
         if ($existing) {
             if ($existing->status !== 'active') {
