@@ -12,7 +12,7 @@ class VehicleModuleApplicabilityService
     public const GROUPS = [
         'core' => ['vehicle_details', 'insurance', 'puc'],
         'compliance' => ['fitness', 'permit', 'hsrp', 'sld', 'vltd'],
-        'operations' => ['rto_process'],
+        'operations' => ['renewal_registration', 'rto_process'],
         'finance' => ['payment'],
     ];
 
@@ -43,8 +43,6 @@ class VehicleModuleApplicabilityService
             $text
         ) && ! $passengerCommercial;
 
-        // Pickup/LGV is intentionally a separate light-commercial class.
-        // It gets Fitness but never Permit/SLD/VLTD merely because it is a goods vehicle.
         $lgvPickup = (bool) preg_match(
             '/\bLGV\b|\bLCV\b|PICK.?UP|PICKUP|BOLERO.?PICKUP|GOODS.?CARRIER.?LGV|LIGHT.?GOODS/',
             $text
@@ -55,8 +53,6 @@ class VehicleModuleApplicabilityService
             $text
         );
 
-        // OCR/RTO data does not always return HGV/HGVT text. In those cases,
-        // a commercial vehicle above 3500 kg GVW is treated as heavy commercial.
         $commercialSignal = (bool) preg_match(
             '/COMMERCIAL|TRANSPORT|GOODS|CARRIER|PASSENGER|PSV|LPV|TAXI|CAB|BUS|TRUCK|LORRY|TIPPER|DUMPER|TRAILER|HGV|HGVT|\bGT\b/',
             $text
@@ -73,7 +69,6 @@ class VehicleModuleApplicabilityService
             && ! $lgvPickup
             && ($passengerCommercial || $heavyCommercial);
 
-        // Common services for supported road vehicles.
         $enabled = array_fill_keys([
             'vehicle_details',
             'insurance',
@@ -83,20 +78,21 @@ class VehicleModuleApplicabilityService
             'payment',
         ], true);
 
-        // LGV/pickup and full commercial vehicles require Fitness.
+        // Renewal Registration is a dedicated shortcut into the RTO workflow,
+        // shown only for private cars and two wheelers.
+        if ($privateCar || $twoWheeler) {
+            $enabled['renewal_registration'] = true;
+        }
+
         if ($lgvPickup || $fullCommercial) {
             $enabled['fitness'] = true;
         }
 
-        // SLD and VLTD are only part of the full commercial workflow.
         if ($fullCommercial) {
             $enabled['sld'] = true;
             $enabled['vltd'] = true;
         }
 
-        // Permit is never shown for 2W, private cars or LGV/pickups.
-        // It is shown for taxi/LPV/bus and heavy commercial vehicles, including
-        // commercial vehicles identified as >3500 kg GVW when class text is incomplete.
         $permitApplicable = $fullCommercial;
         if ($permitApplicable) {
             $enabled['permit'] = true;
