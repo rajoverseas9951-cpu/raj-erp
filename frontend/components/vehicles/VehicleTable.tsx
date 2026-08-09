@@ -61,21 +61,40 @@ export function VehicleTable({ vehicles, meta, loading = false, onChanged }: Pro
     </div>
 
     <div className="grid gap-4">
-      {vehicles.map(vehicle=><article key={vehicle.id} className="group overflow-hidden rounded-[28px] border border-[#dbe5f2] bg-white shadow-[0_14px_40px_rgba(15,40,86,.07)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_22px_55px_rgba(15,40,86,.12)]">
+      {vehicles.map(vehicle=>{
+        const services = applicableServices(vehicle);
+        return <article key={vehicle.id} className="group overflow-hidden rounded-[28px] border border-[#dbe5f2] bg-white shadow-[0_14px_40px_rgba(15,40,86,.07)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_22px_55px_rgba(15,40,86,.12)]">
         <div className="grid gap-0 lg:grid-cols-[270px_minmax(0,1fr)_330px]">
           <div className="relative overflow-hidden bg-gradient-to-br from-[#071a3c] via-[#0b2c68] to-[#1556b8] p-5 text-white">
             <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-cyan-300/10 blur-xl"/><div className="absolute -bottom-14 -left-10 h-36 w-36 rounded-full bg-blue-300/10 blur-2xl"/>
             <div className="relative flex h-full min-h-[185px] flex-col justify-between"><div className="flex items-start justify-between gap-3"><div className="grid h-14 w-14 place-items-center rounded-2xl border border-white/15 bg-white/10 text-3xl backdrop-blur">{vehicleIcon(vehicle.vehicle_type)}</div><input aria-label={`Select ${vehicle.vehicle_number}`} type="checkbox" checked={selected.includes(vehicle.id)} onChange={(event)=>setSelected(current=>event.target.checked?[...current,vehicle.id]:current.filter(id=>id!==vehicle.id))} className="h-4 w-4 accent-cyan-300"/></div><div><p className="text-[9px] font-black uppercase tracking-[.22em] text-cyan-300">Vehicle profile</p><Link href={`/vehicles/${vehicle.id}`} className="mt-1 block text-2xl font-black tracking-tight hover:text-cyan-200">{vehicle.vehicle_number}</Link><p className="mt-2 text-xs font-semibold text-blue-100/80">{vehicle.registration_authority||"RTO not added"}</p></div></div>
           </div>
 
-          <div className="p-5 sm:p-6"><div className="grid gap-5 xl:grid-cols-2"><div><p className="text-[9px] font-black uppercase tracking-[.18em] text-blue-500">Owner</p><h3 className="mt-1 truncate text-xl font-black text-[#0b1f44]">{ownerName(vehicle)}</h3>{vehicle.customer?.mobile?<a className="mt-1 inline-block text-sm font-bold text-blue-600 hover:underline" href={`tel:${vehicle.customer.mobile}`}>{vehicle.customer.mobile}</a>:<p className="mt-1 text-sm text-slate-400">Mobile not added</p>}</div><div><p className="text-[9px] font-black uppercase tracking-[.18em] text-blue-500">Vehicle</p><p className="mt-1 text-base font-black text-slate-900">{humanize(vehicle.vehicle_type)}</p><p className="mt-1 text-sm font-semibold text-slate-500">{[vehicle.manufacturer,vehicle.model].filter(Boolean).join(" · ")||"Make/model not added"}</p></div></div><div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3"><MiniFact label="Fuel" value={humanize(vehicle.fuel_type)}/><MiniFact label="Class" value={humanize((vehicle as any).vehicle_class)}/><MiniFact label="Category" value={humanize((vehicle as any).category)}/></div></div>
+          <div className="p-5 sm:p-6"><div className="grid gap-5 xl:grid-cols-2"><div><p className="text-[9px] font-black uppercase tracking-[.18em] text-blue-500">Owner</p><h3 className="mt-1 truncate text-xl font-black text-[#0b1f44]">{ownerName(vehicle)}</h3>{vehicle.customer?.mobile?<a className="mt-1 inline-block text-sm font-bold text-blue-600 hover:underline" href={`tel:${vehicle.customer.mobile}`}>{vehicle.customer.mobile}</a>:<p className="mt-1 text-sm text-slate-400">Mobile not added</p>}</div><div><p className="text-[9px] font-black uppercase tracking-[.18em] text-blue-500">Vehicle</p><p className="mt-1 text-base font-black text-slate-900">{humanize(vehicle.vehicle_type)}</p><p className="mt-1 text-sm font-semibold text-slate-500">{[vehicle.manufacturer,vehicle.model].filter(Boolean).join(" · ")||"Make/model not added"}</p></div></div><div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3"><MiniFact label="Fuel" value={humanize(vehicle.fuel_type)}/><MiniFact label="Class" value={humanize(vehicle.vehicle_class)}/><MiniFact label="Category" value={humanize(vehicle.vehicle_category)}/></div></div>
 
-          <div className="border-t border-slate-100 bg-[#f8fbff] p-5 lg:border-l lg:border-t-0"><div className="flex items-center justify-between gap-3"><div><p className="text-[9px] font-black uppercase tracking-[.18em] text-blue-500">Compliance</p><p className="mt-1 text-sm font-black text-slate-800">Current service status</p></div><span className="rounded-full bg-white px-3 py-1 text-[9px] font-black uppercase text-slate-400 shadow-sm">Live</span></div><div className="mt-4 grid grid-cols-2 gap-2"><ServiceChip label="Insurance" value={vehicle.insurance_status}/><ServiceChip label="PUC" value={vehicle.puc_status}/><ServiceChip label="Fitness" value={vehicle.fitness_status}/><ServiceChip label="Permit" value={vehicle.permit_status}/><ServiceChip label="Tax" value={vehicle.tax_status}/></div><div className="mt-5 grid grid-cols-2 gap-2"><RowLink href={`/vehicles/${vehicle.id}`} label="Open Vehicle" primary/><RowLink href={`/vehicles/${vehicle.id}/edit`} label="Edit"/><RowLink href={`/vehicles/${vehicle.id}/insurance`} label="Insurance"/><RowLink href={`/vehicles/${vehicle.id}/timeline`} label="Timeline"/></div></div>
+          <div className="border-t border-slate-100 bg-[#f8fbff] p-5 lg:border-l lg:border-t-0"><div className="flex items-center justify-between gap-3"><div><p className="text-[9px] font-black uppercase tracking-[.18em] text-blue-500">Compliance</p><p className="mt-1 text-sm font-black text-slate-800">Current service status</p></div><span className="rounded-full bg-white px-3 py-1 text-[9px] font-black uppercase text-slate-400 shadow-sm">Live</span></div><div className="mt-4 grid grid-cols-2 gap-2"><ServiceChip label="Insurance" value={vehicle.insurance_status}/><ServiceChip label="PUC" value={vehicle.puc_status}/>{services.fitness&&<ServiceChip label="Fitness" value={vehicle.fitness_status}/>} {services.permit&&<ServiceChip label="Permit" value={vehicle.permit_status}/>} {services.tax&&<ServiceChip label="Tax" value={vehicle.tax_status}/>}</div><div className="mt-5 grid grid-cols-2 gap-2"><RowLink href={`/vehicles/${vehicle.id}`} label="Open Vehicle" primary/><RowLink href={`/vehicles/${vehicle.id}/edit`} label="Edit"/><RowLink href={`/vehicles/${vehicle.id}/insurance`} label="Insurance"/><RowLink href={`/vehicles/${vehicle.id}/timeline`} label="Timeline"/></div></div>
         </div>
-      </article>)}
+      </article>})}
     </div>
     <Pagination meta={meta} onPage={(page)=>updateQuery({page:String(page)})}/>
   </section>;
+}
+
+function applicableServices(vehicle: Vehicle){
+  const text=[vehicle.vehicle_type,vehicle.vehicle_class,vehicle.vehicle_category,vehicle.manufacturer,vehicle.model].filter(Boolean).join(" ").toUpperCase();
+  const twoWheeler=/TWO.?WHEEL|2W|2WN|M.?CYCLE|MOTOR.?CYCLE|SCOOTER|SCOOTY|BIKE/.test(text);
+  const privateCar=/PRIVATE|MOTOR.?CAR|LMV.?NT|NON[- ]?TRANSPORT|HATCHBACK|SEDAN|SUV/.test(text)&&!/TAXI|CAB|PASSENGER|LPV|PSV/.test(text);
+  const pickup=/\bLGV\b|\bLCV\b|PICK.?UP|PICKUP|BOLERO.?PICKUP|GOODS.?CARRIER.?LGV/.test(text)&&!/\bHGV\b|\bHGVT\b|HEAVY/.test(text);
+  const passengerCommercial=/\bLPV\b|TAXI|CAB|PASSENGER|PSV|MAXI|BUS/.test(text);
+  const explicitHeavy=/\bHGV\b|\bHGVT\b|\bGT\b|HEAVY|TRUCK|LORRY|TIPPER|DUMPER|TRAILER/.test(text);
+  const weight=Number(vehicle.gross_weight??0);
+  const heavyCommercial=!pickup&&!twoWheeler&&!privateCar&&(explicitHeavy||weight>3500);
+  const fullCommercial=passengerCommercial||heavyCommercial;
+  return {
+    fitness: pickup||fullCommercial,
+    permit: fullCommercial&&!pickup&&!twoWheeler&&!privateCar,
+    tax: fullCommercial,
+  };
 }
 
 function humanize(value?:string){return value?value.replaceAll("_"," ").replace(/\b\w/g,char=>char.toUpperCase()):"Not Added"}
