@@ -26,18 +26,54 @@ class VehicleModuleApplicabilityService
             $vehicle->model,
         ])));
 
-        $twoWheeler = (bool) preg_match('/TWO.?WHEEL|2W|2WN|M.?CYCLE|MOTOR.?CYCLE|SCOOTER|SCOOTY|BIKE/', $text);
-        $privateCar = (bool) preg_match('/PRIVATE|MOTOR.?CAR|LMV.?NT|NON[- ]?TRANSPORT|HATCHBACK|SEDAN|SUV/', $text)
-            && ! preg_match('/TAXI|CAB|PASSENGER|LPV|PSV/', $text);
+        $grossWeight = is_numeric($vehicle->gross_weight) ? (float) $vehicle->gross_weight : 0.0;
 
-        // LGV / pickup gets the basic private-vehicle workflow plus Fitness only.
-        $lgvPickup = (bool) preg_match('/\bLGV\b|\bLCV\b|PICK.?UP|PICKUP|BOLERO.?PICKUP|GOODS.?CARRIER.?LGV/', $text)
-            && ! preg_match('/\bHGV\b|\bHGVT\b|HEAVY/', $text);
+        $twoWheeler = (bool) preg_match(
+            '/TWO.?WHEEL|2W|2WN|M.?CYCLE|MOTOR.?CYCLE|MOTORCYCLE|SCOOTER|SCOOTY|BIKE|MOPED/',
+            $text
+        );
 
-        $passengerCommercial = (bool) preg_match('/\bLPV\b|TAXI|CAB|PASSENGER|PSV|MAXI|BUS/', $text);
-        $heavyCommercial = (bool) preg_match('/\bHGV\b|\bHGVT\b|\bGT\b|HEAVY|TRUCK|LORRY|TIPPER|DUMPER|TRAILER/', $text);
-        $fullCommercial = $passengerCommercial || $heavyCommercial;
+        $passengerCommercial = (bool) preg_match(
+            '/\bLPV\b|TAXI|CAB|PASSENGER|PSV|MAXI|BUS|OMNI.?BUS|SCHOOL.?BUS|STAGE.?CARRIAGE|CONTRACT.?CARRIAGE/',
+            $text
+        );
 
+        $privateCar = (bool) preg_match(
+            '/PRIVATE|MOTOR.?CAR|LMV.?NT|NON[- ]?TRANSPORT|HATCHBACK|SEDAN|SUV/',
+            $text
+        ) && ! $passengerCommercial;
+
+        // Pickup/LGV is intentionally a separate light-commercial class.
+        // It gets Fitness but never Permit/SLD/VLTD merely because it is a goods vehicle.
+        $lgvPickup = (bool) preg_match(
+            '/\bLGV\b|\bLCV\b|PICK.?UP|PICKUP|BOLERO.?PICKUP|GOODS.?CARRIER.?LGV|LIGHT.?GOODS/',
+            $text
+        ) && ! preg_match('/\bHGV\b|\bHGVT\b|\bGT\b|HEAVY/', $text);
+
+        $heavyByClass = (bool) preg_match(
+            '/\bHGV\b|\bHGVT\b|\bGT\b|HEAVY|TRUCK|LORRY|TIPPER|DUMPER|TRAILER|ARTICULATED|MULTI.?AXLE/',
+            $text
+        );
+
+        // OCR/RTO data does not always return HGV/HGVT text. In those cases,
+        // a commercial vehicle above 3500 kg GVW is treated as heavy commercial.
+        $commercialSignal = (bool) preg_match(
+            '/COMMERCIAL|TRANSPORT|GOODS|CARRIER|PASSENGER|PSV|LPV|TAXI|CAB|BUS|TRUCK|LORRY|TIPPER|DUMPER|TRAILER|HGV|HGVT|\bGT\b/',
+            $text
+        );
+        $heavyByWeight = ! $twoWheeler
+            && ! $privateCar
+            && ! $lgvPickup
+            && $commercialSignal
+            && $grossWeight > 3500;
+
+        $heavyCommercial = $heavyByClass || $heavyByWeight;
+        $fullCommercial = ! $twoWheeler
+            && ! $privateCar
+            && ! $lgvPickup
+            && ($passengerCommercial || $heavyCommercial);
+
+        // Common services for supported road vehicles.
         $enabled = array_fill_keys([
             'vehicle_details',
             'insurance',
@@ -47,23 +83,21 @@ class VehicleModuleApplicabilityService
             'payment',
         ], true);
 
+        // LGV/pickup and full commercial vehicles require Fitness.
         if ($lgvPickup || $fullCommercial) {
             $enabled['fitness'] = true;
         }
 
+        // SLD and VLTD are only part of the full commercial workflow.
         if ($fullCommercial) {
             $enabled['sld'] = true;
             $enabled['vltd'] = true;
         }
 
-        // Permit is intentionally NOT a generic commercial module.
-        // Never show it for two-wheelers, private cars, LGV/LCV or pickups.
-        // It applies to taxi/LPV/passenger commercial and HGV/HGVT/GT/truck/bus/heavy classes.
-        $permitApplicable = ! $twoWheeler
-            && ! $privateCar
-            && ! $lgvPickup
-            && ($passengerCommercial || $heavyCommercial);
-
+        // Permit is never shown for 2W, private cars or LGV/pickups.
+        // It is shown for taxi/LPV/bus and heavy commercial vehicles, including
+        // commercial vehicles identified as >3500 kg GVW when class text is incomplete.
+        $permitApplicable = $fullCommercial;
         if ($permitApplicable) {
             $enabled['permit'] = true;
         }
@@ -92,9 +126,12 @@ class VehicleModuleApplicabilityService
                 'privateCar',
                 'lgvPickup',
                 'passengerCommercial',
+                'heavyByClass',
+                'heavyByWeight',
                 'heavyCommercial',
                 'fullCommercial',
-                'permitApplicable'
+                'permitApplicable',
+                'grossWeight'
             ),
             'groups' => $groups,
         ];
