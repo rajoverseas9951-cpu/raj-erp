@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { OperationalRecord, vehicleOperationsApi } from '@/lib/vehicle-operations';
 import { VehicleMaster, vehicleMasterApi } from '@/lib/vehicle-masters';
 
@@ -12,9 +12,12 @@ const labelClass = 'grid gap-1.5 text-[11px] font-black uppercase tracking-[.04e
 
 export default function RtoProcessPage() {
   const { vehicleId } = useParams<{ vehicleId: string }>();
+  const searchParams = useSearchParams();
+  const renewalMode = searchParams.get('mode') === 'renewal-registration';
   const [rows, setRows] = useState<OperationalRecord[]>([]);
   const [workTypes, setWorkTypes] = useState<Master[]>([]);
   const [rtoOffices, setRtoOffices] = useState<VehicleMaster[]>([]);
+  const [selectedWorkType, setSelectedWorkType] = useState(renewalMode ? 'Renewal Registration' : '');
   const [faceless, setFaceless] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -29,22 +32,29 @@ export default function RtoProcessPage() {
   };
 
   const loadMasters = async () => {
-    const [work, offices] = await Promise.all([
-      vehicleOperationsApi.masters('rto_work_type'),
-      vehicleMasterApi.list('rto_offices'),
-    ]);
-    setWorkTypes(work);
+    let work = await vehicleOperationsApi.masters('rto_work_type');
+    if (renewalMode && !work.some((item) => item.name.toLowerCase() === 'renewal registration')) {
+      try {
+        const added = await vehicleOperationsApi.addMaster('rto_work_type', 'Renewal Registration');
+        work = [...work, added];
+      } catch {
+        // Keep the screen usable even if the user cannot create masters.
+      }
+    }
+    const offices = await vehicleMasterApi.list('rto_offices');
+    setWorkTypes(work.sort((a, b) => a.name.localeCompare(b.name)));
     setRtoOffices(offices.filter((row) => row.status === 'active').sort((a, b) => (a.code ?? '').localeCompare(b.code ?? '') || a.name.localeCompare(b.name)));
   };
 
   useEffect(() => { void load(); }, [vehicleId]);
-  useEffect(() => { void loadMasters().catch(() => undefined); }, []);
+  useEffect(() => { void loadMasters().catch(() => undefined); }, [renewalMode]);
 
   async function addWorkType() {
     const name = prompt('New RTO work type');
     if (!name?.trim()) return;
     const added = await vehicleOperationsApi.addMaster('rto_work_type', name.trim());
     setWorkTypes((current) => current.some((x) => x.id === added.id) ? current : [...current, added].sort((a, b) => a.name.localeCompare(b.name)));
+    setSelectedWorkType(added.name);
   }
 
   async function addRtoOffice() {
@@ -67,6 +77,7 @@ export default function RtoProcessPage() {
     try {
       await vehicleOperationsApi.create(vehicleId, 'rto_process', body);
       element.reset();
+      setSelectedWorkType(renewalMode ? 'Renewal Registration' : '');
       setFaceless(true);
       await load();
     } catch (e) {
@@ -86,8 +97,8 @@ export default function RtoProcessPage() {
           <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <a href={`/vehicles/${vehicleId}`} className="text-xs font-bold text-blue-200 hover:text-white">← Vehicle Profile</a>
-              <p className="mt-5 text-[9px] font-black uppercase tracking-[.24em] text-cyan-300">RTO work desk</p>
-              <h1 className="mt-1 text-3xl font-black tracking-tight sm:text-4xl">RTO Process</h1>
+              <p className="mt-5 text-[9px] font-black uppercase tracking-[.24em] text-cyan-300">{renewalMode ? 'Registration renewal desk' : 'RTO work desk'}</p>
+              <h1 className="mt-1 text-3xl font-black tracking-tight sm:text-4xl">{renewalMode ? 'Renewal Registration' : 'RTO Process'}</h1>
               <p className="mt-2 max-w-2xl text-sm text-blue-100/70">Compact entry matching the actual RTO workflow.</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/10 px-5 py-3 text-right backdrop-blur">
@@ -102,23 +113,25 @@ export default function RtoProcessPage() {
         <form onSubmit={submit} className="overflow-hidden rounded-[28px] border border-[#d9e5f7] bg-white shadow-[0_16px_45px_rgba(26,64,120,.08)]">
           <div className="flex items-center justify-between border-b border-slate-100 bg-gradient-to-r from-white to-blue-50/70 px-5 py-4 sm:px-6">
             <div>
-              <p className="text-[9px] font-black uppercase tracking-[.22em] text-blue-500">New RTO work</p>
+              <p className="text-[9px] font-black uppercase tracking-[.22em] text-blue-500">{renewalMode ? 'New renewal registration' : 'New RTO work'}</p>
               <h2 className="mt-1 text-xl font-black">Vehicle RTO Process Detail</h2>
             </div>
             <a href="/masters" className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-[10px] font-black text-blue-700">Manage Masters →</a>
           </div>
 
           <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3 sm:p-6">
-            <MasterSelect name="work_type" label="Work Type" required rows={workTypes} onAdd={() => void addWorkType()} />
-            <Field name="amount" label="Amount" type="number" />
-            <Field name="reference_number" label="Application No" />
+            <MasterSelect name="work_type" label="Work Type" required rows={workTypes} onAdd={() => void addWorkType()} value={selectedWorkType} onChange={setSelectedWorkType} />
+            <Field name="receipt_date" label="Date" type="date" required />
+            <Field name="amount" label="Amount" type="number" required />
 
-            <MasterSelect name="rto_office" label="RTO Office" rows={rtoOffices.map((x) => ({ id: x.id, name: `${x.code ? `${x.code} · ` : ''}${x.name}` }))} onAdd={() => void addRtoOffice()} />
-            <Field name="external_agent" label="RTO Agent Name" />
+            <Field name="reference_number" label="Application No" required />
+            <MasterSelect name="rto_office" label="RTO Office" rows={rtoOffices.map((x) => ({ id: x.id, name: `${x.code ? `${x.code} · ` : ''}${x.name}` }))} onAdd={() => void addRtoOffice()} required />
+            <Field name="external_agent" label="RTO Agent Name" required />
+
             <Field name="broker" label="Broker" />
-
             <Field name="assigned_agent" label="Agent" />
             <Field name="agent_amount" label="RTO Agent Amount" type="number" />
+
             <label className={labelClass}>Faceless Appointment
               <div className="flex h-12 items-center justify-between rounded-xl border border-slate-200 bg-slate-50/80 px-3">
                 <span className={`text-xs font-black ${faceless ? 'text-blue-700' : 'text-slate-400'}`}>{faceless ? 'ON' : 'OFF'}</span>
@@ -127,15 +140,14 @@ export default function RtoProcessPage() {
                 </button>
               </div>
             </label>
-
-            {!faceless && <Field name="process_date" label="Application Date" type="date" />}
+            {!faceless && <Field name="process_date" label="Application Date" type="date" required />}
             <Field name="approval_date" label="Approve Date" type="date" />
-            <Field name="rc_received_date" label="RC Rec Date" type="date" />
 
+            <Field name="rc_received_date" label="RC Rec Date" type="date" />
             <Field name="rc_delivered_date" label="RC Deliver Date" type="date" />
             <Field name="invoice_number" label="Invoice No" />
-            <Field name="period" label="RC Status" />
 
+            <Field name="period" label="RC Status" />
             <label className={labelClass}>Status
               <select name="status" defaultValue="ACTIVE" className={inputClass}>
                 <option value="ACTIVE">Active</option>
@@ -144,13 +156,13 @@ export default function RtoProcessPage() {
                 <option value="CANCELLED">Cancelled</option>
               </select>
             </label>
-            <label className={`${labelClass} sm:col-span-2`}>Remark
+            <label className={labelClass}>Remark
               <textarea name="notes" rows={3} className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-3 text-sm font-semibold normal-case tracking-normal text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" />
             </label>
           </div>
 
           <div className="flex flex-col gap-3 border-t border-slate-100 bg-[#f8fbff] p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <p className="text-[10px] font-semibold text-slate-500">Faceless ON = no application date. Turn it OFF only when an application date is required.</p>
+            <p className="text-[10px] font-semibold text-slate-500">Faceless ON = Application Date hidden. OFF = Application Date required.</p>
             <button disabled={saving} className="min-w-[190px] rounded-2xl bg-gradient-to-r from-[#0b2b62] to-[#2563eb] px-6 py-3.5 text-sm font-black text-white shadow-[0_12px_28px_rgba(37,99,235,.28)] transition hover:-translate-y-0.5 disabled:opacity-50">{saving ? 'Saving…' : '✓ Save RTO Work'}</button>
           </div>
         </form>
@@ -162,8 +174,8 @@ export default function RtoProcessPage() {
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full text-xs sm:text-sm">
-              <thead className="bg-[#f8fbff]"><tr className="text-left text-[9px] font-black uppercase tracking-wide text-slate-400"><th className="p-4">Work</th><th className="p-4">Application No</th><th className="p-4">RTO</th><th className="p-4">Agent</th><th className="p-4">Application Date</th><th className="p-4">RC Status</th><th className="p-4">Status</th><th className="p-4">Action</th></tr></thead>
-              <tbody>{visible.map((row) => <tr key={row.id} className="border-t border-slate-100 hover:bg-blue-50/30"><td className="p-4 font-black">{String(row.work_type ?? '—')}</td><td className="p-4 font-semibold text-blue-700">{String(row.reference_number ?? '—')}</td><td className="p-4">{String(row.rto_office ?? '—')}</td><td className="p-4">{String(row.assigned_agent ?? row.external_agent ?? '—')}</td><td className="p-4">{String(row.process_date ?? 'Faceless')}</td><td className="p-4">{String(row.period ?? '—')}</td><td className="p-4"><span className="rounded-full bg-blue-50 px-2.5 py-1 text-[9px] font-black uppercase text-blue-700">{String(row.status ?? 'ACTIVE')}</span></td><td className="p-4"><button onClick={() => confirm('Archive this RTO record?') && vehicleOperationsApi.remove(vehicleId, 'rto_process', row.id).then(load)} className="font-black text-rose-600">Archive</button></td></tr>)}</tbody>
+              <thead className="bg-[#f8fbff]"><tr className="text-left text-[9px] font-black uppercase tracking-wide text-slate-400"><th className="p-4">Work</th><th className="p-4">Date</th><th className="p-4">Application No</th><th className="p-4">RTO</th><th className="p-4">Agent</th><th className="p-4">Application Date</th><th className="p-4">RC Status</th><th className="p-4">Status</th><th className="p-4">Action</th></tr></thead>
+              <tbody>{visible.map((row) => <tr key={row.id} className="border-t border-slate-100 hover:bg-blue-50/30"><td className="p-4 font-black">{String(row.work_type ?? '—')}</td><td className="p-4">{String(row.receipt_date ?? '—')}</td><td className="p-4 font-semibold text-blue-700">{String(row.reference_number ?? '—')}</td><td className="p-4">{String(row.rto_office ?? '—')}</td><td className="p-4">{String(row.assigned_agent ?? row.external_agent ?? '—')}</td><td className="p-4">{String(row.process_date ?? 'Faceless')}</td><td className="p-4">{String(row.period ?? '—')}</td><td className="p-4"><span className="rounded-full bg-blue-50 px-2.5 py-1 text-[9px] font-black uppercase text-blue-700">{String(row.status ?? 'ACTIVE')}</span></td><td className="p-4"><button onClick={() => confirm('Archive this RTO record?') && vehicleOperationsApi.remove(vehicleId, 'rto_process', row.id).then(load)} className="font-black text-rose-600">Archive</button></td></tr>)}</tbody>
             </table>
             {visible.length === 0 && <p className="p-10 text-center text-sm font-semibold text-slate-400">No RTO work records added yet.</p>}
           </div>
@@ -173,10 +185,10 @@ export default function RtoProcessPage() {
   );
 }
 
-function Field({ name, label, type = 'text' }: { name: string; label: string; type?: string }) {
-  return <label className={labelClass}>{label}<input name={name} type={type} step={type === 'number' ? '0.01' : undefined} className={inputClass} /></label>;
+function Field({ name, label, type = 'text', required = false }: { name: string; label: string; type?: string; required?: boolean }) {
+  return <label className={labelClass}>{label}{required ? ' *' : ''}<input name={name} type={type} required={required} step={type === 'number' ? '0.01' : undefined} className={inputClass} /></label>;
 }
 
-function MasterSelect({ name, label, rows, onAdd, required = false }: { name: string; label: string; rows: Master[]; onAdd: () => void; required?: boolean }) {
-  return <label className={labelClass}>{label}{required ? ' *' : ''}<div className="flex gap-2"><select name={name} required={required} defaultValue="" className={inputClass}><option value="">Select</option>{rows.map((item) => <option key={item.id} value={item.name}>{item.name}</option>)}</select><button type="button" onClick={onAdd} title={`Add ${label}`} className="h-12 shrink-0 rounded-xl border border-blue-100 bg-blue-50 px-4 text-lg font-black text-blue-700 hover:bg-blue-100">+</button></div></label>;
+function MasterSelect({ name, label, rows, onAdd, required = false, value, onChange }: { name: string; label: string; rows: Master[]; onAdd: () => void; required?: boolean; value?: string; onChange?: (value: string) => void }) {
+  return <label className={labelClass}>{label}{required ? ' *' : ''}<div className="flex gap-2"><select name={name} required={required} value={value} onChange={(event) => onChange?.(event.target.value)} className={inputClass}><option value="">Select</option>{rows.map((item) => <option key={item.id} value={item.name}>{item.name}</option>)}</select><button type="button" onClick={onAdd} title={`Add ${label}`} className="h-12 shrink-0 rounded-xl border border-blue-100 bg-blue-50 px-4 text-lg font-black text-blue-700 hover:bg-blue-100">+</button></div></label>;
 }
