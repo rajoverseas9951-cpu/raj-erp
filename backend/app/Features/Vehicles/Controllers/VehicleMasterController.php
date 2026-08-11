@@ -13,6 +13,7 @@ use Illuminate\Validation\ValidationException;
 class VehicleMasterController
 {
     private const TYPES = ['manufacturers', 'models', 'variants', 'colours', 'vehicle_types', 'vehicle_classes', 'body_types', 'fuel_types', 'rto_offices'];
+    private const CLASS_MODULES = ['insurance','puc','hsrp','fitness','permit','tax','sld','vltd','rto_process','payment'];
 
     public function __construct(private VehicleMasterResolver $resolver) {}
 
@@ -55,6 +56,7 @@ class VehicleMasterController
         $data = $this->validated($request, $type);
         $this->validateParent($request, $type, $data['parent_id'] ?? null);
         $this->ensureUnique($request, $type, $data['name'], $data['parent_id'] ?? null);
+        $data = $this->prepareSpecialData($type, $data);
         $id = (string) Str::uuid();
         $name = strtoupper(trim($data['name']));
         $inserted = DB::table('vehicle_masters')->insertOrIgnore([
@@ -64,22 +66,14 @@ class VehicleMasterController
             'type' => $type,
             'name' => $name,
             'normalized_name' => $this->resolver->normalizeName($name),
-            'normalized_key' => $this->resolver->normalizedKey(
-                $this->tenant($request),
-                $type,
-                $name,
-                $data['parent_id'] ?? null,
-            ),
+            'normalized_key' => $this->resolver->normalizedKey($this->tenant($request), $type, $name, $data['parent_id'] ?? null),
             'status' => $data['status'] ?? 'active',
             'created_by' => $request->user()?->id,
             'updated_by' => $request->user()?->id,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-        if (! $inserted) {
-            throw ValidationException::withMessages(['name' => ['This master name already exists.']]);
-        }
-
+        if (! $inserted) throw ValidationException::withMessages(['name' => ['This master name already exists.']]);
         return response()->json(['success' => true, 'data' => $this->find($request, $type, $id)], 201);
     }
 
@@ -93,20 +87,11 @@ class VehicleMasterController
         $name = isset($data['name']) ? strtoupper(trim($data['name'])) : $current->name;
         $parentId = array_key_exists('parent_id', $data) ? $data['parent_id'] : $current->parent_id;
         $this->ensureUnique($request, $type, $name, $parentId, $id);
+        $data = $this->prepareSpecialData($type, $data);
         $data['name'] = $name;
         $data['normalized_name'] = $this->resolver->normalizeName($name);
-        $data['normalized_key'] = $this->resolver->normalizedKey(
-            $this->tenant($request),
-            $type,
-            $name,
-            $parentId,
-        );
-        $this->query($request, $type)->where('id', $id)->update([
-            ...$data,
-            'updated_by' => $request->user()?->id,
-            'updated_at' => now(),
-        ]);
-
+        $data['normalized_key'] = $this->resolver->normalizedKey($this->tenant($request), $type, $name, $parentId);
+        $this->query($request, $type)->where('id', $id)->update([...$data, 'updated_by' => $request->user()?->id, 'updated_at' => now()]);
         return response()->json(['success' => true, 'data' => $this->find($request, $type, $id)]);
     }
 
@@ -114,68 +99,64 @@ class VehicleMasterController
     {
         $type = $this->type($type);
         $this->authorize($request, 'vehicle.delete');
-        $this->find($request, $type, $id);
+        $record = $this->find($request, $type, $id);
         $column = [
             'manufacturers' => 'manufacturer_id', 'models' => 'model_id', 'colours' => 'colour_id',
-            'variants' => 'variant_id', 'vehicle_types' => 'vehicle_type_id',
-            'vehicle_classes' => 'vehicle_class_id', 'body_types' => 'vehicle_category_id',
-            'fuel_types' => 'fuel_type_id', 'rto_offices' => 'rto_office_id',
+            'variants' => 'variant_id', 'vehicle_types' => 'vehicle_type_id', 'vehicle_classes' => 'vehicle_class_id',
+            'body_types' => 'vehicle_category_id', 'fuel_types' => 'fuel_type_id', 'rto_offices' => 'rto_office_id',
         ][$type] ?? null;
-        $record = $this->find($request, $type, $id);
         $vehicleQuery = DB::table('vehicles')->where('tenant_id', $this->tenant($request))->whereNull('deleted_at');
         $inUse = $column ? $vehicleQuery->where($column, $id)->exists() : false;
         $hasChildren = ($type === 'manufacturers' && $this->query($request, 'models')->where('parent_id', $id)->exists())
-            || ($type === 'models' && $this->query($request, 'variants')->where('parent_id', $id)->exists());
-        if ($inUse || $hasChildren) {
-            return response()->json(['success' => false, 'message' => 'This master is in use and cannot be deleted. Deactivate it instead.'], 409);
-        }
+            || ($type === 'models' && $this->query($request, 'variants')->where('parent_id', $id)->exists())
+            || ($type === 'vehicle_types' && $this->query($request, 'vehicle_classes')->where('parent_id', $id)->exists());
+        if ($inUse || $hasChildren) return response()->json(['success' => false, 'message' => 'This master is in use and cannot be deleted. Deactivate it instead.'], 409);
         $this->query($request, $type)->where('id', $id)->update([
-            'deleted_at' => now(),
-            'normalized_key' => hash('sha256', $record->normalized_key.'|deleted|'.$id),
-            'updated_by' => $request->user()?->id,
-            'updated_at' => now(),
+            'deleted_at' => now(), 'normalized_key' => hash('sha256', $record->normalized_key.'|deleted|'.$id),
+            'updated_by' => $request->user()?->id, 'updated_at' => now(),
         ]);
         return response()->json(['success' => true, 'message' => 'Master deleted safely.', 'data' => null]);
     }
 
     private function validated(Request $request, string $type, bool $updating = false): array
     {
-        return $request->validate([
+        $rules = [
             'name' => [$updating ? 'sometimes' : 'required', 'string', 'max:160'],
             'code' => ['nullable', 'string', 'max:40'],
-            'parent_id' => [in_array($type, ['models', 'variants'], true) ? ($updating ? 'sometimes' : 'required') : 'nullable', 'uuid'],
+            'parent_id' => [in_array($type, ['models', 'variants', 'vehicle_classes'], true) ? ($updating ? 'sometimes' : 'required') : 'nullable', 'uuid'],
             'status' => ['sometimes', Rule::in(['active', 'inactive'])],
             'notes' => ['nullable', 'string', 'max:2000'],
-        ]);
+        ];
+        if ($type === 'vehicle_classes') {
+            $rules['transport_kind'] = [$updating ? 'sometimes' : 'required', Rule::in(['transport','non_transport'])];
+            $rules['module_rules'] = [$updating ? 'sometimes' : 'required', 'array'];
+            foreach (self::CLASS_MODULES as $module) $rules["module_rules.$module"] = ['required_with:module_rules', Rule::in(['required','optional','na'])];
+        }
+        return $request->validate($rules);
+    }
+
+    private function prepareSpecialData(string $type, array $data): array
+    {
+        if ($type === 'vehicle_classes' && array_key_exists('module_rules', $data)) $data['module_rules'] = json_encode($data['module_rules']);
+        return $data;
     }
 
     private function validateParent(Request $request, string $type, ?string $parentId): void
     {
-        $parentType = ['models' => 'manufacturers', 'variants' => 'models'][$type] ?? null;
+        $parentType = ['models' => 'manufacturers', 'variants' => 'models', 'vehicle_classes' => 'vehicle_types'][$type] ?? null;
         if (! $parentType) return;
-        $valid = $parentId && $this->query($request, $parentType)->where('id', $parentId)->exists();
-        if (! $valid) throw ValidationException::withMessages(['parent_id' => [
-            $type === 'models' ? 'Select a valid vehicle manufacturer.' : 'Select a valid vehicle model.',
-        ]]);
+        $valid = $parentId && $this->query($request, $parentType)->where('id', $parentId)->where('status','active')->exists();
+        if (! $valid) throw ValidationException::withMessages(['parent_id' => ['Select a valid '.str_replace('_',' ',rtrim($parentType,'s')).'.']]);
     }
 
-    private function ensureUnique(
-        Request $request,
-        string $type,
-        string $name,
-        ?string $parentId = null,
-        ?string $except = null
-    ): void
+    private function ensureUnique(Request $request, string $type, string $name, ?string $parentId = null, ?string $except = null): void
     {
         $query = $this->query($request, $type);
         $parentId ? $query->where('parent_id', $parentId) : $query->whereNull('parent_id');
         if ($except) $query->where('id', '<>', $except);
         $target = $this->resolver->matchingName($type, $name);
-        if ($query->get()->contains(
-            fn (object $master) => $this->resolver->matchingName($type, $master->name) === $target
-        )) {
+        if ($query->get()->contains(fn (object $master) => $this->resolver->matchingName($type, $master->name) === $target))
             throw ValidationException::withMessages(['name' => ['This master name already exists.']]);
-        }
     }
 
     private function find(Request $request, string $type, string $id): object
@@ -185,23 +166,10 @@ class VehicleMasterController
 
     private function query(Request $request, string $type)
     {
-        return DB::table('vehicle_masters')->where('vehicle_masters.tenant_id', $this->tenant($request))
-            ->where('vehicle_masters.type', $type)->whereNull('vehicle_masters.deleted_at');
+        return DB::table('vehicle_masters')->where('vehicle_masters.tenant_id', $this->tenant($request))->where('vehicle_masters.type', $type)->whereNull('vehicle_masters.deleted_at');
     }
 
-    private function type(string $type): string
-    {
-        abort_unless(in_array($type, self::TYPES, true), 404);
-        return $type;
-    }
-
-    private function tenant(Request $request): string
-    {
-        return (string) $request->user()?->tenant_id;
-    }
-
-    private function authorize(Request $request, string $permission): void
-    {
-        abort_unless($request->user()?->can($permission), 403);
-    }
+    private function type(string $type): string { abort_unless(in_array($type, self::TYPES, true), 404); return $type; }
+    private function tenant(Request $request): string { return (string) $request->user()?->tenant_id; }
+    private function authorize(Request $request, string $permission): void { abort_unless($request->user()?->can($permission), 403); }
 }
