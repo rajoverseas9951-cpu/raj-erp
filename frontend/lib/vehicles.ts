@@ -49,6 +49,11 @@ export type Vehicle = {
   broker_agent_enabled?: boolean;
   broker_name?: string;
   agent_name?: string;
+  business_source_type?: "direct"|"agent"|"broker"|"dealer"|"fleet"|"other";
+  business_source_name?: string;
+  default_payment_party_type?: "customer"|"source"|"fleet"|"other";
+  default_payment_customer_id?: string;
+  default_payment_party_name?: string;
   insurance_status: string;
   fitness_status: string;
   permit_status: string;
@@ -65,71 +70,41 @@ export type Vehicle = {
   documents?: VehicleDocument[];
   archived_at?: string;
 };
-export type VehicleDocument = {
-  id: string;
-  document_type: string;
-  file_name: string;
-  file_id: string;
-  created_at: string;
+export type VehicleDocument = { id:string; document_type:string; file_name:string; file_id:string; created_at:string };
+export type VehicleTimelineEvent = { id:string; event_type:string; title:string; description?:string; created_at:string; metadata?:Record<string,unknown> };
+export type VehiclePagination = { current_page:number; last_page:number; per_page:number; total:number };
+export type VehicleListResponse = { data:Vehicle[]; links?:unknown; meta?:VehiclePagination; current_page?:number; last_page?:number; per_page?:number; total?:number };
+export type VehicleBrokerAgentDraft = { broker_agent_enabled:boolean; broker_name:string; agent_name:string };
+export type VehicleBusinessRelationshipDraft = {
+  business_source_type:"direct"|"agent"|"broker"|"dealer"|"fleet"|"other";
+  business_source_name:string;
+  default_payment_party_type:"customer"|"source"|"fleet"|"other";
+  default_payment_customer_id?:string;
+  default_payment_party_name:string;
 };
-export type VehicleTimelineEvent = {
-  id: string;
-  event_type: string;
-  title: string;
-  description?: string;
-  created_at: string;
-  metadata?: Record<string, unknown>;
-};
-export type VehiclePagination = { current_page: number; last_page: number; per_page: number; total: number };
-export type VehicleListResponse = { data: Vehicle[]; links?: unknown; meta?: VehiclePagination; current_page?: number; last_page?: number; per_page?: number; total?: number };
-export type VehicleBrokerAgentDraft = { broker_agent_enabled: boolean; broker_name: string; agent_name: string };
 
-let brokerAgentDraft: VehicleBrokerAgentDraft | null = null;
-export function setVehicleBrokerAgentDraft(draft: VehicleBrokerAgentDraft | null) { brokerAgentDraft = draft; }
-function withBrokerAgentDraft(body: unknown) {
-  if (!brokerAgentDraft || !body || typeof body !== 'object' || Array.isArray(body)) return body;
-  return { ...(body as Record<string, unknown>), ...brokerAgentDraft };
+let brokerAgentDraft:VehicleBrokerAgentDraft|null=null;
+let businessRelationshipDraft:VehicleBusinessRelationshipDraft|null=null;
+export function setVehicleBrokerAgentDraft(draft:VehicleBrokerAgentDraft|null){brokerAgentDraft=draft;}
+export function setVehicleBusinessRelationshipDraft(draft:VehicleBusinessRelationshipDraft|null){businessRelationshipDraft=draft;}
+function withVehicleDrafts(body:unknown){
+  if(!body||typeof body!=="object"||Array.isArray(body)) return body;
+  return {...(body as Record<string,unknown>),...(brokerAgentDraft??{}),...(businessRelationshipDraft??{})};
 }
 
-async function mutateVehicle<T>(path: string, init: RequestInit): Promise<T> {
-  const result = await authenticatedRequest<T>(path, init);
-  invalidateDashboard();
-  return result;
+async function mutateVehicle<T>(path:string,init:RequestInit):Promise<T>{
+  const result=await authenticatedRequest<T>(path,init); invalidateDashboard(); return result;
 }
-export const vehicleApi = {
-  list: (q = "") =>
-    authenticatedRequest<VehicleListResponse>(
-      `/vehicles${q}`,
-    ),
-  get: (id: string) => authenticatedRequest<Vehicle>(`/vehicles/${id}`),
-  timeline: (id: string) =>
-    authenticatedRequest<{ data: VehicleTimelineEvent[] }>(
-      `/vehicles/${id}/timeline`,
-    ),
-  create: (body: unknown) =>
-    mutateVehicle<Vehicle>("/vehicles", {
-      method: "POST",
-      body: JSON.stringify(withBrokerAgentDraft(body)),
-    }).finally(() => setVehicleBrokerAgentDraft(null)),
-  update: (id: string, body: unknown) =>
-    mutateVehicle<Vehicle>(`/vehicles/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(withBrokerAgentDraft(body)),
-    }).finally(() => setVehicleBrokerAgentDraft(null)),
-  archive: (id: string) =>
-    mutateVehicle<Vehicle>(`/vehicles/${id}/archive`, { method: "POST" }),
-  remove: (id: string) =>
-    mutateVehicle<null>(`/vehicles/${id}`, { method: "DELETE" }),
-  bulkDelete: (ids: string[]) =>
-    mutateVehicle("/vehicles/bulk-delete", {
-      method: "POST",
-      body: JSON.stringify({ ids }),
-    }),
-  bulkUpdate: (ids: string[], updates: Record<string, string>) =>
-    mutateVehicle("/vehicles/bulk-update", {
-      method: "POST",
-      body: JSON.stringify({ ids, updates }),
-    }),
+export const vehicleApi={
+  list:(q="")=>authenticatedRequest<VehicleListResponse>(`/vehicles${q}`),
+  get:(id:string)=>authenticatedRequest<Vehicle>(`/vehicles/${id}`),
+  timeline:(id:string)=>authenticatedRequest<{data:VehicleTimelineEvent[]}>(`/vehicles/${id}/timeline`),
+  create:(body:unknown)=>mutateVehicle<Vehicle>("/vehicles",{method:"POST",body:JSON.stringify(withVehicleDrafts(body))}).finally(()=>{setVehicleBrokerAgentDraft(null);setVehicleBusinessRelationshipDraft(null);}),
+  update:(id:string,body:unknown)=>mutateVehicle<Vehicle>(`/vehicles/${id}`,{method:"PUT",body:JSON.stringify(withVehicleDrafts(body))}).finally(()=>{setVehicleBrokerAgentDraft(null);setVehicleBusinessRelationshipDraft(null);}),
+  archive:(id:string)=>mutateVehicle<Vehicle>(`/vehicles/${id}/archive`,{method:"POST"}),
+  remove:(id:string)=>mutateVehicle<null>(`/vehicles/${id}`,{method:"DELETE"}),
+  bulkDelete:(ids:string[])=>mutateVehicle("/vehicles/bulk-delete",{method:"POST",body:JSON.stringify({ids})}),
+  bulkUpdate:(ids:string[],updates:Record<string,string>)=>mutateVehicle("/vehicles/bulk-update",{method:"POST",body:JSON.stringify({ids,updates})}),
 };
 import { authenticatedRequest } from "@/lib/api-client";
 import { invalidateDashboard } from "@/lib/dashboard-refresh";
