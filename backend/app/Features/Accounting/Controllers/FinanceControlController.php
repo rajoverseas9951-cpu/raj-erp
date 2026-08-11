@@ -4,6 +4,7 @@ namespace App\Features\Accounting\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -75,10 +76,16 @@ class FinanceControlController
             return ['id'=>$l->id,'name'=>$l->ledger_name,'group'=>$l->ledger_group,'receivable'=>$balance>0?round($balance,2):0,'payable'=>$balance<0?round(abs($balance),2):0];
         })->filter(fn($r)=>$r['receivable']>0||$r['payable']>0)->values();
 
-        $insuranceDue = (float) DB::table('insurance_commissions')->where('tenant_id',$tenant)->whereNull('deleted_at')
-            ->sum(DB::raw('GREATEST(COALESCE(net_receivable,0)-COALESCE(received_amount,0),0)'));
-        $serviceDue = (float) DB::table('service_works')->where('tenant_id',$tenant)->whereNull('deleted_at')
-            ->sum(DB::raw('GREATEST(COALESCE(amount,0)-COALESCE(received_amount,0),0)'));
+        $insuranceDue = 0.0;
+        if (Schema::hasTable('insurance_commissions')) {
+            $insuranceDue = (float) (DB::table('insurance_commissions')->where('tenant_id',$tenant)->whereNull('deleted_at')
+                ->selectRaw('COALESCE(SUM(GREATEST(COALESCE(net_receivable,0)-COALESCE(received_amount,0),0)),0) as total')->value('total') ?? 0);
+        }
+        $serviceDue = 0.0;
+        if (Schema::hasTable('service_works')) {
+            $serviceDue = (float) (DB::table('service_works')->where('tenant_id',$tenant)->whereNull('deleted_at')
+                ->selectRaw('COALESCE(SUM(GREATEST(COALESCE(amount,0)-COALESCE(received_amount,0),0)),0) as total')->value('total') ?? 0);
+        }
 
         return response()->json(['success'=>true,'data'=>[
             'rows'=>$rows,
@@ -93,8 +100,7 @@ class FinanceControlController
 
     public function openingBalances(Request $request)
     {
-        $tenant=$this->tenant($request);
-        $rows=DB::table('accounting_ledgers')->where('tenant_id',$tenant)->orderBy('ledger_name')
+        $rows=DB::table('accounting_ledgers')->where('tenant_id',$this->tenant($request))->orderBy('ledger_name')
             ->get(['id','ledger_name','ledger_group','opening_balance','balance_type']);
         return response()->json(['success'=>true,'data'=>$rows]);
     }
@@ -119,10 +125,12 @@ class FinanceControlController
     public function lockYear(Request $request)
     {
         $data=$request->validate(['fy_start'=>['required','date'],'confirm'=>['accepted']]); [$start,$end]=$this->fyDates($data['fy_start']);
-        DB::table('financial_year_locks')->updateOrInsert(
-            ['tenant_id'=>$this->tenant($request),'fy_start'=>$start,'fy_end'=>$end],
-            ['id'=>(string)Str::uuid(),'locked_at'=>now(),'locked_by'=>$request->user()?->id,'unlocked_at'=>null,'unlocked_by'=>null,'created_at'=>now(),'updated_at'=>now()]
-        );
+        $tenant=$this->tenant($request); $existing=DB::table('financial_year_locks')->where('tenant_id',$tenant)->where('fy_start',$start)->where('fy_end',$end)->first();
+        if ($existing) {
+            DB::table('financial_year_locks')->where('id',$existing->id)->update(['locked_at'=>now(),'locked_by'=>$request->user()?->id,'unlocked_at'=>null,'unlocked_by'=>null,'updated_at'=>now()]);
+        } else {
+            DB::table('financial_year_locks')->insert(['id'=>(string)Str::uuid(),'tenant_id'=>$tenant,'fy_start'=>$start,'fy_end'=>$end,'locked_at'=>now(),'locked_by'=>$request->user()?->id,'created_at'=>now(),'updated_at'=>now()]);
+        }
         return response()->json(['success'=>true,'data'=>['fy_start'=>$start,'fy_end'=>$end,'locked'=>true]]);
     }
 
@@ -136,6 +144,7 @@ class FinanceControlController
 
     private function assertYearOpen(string $tenant, string $date): void
     {
+        if (!Schema::hasTable('financial_year_locks')) return;
         $locked=DB::table('financial_year_locks')->where('tenant_id',$tenant)->whereNotNull('locked_at')
             ->whereDate('fy_start','<=',$date)->whereDate('fy_end','>=',$date)->exists();
         if ($locked) throw ValidationException::withMessages(['date'=>['This financial year is locked. Unlock it before changing accounts.']]);
