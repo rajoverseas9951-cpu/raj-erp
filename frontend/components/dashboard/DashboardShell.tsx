@@ -23,6 +23,25 @@ const navigation:NavItem[]=[
   {label:"Team & Roles",href:"/users",icon:"users",permission:"users.view"},
   {label:"Settings",href:"/settings",icon:"settings",permission:"settings.manage"},
 ];
+const accountGroups=[
+  {label:"Accounting",items:[
+    ["Accounts Dashboard","/accounts"],
+    ["Ledger Master","/accounts/ledgers"],
+    ["Voucher Entry","/accounts#voucher"],
+    ["Insurance Accounting","/accounts/insurance"],
+  ]},
+  {label:"Financial Statements",items:[
+    ["Day Book","/reports/day-book"],
+    ["Trial Balance","/reports/trial-balance"],
+    ["Profit & Loss","/reports/profit-loss"],
+    ["Balance Sheet","/reports/balance-sheet"],
+  ]},
+  {label:"Business Control",items:[
+    ["Insurance Commission","/reports/insurance-commission"],
+    ["Insurance Due","/reports/insurance-due"],
+    ["RTO Profit","/reports/rto-profit"],
+  ]},
+] as const;
 const reportGroups=[
   {label:"Business Reports",items:[
     ["Expiry Report","/reports/expiry"],["Agent Report","/reports/agent"],["Broker Report","/reports/broker"],
@@ -44,6 +63,7 @@ export function DashboardShell({session,children}:{session:DashboardSession;chil
   const [profile,setProfile]=useState(false); const [notices,setNotices]=useState(false);
   const [mastersOpen,setMastersOpen]=useState(()=>masterPaths.some(x=>path.startsWith(x)));
   const [reportsOpen,setReportsOpen]=useState(()=>path.startsWith('/reports'));
+  const [accountsOpen,setAccountsOpen]=useState(()=>path.startsWith('/accounts'));
   const menuRef=useRef<HTMLDivElement>(null);
 
   useEffect(()=>{
@@ -54,7 +74,7 @@ export function DashboardShell({session,children}:{session:DashboardSession;chil
   useEffect(()=>{const saved=localStorage.getItem('raj-theme');const enabled=saved==='dark'||(!saved&&matchMedia('(prefers-color-scheme: dark)').matches);setDark(enabled);document.documentElement.classList.toggle('dark',enabled)},[]);
   useEffect(()=>{const fn=(e:MouseEvent)=>{if(menuRef.current&&!menuRef.current.contains(e.target as Node)){setProfile(false);setNotices(false)}};document.addEventListener('mousedown',fn);return()=>document.removeEventListener('mousedown',fn)},[]);
   function theme(){const value=!dark;setDark(value);document.documentElement.classList.toggle('dark',value);localStorage.setItem('raj-theme',value?'dark':'light')}
-  const current=path.startsWith('/reports')?navigation.find(n=>n.label==='Reports'):masterPaths.some(x=>path.startsWith(x))?navigation.find(n=>n.label==='Masters'):navigation.find(n=>path===n.href||path.startsWith(`${n.href}/`));
+  const current=path.startsWith('/accounts')?navigation.find(n=>n.label==='Accounts'):path.startsWith('/reports')?navigation.find(n=>n.label==='Reports'):masterPaths.some(x=>path.startsWith(x))?navigation.find(n=>n.label==='Masters'):navigation.find(n=>path===n.href||path.startsWith(`${n.href}/`));
 
   return <div className="min-h-screen bg-slate-50 text-slate-950 transition-colors dark:bg-slate-950 dark:text-slate-100">
     {mobile&&<button aria-label="Close navigation" onClick={()=>setMobile(false)} className="fixed inset-0 z-30 bg-slate-950/50 lg:hidden"/>}
@@ -68,11 +88,16 @@ export function DashboardShell({session,children}:{session:DashboardSession;chil
       <nav className="mt-5 flex-1 space-y-1 overflow-y-auto px-3 pb-4" aria-label="Primary navigation">
         {!collapsed&&<p className="mb-2 px-3 text-[10px] font-black uppercase tracking-[.2em] text-slate-600">Workspace</p>}
         {navigation.filter(n=>can(activeSession,n.permission)).map(n=>{
-          const isReports=n.label==='Reports',isMasters=n.label==='Masters'; const active=isReports?path.startsWith('/reports'):isMasters?masterPaths.some(x=>path.startsWith(x)):path===n.href||path.startsWith(`${n.href}/`);
-          if(isReports||isMasters){const open=isReports?reportsOpen:mastersOpen;return <div key={n.label}>
-            <button type="button" onClick={()=>collapsed?setCollapsed(false):isReports?setReportsOpen(!reportsOpen):setMastersOpen(!mastersOpen)} className={`group flex h-11 w-full items-center rounded-xl px-3 transition ${active?'bg-blue-600 text-white shadow-lg shadow-blue-950/30':'hover:bg-white/[.07] hover:text-white'} ${collapsed?'justify-center':''}`} title={collapsed?n.label:undefined}><Icon name={n.icon} className="h-5 w-5 shrink-0"/>{!collapsed&&<><span className="ml-3 text-sm font-semibold">{n.label}</span><Icon name="down" className={`ml-auto h-4 w-4 transition ${open?'rotate-180':''}`}/></>}</button>
-            {!collapsed&&open&&<div className="ml-4 border-l border-white/10 py-2 pl-3">{(isReports?reportGroups:masterGroups).map(group=><div key={group.label} className="mb-3"><p className="mb-1 px-2 text-[9px] font-black uppercase tracking-[.14em] text-slate-600">{group.label}</p>{group.items.map(([label,href])=><Link key={href} href={href} onClick={()=>setMobile(false)} className={`block rounded-lg px-2.5 py-2 text-xs font-semibold transition ${path===href?'bg-blue-500/20 text-blue-200':'text-slate-400 hover:bg-white/[.06] hover:text-white'}`}>{label}</Link>)}</div>)}</div>}
-          </div>}
+          const isAccounts=n.label==='Accounts',isReports=n.label==='Reports',isMasters=n.label==='Masters';
+          const active=isAccounts?path.startsWith('/accounts'):isReports?path.startsWith('/reports'):isMasters?masterPaths.some(x=>path.startsWith(x)):path===n.href||path.startsWith(`${n.href}/`);
+          if(isAccounts||isReports||isMasters){
+            const open=isAccounts?accountsOpen:isReports?reportsOpen:mastersOpen;
+            const groups=isAccounts?accountGroups:isReports?reportGroups:masterGroups;
+            return <div key={n.label}>
+              <button type="button" onClick={()=>{if(collapsed){setCollapsed(false);return}if(isAccounts)setAccountsOpen(!accountsOpen);else if(isReports)setReportsOpen(!reportsOpen);else setMastersOpen(!mastersOpen)}} className={`group flex h-11 w-full items-center rounded-xl px-3 transition ${active?'bg-blue-600 text-white shadow-lg shadow-blue-950/30':'hover:bg-white/[.07] hover:text-white'} ${collapsed?'justify-center':''}`} title={collapsed?n.label:undefined}><Icon name={n.icon} className="h-5 w-5 shrink-0"/>{!collapsed&&<><span className="ml-3 text-sm font-semibold">{n.label}</span><Icon name="down" className={`ml-auto h-4 w-4 transition ${open?'rotate-180':''}`}/></>}</button>
+              {!collapsed&&open&&<div className="ml-4 border-l border-white/10 py-2 pl-3">{groups.map(group=><div key={group.label} className="mb-3"><p className="mb-1 px-2 text-[9px] font-black uppercase tracking-[.14em] text-slate-600">{group.label}</p>{group.items.map(([label,href])=><Link key={`${label}-${href}`} href={href} onClick={()=>setMobile(false)} className={`block rounded-lg px-2.5 py-2 text-xs font-semibold transition ${(path===href||path+location.hash===href)?'bg-blue-500/20 text-blue-200':'text-slate-400 hover:bg-white/[.06] hover:text-white'}`}>{label}</Link>)}</div>)}</div>}
+            </div>
+          }
           return <Link key={n.label} onClick={()=>setMobile(false)} href={n.href} title={collapsed?n.label:undefined} className={`group flex h-11 items-center rounded-xl px-3 transition ${active?'bg-blue-600 text-white shadow-lg shadow-blue-950/30':'hover:bg-white/[.07] hover:text-white'} ${collapsed?'justify-center':''}`}><Icon name={n.icon} className="h-5 w-5 shrink-0"/>{!collapsed&&<span className="ml-3 text-sm font-semibold">{n.label}</span>}</Link>
         })}
       </nav>
