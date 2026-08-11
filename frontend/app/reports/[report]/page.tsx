@@ -14,7 +14,7 @@ const titles: Record<string,string> = {
   'agent-work':'Agent Work Report', 'balance-sheet':'Balance Sheet', 'profit-loss':'Profit & Loss',
   'trial-balance':'Trial Balance', 'day-book':'Day Book',
 };
-const moneyKeys = /(amount|premium|commission|billing|cost|profit|payable|received|due|discount|debit|credit|balance|assets|liabilities|income|expense)/i;
+const moneyKeys = /(amount|premium|commission|billing|cost|profit|payable|received|due|discount|debit|credit|balance|assets|liabilities|income|expense|tds)/i;
 const hideKeys = new Set(['id']);
 const label=(value:string)=>value.replaceAll('_',' ').replace(/\b\w/g,x=>x.toUpperCase());
 const money=(value:unknown)=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2}).format(Number(value||0));
@@ -42,10 +42,28 @@ export default function ReportDetailPage(){
         case 'vehicle': payload=await businessReportsApi.vehicles(filters); break;
         case 'agent-work': payload=await businessReportsApi.agentWork(filters); break;
         case 'balance-sheet': {
-          const x=await accountingApi.balanceSheet(); payload={rows:[{particular:'Assets',amount:x.assets},{particular:'Liabilities',amount:x.liabilities},{particular:'Difference',amount:x.difference}],summary:{assets:x.assets,liabilities:x.liabilities,difference:x.difference}}; break;
+          const x=await accountingApi.balanceSheet();
+          payload={rows:[
+            {particular:'Total Assets',amount:x.assets},
+            {particular:'Book Liabilities & Capital',amount:x.book_liabilities},
+            {particular:'Current Year Profit / Loss',amount:x.current_year_profit},
+            {particular:'Total Liabilities + Profit',amount:x.liabilities},
+            {particular:'Balance Difference',amount:x.difference},
+          ],summary:{assets:x.assets,book_liabilities:x.book_liabilities,current_year_profit:x.current_year_profit,liabilities:x.liabilities,difference:x.difference}}; break;
         }
         case 'profit-loss': {
-          const x=await accountingApi.profitLoss(); payload={rows:[{particular:'Income',amount:x.income},{particular:'Expense',amount:x.expense},{particular:'Net Profit',amount:x.net_profit}],summary:{income:x.income,expense:x.expense,net_profit:x.net_profit}}; break;
+          const x=await accountingApi.profitLoss();
+          payload={rows:[
+            {particular:'Insurance Commission Income',amount:x.insurance_commission},
+            {particular:'RTO + Licence + Passport Income',amount:x.rto_income},
+            {particular:'Total Income',amount:x.income},
+            {particular:'Insurance Agent Commission',amount:x.insurance_agent_commission},
+            {particular:'TDS',amount:x.tds},
+            {particular:'RTO + Licence + Passport Cost',amount:x.rto_cost},
+            {particular:'Other Recorded Expenses',amount:x.recorded_expenses},
+            {particular:'Total Expense',amount:x.expense},
+            {particular:'Net Profit',amount:x.net_profit},
+          ],summary:{income:x.income,expense:x.expense,insurance_commission:x.insurance_commission,rto_income:x.rto_income,rto_cost:x.rto_cost,rto_profit:x.rto_profit,net_profit:x.net_profit}}; break;
         }
         case 'trial-balance': {
           const x=await accountingApi.trialBalance(); payload={rows:x.rows as unknown as Array<Record<string,unknown>>,summary:{total_debit:x.total_debit,total_credit:x.total_credit,difference:Number(x.total_debit)-Number(x.total_credit)}}; break;
