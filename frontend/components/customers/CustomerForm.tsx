@@ -152,6 +152,11 @@ export function CustomerForm({ customer }: { customer?: Partial<Customer> }) {
           <button disabled={saving} className="min-w-[180px] rounded-2xl bg-gradient-to-r from-[#0b2f6b] to-[#2563eb] px-6 py-3 text-sm font-black text-white shadow-[0_12px_28px_rgba(37,99,235,.28)] disabled:opacity-50">{saving ? "Saving…" : customer?.id ? "✓ Update Customer" : "✓ Save Customer"}</button>
         </div>
       </div>
+
+      <button type="button" onClick={() => router.push("/dashboard")} className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-3 rounded-[22px] border border-[#dbe5f2] bg-white px-5 py-4 text-sm font-black text-[#173b76] shadow-[0_18px_50px_rgba(7,26,60,.18)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_55px_rgba(7,26,60,.22)]">
+        <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-[#0b2f6b] to-[#2563eb] text-white">←</span>
+        Dashboard
+      </button>
     </form>
   );
 }
