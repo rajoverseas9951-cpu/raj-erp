@@ -82,6 +82,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('accounting/balance-sheet', [AccountingController::class, 'balanceSheet']);
     Route::post('accounting/simple-entry', [FinanceControlController::class, 'simpleEntry']);
     Route::get('accounting/outstanding', [FinanceControlController::class, 'outstanding']);
+    Route::get('accounting/outstanding/export', [FinanceControlController::class, 'outstandingExport']);
     Route::get('accounting/opening-balances', [FinanceControlController::class, 'openingBalances']);
     Route::put('accounting/opening-balances/{ledgerId}', [FinanceControlController::class, 'updateOpeningBalance']);
     Route::get('accounting/financial-year', [FinanceControlController::class, 'yearStatus']);
