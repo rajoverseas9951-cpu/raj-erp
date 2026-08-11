@@ -65,21 +65,14 @@ export function findMatchingMasterId(
 ): string {
   if (!value.trim()) return "";
   const target = normalizedMasterText(value, type);
-  return (
-    options.find((option) => normalizedMasterText(option.name, type) === target)
-      ?.id ?? ""
-  );
+  return options.find((option) => normalizedMasterText(option.name, type) === target)?.id ?? "";
 }
 
 export function getOcrMasterControlState(
   value: string,
   unresolvedText: string,
   options: readonly OcrMasterOption[],
-): {
-  fallbackValue: string;
-  fallbackLabel: string;
-  visibleText: string;
-} {
+): { fallbackValue: string; fallbackLabel: string; visibleText: string } {
   const selected = options.find((option) => option.id === value);
   const showOcrValue = Boolean(unresolvedText && (!value || !selected));
   return {
@@ -89,9 +82,7 @@ export function getOcrMasterControlState(
   };
 }
 
-export type OcrMasterLists = Partial<
-  Record<OcrMasterKind, readonly OcrMasterOption[]>
->;
+export type OcrMasterLists = Partial<Record<OcrMasterKind, readonly OcrMasterOption[]>>;
 
 export function mergeOcrMasterOptions(
   current: OcrMasterLists,
@@ -137,38 +128,25 @@ export function resolveOcrMasterIds(
       !next[binding.nameField]?.trim() ||
       editedFields.has(binding.nameField) ||
       editedFields.has(binding.idField)
-    ) {
-      continue;
-    }
+    ) continue;
 
-    const parentId = binding.parentIdField
-      ? next[binding.parentIdField]
-      : "";
+    const parentId = binding.parentIdField ? next[binding.parentIdField] : "";
     if (binding.parentIdField && !parentId) continue;
     const options = (lists[binding.type] ?? []).filter(
       (option) => !parentId || !option.parent_id || option.parent_id === parentId,
     );
-    const id = findMatchingMasterId(
-      next[binding.nameField],
-      options,
-      binding.type,
-    );
+    const id = findMatchingMasterId(next[binding.nameField], options, binding.type);
     if (id) next[binding.idField] = id;
   }
-
   return next;
 }
 
 function normalizeOcrDate(value: string): string {
   const trimmed = value.trim();
   const iso = trimmed.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
-  if (iso) {
-    return `${iso[1]}-${iso[2].padStart(2, "0")}-${iso[3].padStart(2, "0")}`;
-  }
+  if (iso) return `${iso[1]}-${iso[2].padStart(2, "0")}-${iso[3].padStart(2, "0")}`;
   const indian = trimmed.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
-  if (indian) {
-    return `${indian[3]}-${indian[2].padStart(2, "0")}-${indian[1].padStart(2, "0")}`;
-  }
+  if (indian) return `${indian[3]}-${indian[2].padStart(2, "0")}-${indian[1].padStart(2, "0")}`;
   return trimmed;
 }
 
@@ -182,19 +160,15 @@ export function applyOcrPrefill(
     if (!editedFields.has(field)) next[field] = "";
   }
   for (const [field, value] of Object.entries(extracted)) {
-    if (!OCR_PREFILL_SET.has(field) || editedFields.has(field) || value === "") {
-      continue;
-    }
-    next[field] = field === "registration_date"
-      ? normalizeOcrDate(String(value))
-      : String(value);
+    if (!OCR_PREFILL_SET.has(field) || editedFields.has(field) || value === "") continue;
+    next[field] = field === "registration_date" ? normalizeOcrDate(String(value)) : String(value);
   }
   next.customer_id = current.customer_id;
   return next;
 }
 
 const COMMERCIAL_VEHICLE_PATTERN =
-  /\b(?:COMMERCIAL|GOODS?|TRANSPORT|HGV|LGV|MGV|HMV|TRUCK|LORRY|TRAILER|PICK\s*UP|PICKUP|BUS|TAXI|CAB|MAXI|PSV|PASSENGER|STAGE\s+CARRIAGE|CONTRACT\s+CARRIAGE)\b/i;
+  /\b(?:COMMERCIAL|GOODS?|TRANSPORT|HGV|HGVT|HGMV|HMV|LGV|LGVT|LCV|MGV|GT|TRUCK|LORRY|TIPPER|DUMPER|TRAILER|PICK\s*UP|PICKUP|BUS|OMNI\s*BUS|SCHOOL\s*BUS|AMBULANCE|TAXI|MOTOR\s*CAB|CAB|MAXI\s*CAB|MAXI|LPV|PSV|PASSENGER|STAGE\s*CARRIAGE|CONTRACT\s*CARRIAGE)\b/i;
 
 export function isCommercialVehicle(values: {
   vehicle_type?: string;
@@ -272,9 +246,7 @@ export function buildVehicleFormPayload(
       : value;
   }
   if (isCommercialVehicle(values)) {
-    payload.gross_weight = values.gross_weight
-      ? Number(values.gross_weight)
-      : null;
+    payload.gross_weight = values.gross_weight ? Number(values.gross_weight) : null;
   }
   payload.hypothecation = Boolean(values.financier);
   return payload;
