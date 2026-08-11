@@ -29,9 +29,13 @@ const navigation:NavItem[]=[
 const accountGroups=[
   {label:"Daily Accounts",items:[
     ["Accounts Overview","/accounts"],
-    ["Party / Ledger Balance","/accounts/ledgers"],
-    ["Cash / Bank Entry","/accounts#voucher"],
+    ["Cash & Bank Entry","/accounts/cash-bank"],
+    ["Party Balance","/accounts/outstanding"],
     ["Insurance Accounts","/accounts/insurance"],
+  ]},
+  {label:"Account Setup",items:[
+    ["Account Heads","/accounts/ledgers"],
+    ["Opening Balance & Year Lock","/accounts/setup"],
   ]},
   {label:"Yearly Accounts",items:[
     ["Profit & Loss","/reports/profit-loss"],
