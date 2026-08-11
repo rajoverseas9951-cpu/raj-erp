@@ -8,7 +8,16 @@ import { DASHBOARD_PERIODS,dashboardPeriodLabel } from "@/lib/dashboard-periods"
 
 const money=(v=0)=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(v);
 const num=(v=0)=>v.toLocaleString("en-IN");
-const actions=[["New vehicle","/vehicles/new","vehicle"],["New customer","/customers/new","customers"],["Insurance","/vehicles","shield"],["RTO work","/vehicles","building"],["Payment","/accounts","credit"]] as const;
+const actions=[
+ ["New vehicle","/vehicles/new","vehicle"],
+ ["New customer","/customers/new","customers"],
+ ["Insurance","/vehicles","shield"],
+ ["RTO work","/vehicles","building"],
+ ["Cash / Bank","/accounts#voucher","credit"],
+ ["Party balance","/accounts/ledgers","wallet"],
+ ["P&L","/reports/profit-loss","reports"],
+ ["Balance sheet","/reports/balance-sheet","book"],
+] as const;
 
 export default function DashboardPage(){
  const today=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata"}).format(new Date());
@@ -19,7 +28,7 @@ export default function DashboardPage(){
  return <main className="min-h-screen bg-[#f3f6fb] pb-10 dark:bg-[#050914]"><div className="mx-auto max-w-[1560px] space-y-4 p-4 sm:p-6 lg:p-7">
   <section className="relative overflow-hidden rounded-[28px] bg-[#071a3c] text-white shadow-[0_28px_70px_-32px_rgba(7,26,60,.8)]"><div className="absolute inset-0 bg-[radial-gradient(circle_at_90%_0%,rgba(42,112,255,.55),transparent_31%),linear-gradient(115deg,#06142e_0%,#09265b_62%,#1147b9_100%)]"/><div className="absolute right-[-70px] top-[-120px] h-72 w-72 rounded-full border border-white/10"/><div className="relative px-5 py-5 sm:px-7 sm:py-6">
    <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between"><div><div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(103,232,249,.8)]"/><p className="text-[9px] font-black uppercase tracking-[.24em] text-cyan-200">Raj Insurance ERP · Command Center</p></div><h1 className="mt-2 text-3xl font-black tracking-[-.04em] sm:text-[40px]">Today&apos;s workspace</h1><p className="mt-1.5 text-sm font-medium text-blue-100/65">What needs attention, what&apos;s moving, and what to do next.</p></div>
-   <div className="flex flex-wrap gap-2">{actions.map(([label,href,icon],i)=><Link key={label} href={href} className={`group flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-black transition hover:-translate-y-0.5 ${i===0?"border-white bg-white text-[#0a2b64] shadow-xl shadow-blue-950/20":"border-white/12 bg-white/[.08] text-white hover:bg-white/[.14]"}`}><Icon name={icon} className="h-4 w-4"/><span>{label}</span></Link>)}</div></div>
+   <div className="flex max-w-[760px] flex-wrap gap-2 xl:justify-end">{actions.map(([label,href,icon],i)=><Link key={label} href={href} className={`group flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-black transition hover:-translate-y-0.5 ${i===0?"border-white bg-white text-[#0a2b64] shadow-xl shadow-blue-950/20":"border-white/12 bg-white/[.08] text-white hover:bg-white/[.14]"}`}><Icon name={icon} className="h-4 w-4"/><span>{label}</span></Link>)}</div></div>
    <div className="mt-5 grid overflow-hidden rounded-2xl border border-white/10 bg-black/[.12] sm:grid-cols-2 lg:grid-cols-4"><Metric label="Vehicles" value={num(vehicles)} icon="vehicle"/><Metric label="Active policies" value={num(policies)} icon="shield"/><Metric label="Due soon" value={num(due)} icon="clock" alert={due>0}/><Metric label="Outstanding" value={money(outstanding)} icon="wallet" alert={outstanding>0} last/></div>
   </div></section>
   {error&&<div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700">{error}</div>}
