@@ -4,11 +4,13 @@ import VehicleBrokerAgentBridge from "@/components/vehicles/VehicleBrokerAgentBr
 import { ComplianceExpiryEnhancer } from "@/components/vehicles/ComplianceExpiryEnhancer";
 import { InlineCustomerCreator } from "@/components/vehicles/InlineCustomerCreator";
 import { FleetVehiclePicker } from "@/components/fleets/FleetVehiclePicker";
+import { VehicleBusinessRelationshipCard } from "@/components/vehicles/VehicleBusinessRelationshipCard";
 
 export default function NewVehicleLayout({ children }: { children: ReactNode }) {
   return (
     <div className="vehicle-new-footer-sync">
       <Suspense fallback={null}><FleetVehiclePicker /></Suspense>
+      <div className="px-3 pt-4 sm:px-6 lg:px-8"><VehicleBusinessRelationshipCard /></div>
       {children}
       <VehicleBrokerAgentBridge />
       <ComplianceExpiryEnhancer />
