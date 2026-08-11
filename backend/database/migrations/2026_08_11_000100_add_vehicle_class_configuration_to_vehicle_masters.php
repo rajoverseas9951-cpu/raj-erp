@@ -57,16 +57,41 @@ return new class extends Migration
         foreach ($tenants as $tenant) {
             $typeIds = [];
             foreach ($types as [$name,$code]) {
-                $existing = DB::table('vehicle_masters')->where('tenant_id',$tenant)->where('type','vehicle_types')
-                    ->whereRaw('LOWER(code) = ?', [strtolower($code)])->whereNull('deleted_at')->first();
+                $normalizedName = preg_replace('/[^A-Z0-9]+/','',strtoupper($name));
+                $normalizedKey = hash('sha256',$tenant.'|vehicle_types||'.$normalizedName);
+
+                // Reuse legacy records by code, normalized name OR normalized key.
+                // Older masters often have an empty/different code while already owning
+                // the same unique normalized_key, which previously made this migration fail.
+                $existing = DB::table('vehicle_masters')
+                    ->where('tenant_id',$tenant)
+                    ->where('type','vehicle_types')
+                    ->whereNull('deleted_at')
+                    ->where(function ($q) use ($code, $normalizedName, $normalizedKey) {
+                        $q->whereRaw('LOWER(COALESCE(code, \'\')) = ?', [strtolower($code)])
+                            ->orWhere('normalized_name', $normalizedName)
+                            ->orWhere('normalized_key', $normalizedKey);
+                    })
+                    ->orderBy('created_at')
+                    ->first();
+
                 $id = $existing?->id ?? (string) Str::uuid();
-                if (! $existing) DB::table('vehicle_masters')->insert([
-                    'id'=>$id,'tenant_id'=>$tenant,'type'=>'vehicle_types','name'=>$name,'code'=>$code,'status'=>'active',
-                    'normalized_name'=>preg_replace('/[^A-Z0-9]+/','',strtoupper($name)),
-                    'normalized_key'=>hash('sha256',$tenant.'|vehicle_types||'.preg_replace('/[^A-Z0-9]+/','',strtoupper($name))),
-                    'created_at'=>now(),'updated_at'=>now(),
-                ]);
-                else DB::table('vehicle_masters')->where('id',$id)->update(['name'=>$name,'status'=>'active','updated_at'=>now()]);
+                $payload = [
+                    'name'=>$name,
+                    'code'=>$code,
+                    'status'=>'active',
+                    'normalized_name'=>$normalizedName,
+                    'normalized_key'=>$normalizedKey,
+                    'updated_at'=>now(),
+                ];
+
+                if ($existing) {
+                    DB::table('vehicle_masters')->where('id',$id)->update($payload);
+                } else {
+                    DB::table('vehicle_masters')->insert(array_merge($payload,[
+                        'id'=>$id,'tenant_id'=>$tenant,'type'=>'vehicle_types','created_at'=>now(),
+                    ]));
+                }
                 $typeIds[$code] = $id;
             }
 
@@ -78,20 +103,34 @@ return new class extends Migration
                 $rules = array_merge([
                     'insurance'=>'na','puc'=>'na','hsrp'=>'na','fitness'=>'na','permit'=>'na','tax'=>'na','sld'=>'na','vltd'=>'na','rto_process'=>'na','payment'=>'na'
                 ], $base, $extra);
-                $existing = DB::table('vehicle_masters')->where('tenant_id',$tenant)->where('type','vehicle_classes')
-                    ->whereRaw('LOWER(code) = ?', [strtolower($code)])->whereNull('deleted_at')->first();
+                $normalizedName = preg_replace('/[^A-Z0-9]+/','',strtoupper($name));
+                $normalizedKey = hash('sha256',$tenant.'|vehicle_classes|'.($typeIds[$typeCode] ?? '').'|'.$normalizedName);
+
+                $existing = DB::table('vehicle_masters')
+                    ->where('tenant_id',$tenant)
+                    ->where('type','vehicle_classes')
+                    ->whereNull('deleted_at')
+                    ->where(function ($q) use ($code, $normalizedName, $normalizedKey) {
+                        $q->whereRaw('LOWER(COALESCE(code, \'\')) = ?', [strtolower($code)])
+                            ->orWhere('normalized_name', $normalizedName)
+                            ->orWhere('normalized_key', $normalizedKey);
+                    })
+                    ->orderBy('created_at')
+                    ->first();
+
                 $id = $existing?->id ?? (string) Str::uuid();
                 $payload = [
                     'name'=>$name,'code'=>$code,'parent_id'=>$typeIds[$typeCode] ?? null,'transport_kind'=>$kind,
-                    'module_rules'=>json_encode($rules),'status'=>'active','updated_at'=>now(),
+                    'module_rules'=>json_encode($rules),'status'=>'active',
+                    'normalized_name'=>$normalizedName,'normalized_key'=>$normalizedKey,'updated_at'=>now(),
                 ];
-                if ($existing) DB::table('vehicle_masters')->where('id',$id)->update($payload);
-                else DB::table('vehicle_masters')->insert(array_merge($payload,[
-                    'id'=>$id,'tenant_id'=>$tenant,'type'=>'vehicle_classes',
-                    'normalized_name'=>preg_replace('/[^A-Z0-9]+/','',strtoupper($name)),
-                    'normalized_key'=>hash('sha256',$tenant.'|vehicle_classes|'.($typeIds[$typeCode] ?? '').'|'.preg_replace('/[^A-Z0-9]+/','',strtoupper($name))),
-                    'created_at'=>now(),
-                ]));
+                if ($existing) {
+                    DB::table('vehicle_masters')->where('id',$id)->update($payload);
+                } else {
+                    DB::table('vehicle_masters')->insert(array_merge($payload,[
+                        'id'=>$id,'tenant_id'=>$tenant,'type'=>'vehicle_classes','created_at'=>now(),
+                    ]));
+                }
                 $classIds[] = $id;
             }
             DB::table('vehicle_masters')->where('tenant_id',$tenant)->where('type','vehicle_classes')
