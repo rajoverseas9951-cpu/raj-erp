@@ -2,6 +2,7 @@
 
 use App\Features\Accounting\Controllers\AccountingController;
 use App\Features\Accounting\Controllers\BusinessReportsController;
+use App\Features\Accounting\Controllers\FinanceControlController;
 use App\Features\Accounting\Controllers\InsuranceAccountingController;
 use App\Features\Accounting\Controllers\LedgerController;
 use App\Features\Accounting\Controllers\ServiceWorkController;
@@ -69,6 +70,13 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('accounting/trial-balance', [AccountingController::class, 'trialBalance']);
     Route::get('accounting/profit-loss', [AccountingController::class, 'profitLoss']);
     Route::get('accounting/balance-sheet', [AccountingController::class, 'balanceSheet']);
+    Route::post('accounting/simple-entry', [FinanceControlController::class, 'simpleEntry']);
+    Route::get('accounting/outstanding', [FinanceControlController::class, 'outstanding']);
+    Route::get('accounting/opening-balances', [FinanceControlController::class, 'openingBalances']);
+    Route::put('accounting/opening-balances/{ledgerId}', [FinanceControlController::class, 'updateOpeningBalance']);
+    Route::get('accounting/financial-year', [FinanceControlController::class, 'yearStatus']);
+    Route::post('accounting/financial-year/lock', [FinanceControlController::class, 'lockYear']);
+    Route::post('accounting/financial-year/unlock', [FinanceControlController::class, 'unlockYear']);
 
     Route::get('insurance-accounting/companies', [InsuranceAccountingController::class, 'companies']);
     Route::post('insurance-accounting/companies', [InsuranceAccountingController::class, 'storeCompany']);
