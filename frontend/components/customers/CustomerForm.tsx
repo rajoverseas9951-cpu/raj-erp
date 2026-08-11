@@ -1,55 +1,166 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Customer, customerApi } from "@/lib/customers";
-import { scanDocument } from "@/lib/ocr";
 import { BRAND } from "@/config/brand";
 
-type FormValues={first_name:string;middle_name:string;last_name:string;mobile:string;alternate_mobile:string;whatsapp:string;email:string;date_of_birth:string;gender:string;aadhaar_number:string;pan_number:string;driving_licence_number:string;passport_number:string;voter_id:string;current_address:string;permanent_address:string;city:string;district:string;state:string;pincode:string;occupation:string;company_name:string;gst_number:string;remarks:string;priority:string;status:string};
-const blank:FormValues={first_name:"",middle_name:"",last_name:"",mobile:"",alternate_mobile:"",whatsapp:"",email:"",date_of_birth:"",gender:"",aadhaar_number:"",pan_number:"",driving_licence_number:"",passport_number:"",voter_id:"",current_address:"",permanent_address:"",city:"",district:"",state:"",pincode:"",occupation:"",company_name:"",gst_number:"",remarks:"",priority:"normal",status:"active"};
-function initialValues(customer?:Partial<Customer>):FormValues{if(!customer)return blank;const out={...blank} as Record<string,string>;Object.keys(out).forEach(key=>{const value=(customer as Record<string,unknown>)[key];if(value!==undefined&&value!==null)out[key]=String(value)});return out as FormValues}
-function cleanLine(line:string){return line.replace(/[|_[\]{}<>~`^*=]+/g," ").replace(/[^A-Za-z0-9À-ž\s,./:-]/g," ").replace(/\s+/g," ").trim()}
-function titleCase(value:string){return value.toLowerCase().replace(/\b[a-z]/g,l=>l.toUpperCase())}
-function normaliseDate(value:string){const m=value.replace(/[.]/g,"/").match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);if(!m)return"";const[,d,mo,y]=m;return`${y}-${mo.padStart(2,"0")}-${d.padStart(2,"0")}`}
-function splitName(value:string):Partial<FormValues>{const w=value.replace(/[^A-Za-z\s]/g," ").replace(/\s+/g," ").trim().split(" ").filter(x=>x.length>1).map(titleCase);if(!w.length)return{};if(w.length===1)return{first_name:w[0]};if(w.length===2)return{first_name:w[0],last_name:w[1]};return{first_name:w[0],middle_name:w.slice(1,-1).join(" "),last_name:w.at(-1)??""}}
-function findName(lines:string[]){const blocked=/government|india|aadhaar|uidai|dob|birth|male|female|address|vid|download|issue|year|father|mother|husband|enrol/i;const marker=lines.findIndex(l=>/dob|date of birth|yob|year of birth|\bmale\b|\bfemale\b/i.test(l));const c=(marker>0?lines.slice(Math.max(0,marker-4),marker):lines).filter(l=>!blocked.test(l)).filter(l=>!/\d/.test(l)).filter(l=>/^[A-Za-z][A-Za-z .'-]{3,55}$/.test(l)).filter(l=>{const w=l.split(/\s+/);return w.length>=2&&w.length<=5&&w.every(x=>x.length>=2)});return c.at(-1)??""}
-function parseAadhaarText(frontText:string,backText:string):Partial<FormValues>{const all=`${frontText}\n${backText}`,lines=frontText.split(/\r?\n/).map(cleanLine).filter(Boolean),r:Partial<FormValues>={};const a=all.match(/\b\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/);if(a)r.aadhaar_number=a[0].replace(/\D/g,"");const dob=lines.find(l=>/dob|date of birth/i.test(l));if(dob)r.date_of_birth=normaliseDate(dob);const lower=frontText.toLowerCase();if(/\bfemale\b/.test(lower))r.gender="female";else if(/\bmale\b/.test(lower))r.gender="male";else if(/\btransgender\b/.test(lower))r.gender="other";const name=findName(lines);if(name)Object.assign(r,splitName(name));const pins=[...all.matchAll(/\b[1-9][0-9]{5}\b/g)].map(m=>m[0]);if(pins.length)r.pincode=pins.at(-1);r.current_address="";r.permanent_address="";return r}
-async function lookupPincode(pincode:string):Promise<Partial<FormValues>>{if(!/^\d{6}$/.test(pincode))return{};try{const response=await fetch(`https://api.postalpincode.in/pincode/${pincode}`);if(!response.ok)return{};const json=await response.json(),offices=json?.[0]?.PostOffice;if(!Array.isArray(offices)||!offices.length)return{};const office=offices[0];return{city:String(office.Block||office.Name||"").trim(),district:String(office.District||"").trim(),state:String(office.State||"").trim()}}catch{return{}}}
+type FormValues = {
+  first_name: string;
+  middle_name: string;
+  last_name: string;
+  mobile: string;
+  whatsapp: string;
+  email: string;
+  date_of_birth: string;
+  gender: string;
+  current_address: string;
+  permanent_address: string;
+  city: string;
+  district: string;
+  state: string;
+  pincode: string;
+};
 
-export function CustomerForm({customer}:{customer?:Partial<Customer>}){
- const router=useRouter();const[entryMode,setEntryMode]=useState<"aadhaar"|"manual">("manual"),[values,setValues]=useState<FormValues>(()=>initialValues(customer)),[saving,setSaving]=useState(false),[reading,setReading]=useState(false),[progress,setProgress]=useState(0),[error,setError]=useState(""),[success,setSuccess]=useState(""),[front,setFront]=useState<File|null>(null),[back,setBack]=useState<File|null>(null);
- const frontPreview=useMemo(()=>(front?URL.createObjectURL(front):""),[front]),backPreview=useMemo(()=>(back?URL.createObjectURL(back):""),[back]);
- useEffect(()=>()=>{if(frontPreview)URL.revokeObjectURL(frontPreview);if(backPreview)URL.revokeObjectURL(backPreview)},[frontPreview,backPreview]);
- function setField(name:keyof FormValues,value:string){setValues(old=>({...old,[name]:value}))}
- async function handlePincode(value:string){const pin=value.replace(/\D/g,"").slice(0,6);setField("pincode",pin);if(pin.length===6){const location=await lookupPincode(pin);setValues(old=>({...old,...location,pincode:pin}))}}
- async function readAadhaar(){if(!front&&!back){setError("Pehle Aadhaar front ya back image upload karo.");return}setReading(true);setError("");setSuccess("");setProgress(20);try{const files=[front,back].filter(Boolean) as File[];const{texts}=await scanDocument("aadhaar",files);setProgress(100);const[frontText="",backText=""]=texts;const extracted=parseAadhaarText(frontText,backText);const location=extracted.pincode?await lookupPincode(extracted.pincode):{};setValues(old=>({...old,...extracted,...location}));setSuccess("Details fill ho gayi. Save se pehle name, DOB aur pincode check kar lena.")}catch(err){console.error(err);setError("Aadhaar clear read nahi hua. Manual Entry se details bhar sakte ho.")}finally{setReading(false)}}
- async function submit(event:FormEvent<HTMLFormElement>){event.preventDefault();setSaving(true);setError("");try{const body={...values,tags:[],priority:values.priority||"normal",status:values.status||"active"};if(customer?.id)await customerApi.update(customer.id,body);else await customerApi.create(body);window.location.href="/customers"}catch(err){setError(err instanceof Error?err.message:"Customer save nahi hua.")}finally{setSaving(false)}}
- return <form onSubmit={submit} className="mx-auto max-w-[1500px] space-y-5 pb-8">
-  <section className="relative overflow-hidden rounded-[30px] border border-[#153d79] bg-[#071a3c] p-6 text-white shadow-[0_24px_70px_rgba(7,26,60,.22)] sm:p-8"><div className="absolute inset-0 bg-[radial-gradient(circle_at_90%_10%,rgba(49,124,255,.5),transparent_32%),linear-gradient(135deg,#06152f,#0a2555_58%,#0d3b87)]"/><div className="relative flex flex-wrap items-end justify-between gap-5"><div><p className="text-[10px] font-black uppercase tracking-[.24em] text-[#63d4ff]">{BRAND.brandName} · Customer onboarding</p><h1 className="mt-2 text-4xl font-black tracking-tight">{customer?.id?"Edit Customer":"Add Customer"}</h1><p className="mt-2 max-w-xl text-sm text-blue-100/75">Fast entry, clean verification and one-click save.</p></div><button type="button" onClick={()=>router.push("/customers")} className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-black backdrop-blur">← Customer CRM</button></div></section>
+const blank: FormValues = {
+  first_name: "",
+  middle_name: "",
+  last_name: "",
+  mobile: "",
+  whatsapp: "",
+  email: "",
+  date_of_birth: "",
+  gender: "",
+  current_address: "",
+  permanent_address: "",
+  city: "",
+  district: "",
+  state: "",
+  pincode: "",
+};
 
-  <section className="grid gap-3 sm:grid-cols-2"><Mode icon="▣" active={entryMode==="aadhaar"} title="Aadhaar Auto Fill" text="Upload front/back and let OCR fill available details." onClick={()=>setEntryMode("aadhaar")}/><Mode icon="✎" active={entryMode==="manual"} title="Manual Entry" text="Enter customer details directly with full control." onClick={()=>setEntryMode("manual")}/></section>
-
-  {entryMode==="aadhaar"&&<Section no="00" eyebrow="Smart capture" title="Aadhaar Upload" subtitle="Upload clear front/back images. Review every extracted value before saving."><div className="grid gap-4 md:grid-cols-2"><Upload label="Aadhaar Front" preview={frontPreview} onChange={setFront}/><Upload label="Aadhaar Back" preview={backPreview} onChange={setBack}/></div><button type="button" onClick={readAadhaar} disabled={reading} className="mt-4 w-full rounded-2xl bg-gradient-to-r from-[#0b2f6b] to-[#2563eb] px-5 py-3.5 text-sm font-black text-white shadow-[0_12px_28px_rgba(37,99,235,.22)] disabled:opacity-50">{reading?`Reading Aadhaar… ${progress}%`:"Read Aadhaar Details"}</button></Section>}
-  {error&&<div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">{error}</div>}{success&&<div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-700">{success}</div>}
-
-  <Section no="01" eyebrow="Customer identity" title="Personal Information" subtitle="Primary contact and identity details used across the ERP."><Grid><Input label="First Name" value={values.first_name} required onChange={v=>setField("first_name",v)}/><Input label="Middle Name" value={values.middle_name} onChange={v=>setField("middle_name",v)}/><Input label="Last Name / Surname" value={values.last_name} required onChange={v=>setField("last_name",v)}/><Input label="Mobile Number" value={values.mobile} required onChange={v=>setField("mobile",v)}/><Input label="Alternate Mobile" value={values.alternate_mobile} onChange={v=>setField("alternate_mobile",v)}/><Input label="WhatsApp" value={values.whatsapp} onChange={v=>setField("whatsapp",v)}/><Input label="Email" type="email" value={values.email} onChange={v=>setField("email",v)}/><Input label="Date of Birth" type="date" value={values.date_of_birth} onChange={v=>setField("date_of_birth",v)}/><Select label="Gender" value={values.gender} onChange={v=>setField("gender",v)} options={[["","Select Gender"],["male","Male"],["female","Female"],["other","Other"],["prefer_not_to_say","Prefer Not To Say"]]}/></Grid></Section>
-
-  <Section no="02" eyebrow="KYC vault" title="Identity Details" subtitle="Optional identity numbers. Keep only what is required for your workflow."><Grid><Input label="Aadhaar Number" value={values.aadhaar_number} onChange={v=>setField("aadhaar_number",v.replace(/\D/g,"").slice(0,12))}/><Input label="PAN Number" value={values.pan_number} onChange={v=>setField("pan_number",v.toUpperCase())}/><Input label="Driving Licence" value={values.driving_licence_number} onChange={v=>setField("driving_licence_number",v.toUpperCase())}/><Input label="Passport Number" value={values.passport_number} onChange={v=>setField("passport_number",v.toUpperCase())}/><Input label="Voter ID" value={values.voter_id} onChange={v=>setField("voter_id",v.toUpperCase())}/><Input label="GST Number" value={values.gst_number} onChange={v=>setField("gst_number",v.toUpperCase())}/></Grid></Section>
-
-  <Section no="03" eyebrow="Location" title="Address" subtitle="Pincode can auto-fill city, district and state; full address stays under your control."><div className="grid gap-4 md:grid-cols-2"><Textarea label="Current Address" value={values.current_address} onChange={v=>setField("current_address",v)}/><Textarea label="Permanent Address" value={values.permanent_address} onChange={v=>setField("permanent_address",v)}/></div><div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><Input label="City" value={values.city} onChange={v=>setField("city",v)}/><Input label="District" value={values.district} onChange={v=>setField("district",v)}/><Input label="State" value={values.state} onChange={v=>setField("state",v)}/><Input label="Pincode" value={values.pincode} onChange={v=>void handlePincode(v)}/></div></Section>
-
-  <Section no="04" eyebrow="Relationship settings" title="Business & Notes" subtitle="Optional information for follow-up, segmentation and business context."><Grid><Input label="Occupation" value={values.occupation} onChange={v=>setField("occupation",v)}/><Input label="Company Name" value={values.company_name} onChange={v=>setField("company_name",v)}/><Select label="Priority" value={values.priority} onChange={v=>setField("priority",v)} options={[["low","Low"],["normal","Normal"],["high","High"],["urgent","Urgent"]]}/><Select label="Status" value={values.status} onChange={v=>setField("status",v)} options={[["active","Active"],["inactive","Inactive"],["blocked","Blocked"]]}/></Grid><div className="mt-4"><Textarea label="Remarks" value={values.remarks} onChange={v=>setField("remarks",v)}/></div></Section>
-
-  <div className="mt-2 flex flex-col gap-3 rounded-[24px] border border-[#dbe5f2] bg-white p-4 shadow-[0_12px_35px_rgba(7,26,60,.08)] sm:flex-row sm:items-center sm:justify-between sm:p-5"><div><p className="text-[9px] font-black uppercase tracking-[.16em] text-blue-500">Save customer</p><p className="mt-1 text-xs font-semibold text-slate-500">Finish the form, then save. This bar will never cover your fields.</p></div><div className="flex gap-2 sm:justify-end"><button type="button" onClick={()=>router.push("/customers")} className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-600">Cancel</button><button disabled={saving||reading} className="min-w-[180px] rounded-2xl bg-gradient-to-r from-[#0b2f6b] to-[#2563eb] px-6 py-3 text-sm font-black text-white shadow-[0_12px_28px_rgba(37,99,235,.28)] disabled:opacity-50">{saving?"Saving…":customer?.id?"✓ Update Customer":"✓ Save Customer"}</button></div></div>
- </form>
+function initialValues(customer?: Partial<Customer>): FormValues {
+  if (!customer) return blank;
+  const out = { ...blank } as Record<string, string>;
+  Object.keys(out).forEach((key) => {
+    const value = (customer as Record<string, unknown>)[key];
+    if (value !== undefined && value !== null) out[key] = String(value);
+  });
+  return out as FormValues;
 }
 
-function Mode({icon,active,title,text,onClick}:{icon:string;active:boolean;title:string;text:string;onClick:()=>void}){return <button type="button" onClick={onClick} className={`group relative overflow-hidden rounded-[24px] border p-5 text-left transition ${active?"border-blue-500 bg-gradient-to-br from-blue-50 to-white shadow-[0_14px_35px_rgba(37,99,235,.12)] ring-4 ring-blue-50":"border-[#dce6f2] bg-white hover:border-blue-200 hover:shadow-md"}`}><div className="flex items-start justify-between"><span className={`grid h-12 w-12 place-items-center rounded-2xl text-xl ${active?"bg-blue-600 text-white":"bg-slate-100 text-slate-500"}`}>{icon}</span><span className={`rounded-full px-2.5 py-1 text-[8px] font-black uppercase tracking-wide ${active?"bg-emerald-50 text-emerald-700":"bg-slate-100 text-slate-400"}`}>{active?"Active":"Select"}</span></div><h3 className="mt-4 text-lg font-black text-[#10213f]">{title}</h3><p className="mt-1 text-sm leading-5 text-slate-500">{text}</p></button>}
-function Section({no,eyebrow,title,subtitle,children}:{no:string;eyebrow:string;title:string;subtitle:string;children:React.ReactNode}){return <section className="overflow-hidden rounded-[26px] border border-[#dbe5f2] bg-white shadow-[0_12px_35px_rgba(15,40,86,.06)]"><div className="flex items-start gap-4 border-b border-slate-100 bg-gradient-to-r from-white to-blue-50/40 p-5 sm:p-6"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#0b2f6b] text-xs font-black text-white shadow-sm">{no}</span><div><p className="text-[9px] font-black uppercase tracking-[.2em] text-blue-500">{eyebrow}</p><h2 className="mt-1 text-xl font-black text-[#10213f]">{title}</h2><p className="mt-1 text-xs text-slate-500">{subtitle}</p></div></div><div className="p-5 sm:p-6">{children}</div></section>}
-function Grid({children}:{children:React.ReactNode}){return <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{children}</div>}
-const fieldClass="mt-2 w-full rounded-2xl border border-[#dbe5f2] bg-[#f8fbff] px-4 py-3.5 font-semibold text-[#10213f] outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50";
-function Input({label,value,onChange,type="text",required=false}:{label:string;value:string;onChange:(v:string)=>void;type?:string;required?:boolean}){return <label className="text-xs font-black text-slate-600">{label}{required&&<span className="text-red-500"> *</span>}<input type={type} value={value} required={required} onChange={e=>onChange(e.target.value)} className={fieldClass}/></label>}
-function Textarea({label,value,onChange}:{label:string;value:string;onChange:(v:string)=>void}){return <label className="text-xs font-black text-slate-600">{label}<textarea rows={4} value={value} onChange={e=>onChange(e.target.value)} className={fieldClass}/></label>}
-function Select({label,value,onChange,options}:{label:string;value:string;onChange:(v:string)=>void;options:[string,string][]}){return <label className="text-xs font-black text-slate-600">{label}<select value={value} onChange={e=>onChange(e.target.value)} className={fieldClass}>{options.map(([v,l])=><option key={v||"empty"} value={v}>{l}</option>)}</select></label>}
-function Upload({label,preview,onChange}:{label:string;preview:string;onChange:(file:File|null)=>void}){return <label className="group block cursor-pointer overflow-hidden rounded-[22px] border-2 border-dashed border-blue-200 bg-gradient-to-br from-[#f8fbff] to-blue-50/50 p-4 transition hover:border-blue-400 hover:shadow-md"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-blue-600 text-lg text-white">⇧</span><div><p className="text-sm font-black text-[#10213f]">{label}</p><p className="text-[10px] font-semibold text-slate-400">JPG, PNG or WEBP · click to select</p></div></div><input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={e=>onChange(e.target.files?.[0]??null)}/>{preview?<img src={preview} alt={label} className="mt-4 h-44 w-full rounded-2xl border border-white bg-white object-contain shadow-sm"/>:<div className="mt-4 grid h-28 place-items-center rounded-2xl border border-white bg-white/80 text-xs font-bold text-slate-400">Drop or choose image</div>}</label>}
+async function lookupPincode(pincode: string): Promise<Partial<FormValues>> {
+  if (!/^\d{6}$/.test(pincode)) return {};
+  try {
+    const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+    if (!response.ok) return {};
+    const json = await response.json();
+    const offices = json?.[0]?.PostOffice;
+    if (!Array.isArray(offices) || !offices.length) return {};
+    const office = offices[0];
+    return {
+      city: String(office.Block || office.Name || "").trim(),
+      district: String(office.District || "").trim(),
+      state: String(office.State || "").trim(),
+    };
+  } catch {
+    return {};
+  }
+}
+
+export function CustomerForm({ customer }: { customer?: Partial<Customer> }) {
+  const router = useRouter();
+  const [values, setValues] = useState<FormValues>(() => initialValues(customer));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  function setField(name: keyof FormValues, value: string) {
+    setValues((old) => ({ ...old, [name]: value }));
+  }
+
+  async function handlePincode(value: string) {
+    const pin = value.replace(/\D/g, "").slice(0, 6);
+    setField("pincode", pin);
+    if (pin.length === 6) {
+      const location = await lookupPincode(pin);
+      setValues((old) => ({ ...old, ...location, pincode: pin }));
+    }
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      const body = { ...values, tags: [], priority: "normal", status: "active" };
+      if (customer?.id) await customerApi.update(customer.id, body);
+      else await customerApi.create(body);
+      window.location.href = "/customers";
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Customer save nahi hua.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="mx-auto max-w-[1500px] space-y-5 pb-28">
+      <section className="relative overflow-hidden rounded-[30px] border border-[#153d79] bg-[#071a3c] p-6 text-white shadow-[0_24px_70px_rgba(7,26,60,.22)] sm:p-8">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_90%_10%,rgba(49,124,255,.5),transparent_32%),linear-gradient(135deg,#06152f,#0a2555_58%,#0d3b87)]" />
+        <div className="relative flex flex-wrap items-end justify-between gap-5">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[.24em] text-[#63d4ff]">{BRAND.brandName} · Customer</p>
+            <h1 className="mt-2 text-4xl font-black tracking-tight">{customer?.id ? "Edit Customer" : "Add Customer"}</h1>
+            <p className="mt-2 max-w-xl text-sm text-blue-100/75">Only essential customer details. Fast entry, no unnecessary fields.</p>
+          </div>
+          <button type="button" onClick={() => router.push("/customers")} className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-black backdrop-blur">← Customer CRM</button>
+        </div>
+      </section>
+
+      {error && <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">{error}</div>}
+
+      <Section no="01" eyebrow="Customer identity" title="Personal Information" subtitle="Primary contact details used across the ERP.">
+        <Grid>
+          <Input label="First Name" value={values.first_name} required onChange={(v) => setField("first_name", v)} />
+          <Input label="Middle Name" value={values.middle_name} onChange={(v) => setField("middle_name", v)} />
+          <Input label="Last Name / Surname" value={values.last_name} required onChange={(v) => setField("last_name", v)} />
+          <Input label="Mobile Number" value={values.mobile} required onChange={(v) => setField("mobile", v.replace(/\D/g, "").slice(0, 10))} />
+          <Input label="WhatsApp" value={values.whatsapp} onChange={(v) => setField("whatsapp", v.replace(/\D/g, "").slice(0, 10))} />
+          <Input label="Email" type="email" value={values.email} onChange={(v) => setField("email", v)} />
+          <Input label="Date of Birth" type="date" value={values.date_of_birth} onChange={(v) => setField("date_of_birth", v)} />
+          <Select label="Gender" value={values.gender} onChange={(v) => setField("gender", v)} options={[["", "Select Gender"], ["male", "Male"], ["female", "Female"], ["other", "Other"]]} />
+        </Grid>
+      </Section>
+
+      <Section no="02" eyebrow="Location" title="Address" subtitle="Pincode auto-fills city, district and state where available.">
+        <div className="grid gap-4 md:grid-cols-2">
+          <Textarea label="Current Address" value={values.current_address} onChange={(v) => setField("current_address", v)} />
+          <Textarea label="Permanent Address" value={values.permanent_address} onChange={(v) => setField("permanent_address", v)} />
+        </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Input label="City" value={values.city} onChange={(v) => setField("city", v)} />
+          <Input label="District" value={values.district} onChange={(v) => setField("district", v)} />
+          <Input label="State" value={values.state} onChange={(v) => setField("state", v)} />
+          <Input label="Pincode" value={values.pincode} onChange={(v) => void handlePincode(v)} />
+        </div>
+      </Section>
+
+      <div className="flex flex-col gap-3 rounded-[24px] border border-[#dbe5f2] bg-white p-4 shadow-[0_12px_35px_rgba(7,26,60,.08)] sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div><p className="text-[9px] font-black uppercase tracking-[.16em] text-blue-500">Save customer</p><p className="mt-1 text-xs font-semibold text-slate-500">Personal information and address only.</p></div>
+        <div className="flex gap-2 sm:justify-end">
+          <button type="button" onClick={() => router.push("/customers")} className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-600">Cancel</button>
+          <button disabled={saving} className="min-w-[180px] rounded-2xl bg-gradient-to-r from-[#0b2f6b] to-[#2563eb] px-6 py-3 text-sm font-black text-white shadow-[0_12px_28px_rgba(37,99,235,.28)] disabled:opacity-50">{saving ? "Saving…" : customer?.id ? "✓ Update Customer" : "✓ Save Customer"}</button>
+        </div>
+      </div>
+    </form>
+  );
+}
+
+function Section({ no, eyebrow, title, subtitle, children }: { no: string; eyebrow: string; title: string; subtitle: string; children: React.ReactNode }) {
+  return <section className="overflow-hidden rounded-[28px] border border-[#dce7f4] bg-white shadow-[0_16px_44px_rgba(25,55,95,.08)]"><div className="flex items-start gap-4 border-b border-[#e7eef7] bg-gradient-to-r from-[#f9fbff] to-[#eef5ff] px-5 py-5 sm:px-7"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#0a1d40] text-[10px] font-black text-white">{no}</span><div><p className="text-[9px] font-black uppercase tracking-[.2em] text-blue-500">{eyebrow}</p><h2 className="mt-1 text-xl font-black text-[#10213f]">{title}</h2><p className="mt-1 text-xs font-semibold text-slate-400">{subtitle}</p></div></div><div className="p-5 sm:p-7">{children}</div></section>;
+}
+function Grid({ children }: { children: React.ReactNode }) { return <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{children}</div>; }
+const fieldClass = "mt-2 w-full rounded-2xl border border-[#d9e4f1] bg-[#f8fbff] px-4 py-3.5 text-sm font-bold text-[#10213f] outline-none transition placeholder:text-slate-300 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100/70";
+function Input({ label, value, onChange, type = "text", required = false }: { label: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean }) { return <label className="text-xs font-black text-slate-600">{label}{required && <span className="text-red-500"> *</span>}<input type={type} value={value} required={required} onChange={(e) => onChange(e.target.value)} className={fieldClass} /></label>; }
+function Textarea({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) { return <label className="text-xs font-black text-slate-600">{label}<textarea rows={4} value={value} onChange={(e) => onChange(e.target.value)} className={fieldClass} /></label>; }
+function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) { return <label className="text-xs font-black text-slate-600">{label}<select value={value} onChange={(e) => onChange(e.target.value)} className={fieldClass}>{options.map(([v, l]) => <option key={v || "empty"} value={v}>{l}</option>)}</select></label>; }
