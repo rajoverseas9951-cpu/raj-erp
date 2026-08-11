@@ -14,6 +14,7 @@ use App\Features\Identity\Controllers\ProfileController;
 use App\Features\Identity\Controllers\RoleController;
 use App\Features\Identity\Controllers\UserController;
 use App\Features\Ocr\Controllers\OcrController;
+use App\Features\Vehicles\Controllers\FleetController;
 use App\Features\Vehicles\Controllers\PolicyController;
 use App\Features\Vehicles\Controllers\VehicleController;
 use App\Features\Vehicles\Controllers\VehicleInsuranceController;
@@ -51,6 +52,8 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('reports/hsrp', [BusinessReportsController::class, 'hsrp']);
     Route::get('reports/vehicles', [BusinessReportsController::class, 'vehicles']);
     Route::get('reports/agent-work', [BusinessReportsController::class, 'agentWork']);
+
+    Route::apiResource('fleets', FleetController::class)->except(['create','edit']);
 
     Route::get('other-insurance/{line}', [OtherInsuranceController::class, 'index']);
     Route::post('other-insurance/{line}', [OtherInsuranceController::class, 'store']);
