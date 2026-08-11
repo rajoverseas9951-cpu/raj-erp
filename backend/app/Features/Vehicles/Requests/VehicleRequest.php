@@ -53,6 +53,7 @@ class VehicleRequest extends FormRequest
             if ($alias !== null && $alias !== '') $this->merge(['gross_weight' => $alias]);
         }
 
+        if (! $this->filled('fleet_id') && $this->cookie('raj_fleet_id')) $this->merge(['fleet_id'=>$this->cookie('raj_fleet_id')]);
         if ($this->filled('fleet_id')) {
             $tenant=(string)$this->user()?->tenant_id;
             $valid=DB::table('fleets')->where('tenant_id',$tenant)->where('id',$this->input('fleet_id'))->where('status','active')->whereNull('deleted_at')->exists();
