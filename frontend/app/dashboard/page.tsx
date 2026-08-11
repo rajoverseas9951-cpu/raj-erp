@@ -12,7 +12,10 @@ const num=(v=0)=>v.toLocaleString("en-IN");
 const dailyActions=[
  ["New Vehicle","Add vehicle / RC","/vehicles/new","vehicle"],
  ["New Customer","Create customer","/customers/new","customers"],
- ["Insurance","Policy work","/vehicles","shield"],
+ ["Motor Insurance","Vehicle policy","/policies","shield"],
+ ["Non-Motor","Fire / property / business","/insurance/non_motor","shield"],
+ ["Health","Retail / family / group","/insurance/health","shield"],
+ ["Life","Term / savings / pension","/insurance/life","shield"],
  ["RTO Work","RTO services","/vehicles","building"],
  ["Driving Licence","Licence work","/services/driving-licence","book"],
  ["Passport","Passport work","/services/passport","book"],
@@ -38,7 +41,7 @@ export default function DashboardPage(){
   {error&&<div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700">{error}</div>}
 
   <section className="grid gap-4 xl:grid-cols-[1.15fr_.85fr]">
-   <ActionPanel title="Daily Work" kicker="Quick Actions" subtitle="Most used insurance & RTO actions" items={dailyActions}/>
+   <ActionPanel title="Daily Work" kicker="Quick Actions" subtitle="Motor, non-motor, health, life and RTO work" items={dailyActions}/>
    <ActionPanel title="Accounts" kicker="Money Control" subtitle="Simple shortcuts — no accounting jargon" items={accountActions}/>
   </section>
 
