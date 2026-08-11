@@ -1,110 +1,57 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
-import { VehicleMaster, VehicleMasterType, vehicleMasterApi } from "@/lib/vehicle-masters";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { VehicleClassModuleRules, VehicleMaster, VehicleMasterType, VehicleModuleMode, vehicleMasterApi } from "@/lib/vehicle-masters";
 
 const labels: Record<VehicleMasterType, string> = {
-  manufacturers: "Vehicle Makes / Manufacturers",
-  models: "Vehicle Models",
-  variants: "Vehicle Variants",
-  colours: "Vehicle Colours",
-  vehicle_types: "Vehicle Types",
-  vehicle_classes: "Vehicle Classes",
-  body_types: "Body Types / Categories",
-  fuel_types: "Fuel Types",
-  rto_offices: "RTO Offices",
+  manufacturers: "Vehicle Makes / Manufacturers", models: "Vehicle Models", variants: "Vehicle Variants", colours: "Vehicle Colours",
+  vehicle_types: "Vehicle Types", vehicle_classes: "Vehicle Classes", body_types: "Body Types / Categories", fuel_types: "Fuel Types", rto_offices: "RTO Offices",
 };
+const moduleLabels: Record<keyof VehicleClassModuleRules,string> = {
+  insurance:"Insurance", puc:"PUC", hsrp:"HSRP", fitness:"Fitness", permit:"Permit", tax:"Tax", sld:"SLD", vltd:"VLTD", rto_process:"RTO Process", payment:"Payment Process",
+};
+const moduleKeys = Object.keys(moduleLabels) as (keyof VehicleClassModuleRules)[];
+const defaultRules: VehicleClassModuleRules = {insurance:"required",puc:"required",hsrp:"required",fitness:"na",permit:"na",tax:"na",sld:"na",vltd:"na",rto_process:"required",payment:"required"};
+
+function parsedRules(value?: VehicleMaster["module_rules"]): VehicleClassModuleRules {
+  if (!value) return {...defaultRules};
+  if (typeof value === "string") { try { return {...defaultRules,...JSON.parse(value)}; } catch { return {...defaultRules}; } }
+  return {...defaultRules,...value};
+}
 
 export function VehicleMasterPage({ type }: { type: VehicleMasterType }) {
-  const [rows, setRows] = useState<VehicleMaster[]>([]);
-  const [parents, setParents] = useState<VehicleMaster[]>([]);
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [editing, setEditing] = useState<VehicleMaster>();
-  const [viewing, setViewing] = useState<VehicleMaster>();
-  const [open, setOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [rows,setRows]=useState<VehicleMaster[]>([]),[parents,setParents]=useState<VehicleMaster[]>([]);
+  const [search,setSearch]=useState(""),[page,setPage]=useState(1),[pages,setPages]=useState(1),[total,setTotal]=useState(0);
+  const [editing,setEditing]=useState<VehicleMaster>(),[viewing,setViewing]=useState<VehicleMaster>(),[open,setOpen]=useState(false);
+  const [saving,setSaving]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState("");
+  const [rules,setRules]=useState<VehicleClassModuleRules>({...defaultRules});
 
-  const parentType: VehicleMasterType | undefined = type === "models" ? "manufacturers" : type === "variants" ? "models" : undefined;
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const [result, parentRows] = await Promise.all([
-        vehicleMasterApi.page(type, page, search),
-        parentType ? vehicleMasterApi.list(parentType) : Promise.resolve([]),
-      ]);
-      setRows(result.data);
-      setPages(Math.max(1, result.last_page));
-      setTotal(result.total);
-      setParents(parentRows.filter((row) => row.status === "active"));
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Masters could not be loaded.");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, parentType, search, type]);
+  const parentType: VehicleMasterType | undefined = type === "models" ? "manufacturers" : type === "variants" ? "models" : type === "vehicle_classes" ? "vehicle_types" : undefined;
+  const load = useCallback(async()=>{setLoading(true);setError("");try{const [result,parentRows]=await Promise.all([vehicleMasterApi.page(type,page,search),parentType?vehicleMasterApi.list(parentType):Promise.resolve([])]);setRows(result.data);setPages(Math.max(1,result.last_page));setTotal(result.total);setParents(parentRows.filter(r=>r.status==="active"));}catch(c){setError(c instanceof Error?c.message:"Masters could not be loaded.");}finally{setLoading(false)}},[page,parentType,search,type]);
+  useEffect(()=>{void load()},[load]); useEffect(()=>setPage(1),[search,type]);
+  useEffect(()=>{if(new URLSearchParams(location.search).get("add")==="1"){setEditing(undefined);setRules({...defaultRules});setOpen(true)}},[]);
+  useEffect(()=>{const close=(e:KeyboardEvent)=>{if(e.key==="Escape"&&!saving){setOpen(false);setViewing(undefined)}};addEventListener("keydown",close);return()=>removeEventListener("keydown",close)},[saving]);
 
-  useEffect(() => { void load(); }, [load]);
-  useEffect(() => { setPage(1); }, [search, type]);
-  useEffect(() => {
-    if (new URLSearchParams(location.search).get("add") === "1") { setEditing(undefined); setOpen(true); }
-  }, []);
-  useEffect(() => {
-    const close = (event: KeyboardEvent) => { if (event.key === "Escape" && !saving) { setOpen(false); setViewing(undefined); } };
-    addEventListener("keydown", close);
-    return () => removeEventListener("keydown", close);
-  }, [saving]);
+  function beginEdit(row?:VehicleMaster){setEditing(row);setRules(parsedRules(row?.module_rules));setOpen(true)}
 
-  async function save(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (saving) return;
-    setSaving(true);
-    setError("");
-    const data = new FormData(event.currentTarget);
-    const body = {
-      name: data.get("name"), code: data.get("code"), notes: data.get("notes"),
-      parent_id: parentType ? data.get("parent_id") : null,
-      status: editing?.status ?? "active",
-    };
-    try {
-      if (editing) await vehicleMasterApi.update(type, editing.id, body);
-      else await vehicleMasterApi.create(type, body);
-      setOpen(false);
-      setEditing(undefined);
-      await load();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Master could not be saved.");
-    } finally {
-      setSaving(false);
-    }
-  }
+  async function save(event:FormEvent<HTMLFormElement>){event.preventDefault();if(saving)return;setSaving(true);setError("");const data=new FormData(event.currentTarget);const body:Record<string,unknown>={name:data.get("name"),code:data.get("code"),notes:data.get("notes"),parent_id:parentType?data.get("parent_id"):null,status:editing?.status??"active"};if(type==="vehicle_classes"){body.transport_kind=data.get("transport_kind");body.module_rules=rules;}try{if(editing)await vehicleMasterApi.update(type,editing.id,body);else await vehicleMasterApi.create(type,body);setOpen(false);setEditing(undefined);await load();}catch(c){setError(c instanceof Error?c.message:"Master could not be saved.")}finally{setSaving(false)}}
+  async function remove(row:VehicleMaster){if(!confirm(`Delete ${row.name}? This is allowed only when it is not in use.`))return;setError("");try{await vehicleMasterApi.remove(type,row.id);await load()}catch(c){setError(c instanceof Error?c.message:"Master could not be deleted.")}}
 
-  async function remove(row: VehicleMaster) {
-    if (!confirm(`Delete ${row.name}? This is allowed only when it is not in use.`)) return;
-    setError("");
-    try { await vehicleMasterApi.remove(type, row.id); await load(); }
-    catch (caught) { setError(caught instanceof Error ? caught.message : "Master could not be deleted."); }
-  }
-
+  const colSpan=type==="vehicle_classes"?7:parentType?5:4;
   return <main className="space-y-5 p-4 md:p-6">
-    <header className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-bold text-blue-700">Masters / Vehicle Masters</p><h1 className="text-3xl font-black">{labels[type]}</h1><p className="text-sm text-slate-500">{total} records</p></div><button onClick={() => { setEditing(undefined); setOpen(true); }} className="rounded-xl bg-blue-700 px-5 py-3 font-bold text-white">+ Add</button></header>
-    {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>}
-    <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${labels[type].toLowerCase()}`} className="w-full rounded-xl border bg-white px-4 py-3" />
-    <section className="overflow-x-auto rounded-2xl border bg-white"><table className="w-full min-w-[760px] text-left text-sm"><thead className="bg-slate-50"><tr>{["Name", "Code", ...(parentType ? [parentType === "manufacturers" ? "Manufacturer" : "Model"] : []), "Status", "Actions"].map((heading) => <th className="p-4" key={heading}>{heading}</th>)}</tr></thead><tbody>
-      {loading && <tr><td className="p-8 text-center text-slate-500" colSpan={parentType ? 5 : 4}>Loading...</td></tr>}
-      {!loading && !rows.length && <tr><td className="p-8 text-center text-slate-500" colSpan={parentType ? 5 : 4}>No records found.</td></tr>}
-      {rows.map((row) => <tr className="border-t" key={row.id}><td className="p-4 font-bold">{row.name}</td><td>{row.code || "—"}</td>{parentType && <td>{row.parent_name || "—"}</td>}<td><span className={`rounded-full px-3 py-1 font-semibold ${row.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>{row.status === "active" ? "Active" : "Inactive"}</span></td><td><div className="flex flex-wrap gap-2"><button onClick={() => setViewing(row)} className="rounded-lg border px-3 py-2">View</button><button onClick={() => { setEditing(row); setOpen(true); }} className="rounded-lg border px-3 py-2">Edit</button><button onClick={() => void vehicleMasterApi.update(type, row.id, { status: row.status === "active" ? "inactive" : "active" }).then(load).catch((caught) => setError(caught instanceof Error ? caught.message : "Status update failed."))} className="rounded-lg border px-3 py-2">{row.status === "active" ? "Deactivate" : "Activate"}</button><button onClick={() => void remove(row)} className="rounded-lg border border-red-200 px-3 py-2 text-red-700">Delete</button></div></td></tr>)}
+    <header className="overflow-hidden rounded-[26px] bg-gradient-to-r from-[#071a3d] via-[#0b2f6b] to-[#2563eb] p-6 text-white shadow-xl"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-[10px] font-black uppercase tracking-[.22em] text-blue-200">Masters / Vehicle Masters</p><h1 className="mt-1 text-3xl font-black">{labels[type]}</h1><p className="mt-1 text-sm text-blue-100/80">{type==="vehicle_classes"?"Map every legal RC class to a vehicle type and control which service sections appear.":`${total} records`}</p></div><button onClick={()=>beginEdit()} className="rounded-xl bg-white px-5 py-3 font-black text-blue-800 shadow">+ Add</button></div></header>
+    {error&&<div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>}
+    <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={`Search ${labels[type].toLowerCase()}`} className="w-full rounded-xl border bg-white px-4 py-3"/>
+    <section className="overflow-x-auto rounded-2xl border bg-white shadow-sm"><table className="w-full min-w-[900px] text-left text-sm"><thead className="bg-slate-50"><tr>{["Name","Code",...(parentType?[type==="vehicle_classes"?"Mapped Vehicle Type":parentType==="manufacturers"?"Manufacturer":"Model"]:[]),...(type==="vehicle_classes"?["Transport","Services"]:[]),"Status","Actions"].map(h=><th className="p-4" key={h}>{h}</th>)}</tr></thead><tbody>
+      {loading&&<tr><td className="p-8 text-center text-slate-500" colSpan={colSpan}>Loading...</td></tr>}
+      {!loading&&!rows.length&&<tr><td className="p-8 text-center text-slate-500" colSpan={colSpan}>No records found.</td></tr>}
+      {rows.map(row=>{const r=parsedRules(row.module_rules);const enabled=moduleKeys.filter(k=>r[k]!=="na");return <tr className="border-t align-top" key={row.id}><td className="p-4 font-bold">{row.name}</td><td className="p-4">{row.code||"—"}</td>{parentType&&<td className="p-4">{row.parent_name||"—"}</td>}{type==="vehicle_classes"&&<><td className="p-4 capitalize">{(row.transport_kind||"—").replaceAll("_"," ")}</td><td className="p-4"><div className="flex max-w-[360px] flex-wrap gap-1.5">{enabled.map(k=><span key={k} className={`rounded-full px-2 py-1 text-[10px] font-bold ${r[k]==="optional"?"bg-amber-50 text-amber-700":"bg-blue-50 text-blue-700"}`}>{moduleLabels[k]}{r[k]==="optional"?" · Optional":""}</span>)}</div></td></>}<td className="p-4"><span className={`rounded-full px-3 py-1 font-semibold ${row.status==="active"?"bg-emerald-50 text-emerald-700":"bg-slate-100 text-slate-600"}`}>{row.status==="active"?"Active":"Inactive"}</span></td><td className="p-4"><div className="flex flex-wrap gap-2"><button onClick={()=>setViewing(row)} className="rounded-lg border px-3 py-2">View</button><button onClick={()=>beginEdit(row)} className="rounded-lg border px-3 py-2">Edit</button><button onClick={()=>void vehicleMasterApi.update(type,row.id,{status:row.status==="active"?"inactive":"active"}).then(load).catch(c=>setError(c instanceof Error?c.message:"Status update failed."))} className="rounded-lg border px-3 py-2">{row.status==="active"?"Deactivate":"Activate"}</button><button onClick={()=>void remove(row)} className="rounded-lg border border-red-200 px-3 py-2 text-red-700">Delete</button></div></td></tr>})}
     </tbody></table></section>
-    <div className="flex items-center justify-between"><button disabled={page <= 1 || loading} onClick={() => setPage((current) => current - 1)} className="rounded-lg border px-4 py-2 disabled:opacity-40">Previous</button><span className="text-sm text-slate-500">Page {page} of {pages}</span><button disabled={page >= pages || loading} onClick={() => setPage((current) => current + 1)} className="rounded-lg border px-4 py-2 disabled:opacity-40">Next</button></div>
-    {open && <Modal title={`${editing ? "Edit" : "Add"} ${labels[type]}`} saving={saving} close={() => setOpen(false)}><form onSubmit={save} className="grid gap-4 md:grid-cols-2"><Field name="name" label="Name" defaultValue={editing?.name} required /><Field name="code" label="Code" defaultValue={editing?.code} />{parentType && <label className="text-sm font-semibold">{parentType === "manufacturers" ? "Manufacturer" : "Model"}<select name="parent_id" required defaultValue={editing?.parent_id ?? ""} className="mt-2 w-full rounded-xl border bg-white px-4 py-3"><option value="">Select</option>{parents.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>}<Field name="notes" label="Notes" defaultValue={editing?.notes} /><div className="flex justify-end gap-2 md:col-span-2"><button type="button" disabled={saving} onClick={() => setOpen(false)} className="rounded-xl border px-5 py-3">Cancel</button><button disabled={saving} className="rounded-xl bg-blue-700 px-5 py-3 font-bold text-white">{saving ? "Saving..." : "Save"}</button></div></form></Modal>}
-    {viewing && <Modal title={viewing.name} saving={false} close={() => setViewing(undefined)}><dl className="grid gap-3 md:grid-cols-2">{Object.entries(viewing).filter(([key]) => !["id", "type"].includes(key)).map(([key, value]) => <div key={key} className="rounded-xl bg-slate-50 p-3"><dt className="text-xs font-bold uppercase text-slate-400">{key.replaceAll("_", " ")}</dt><dd className="font-semibold">{String(value ?? "—")}</dd></div>)}</dl></Modal>}
+    <div className="flex items-center justify-between"><button disabled={page<=1||loading} onClick={()=>setPage(p=>p-1)} className="rounded-lg border px-4 py-2 disabled:opacity-40">Previous</button><span className="text-sm text-slate-500">Page {page} of {pages}</span><button disabled={page>=pages||loading} onClick={()=>setPage(p=>p+1)} className="rounded-lg border px-4 py-2 disabled:opacity-40">Next</button></div>
+    {open&&<Modal title={`${editing?"Edit":"Add"} ${labels[type]}`} saving={saving} close={()=>setOpen(false)}><form onSubmit={save} className="grid gap-4 md:grid-cols-2"><Field name="name" label="Name" defaultValue={editing?.name} required/><Field name="code" label="Code / RC Alias" defaultValue={editing?.code}/>{parentType&&<label className="text-sm font-semibold">{type==="vehicle_classes"?"Vehicle Type":parentType==="manufacturers"?"Manufacturer":"Model"}<select name="parent_id" required defaultValue={editing?.parent_id??""} className="mt-2 w-full rounded-xl border bg-white px-4 py-3"><option value="">Select</option>{parents.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select></label>}{type==="vehicle_classes"&&<label className="text-sm font-semibold">Usage<select name="transport_kind" required defaultValue={editing?.transport_kind??"non_transport"} className="mt-2 w-full rounded-xl border bg-white px-4 py-3"><option value="non_transport">Non Transport</option><option value="transport">Transport / Commercial</option></select></label>}<Field name="notes" label="Notes" defaultValue={editing?.notes}/>{type==="vehicle_classes"&&<div className="md:col-span-2"><div className="mb-3"><p className="font-black text-slate-900">Applicable Vehicle Sections</p><p className="text-xs text-slate-500">Required = always visible · Optional = per-vehicle toggle · Not Applicable = hidden</p></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{moduleKeys.map(k=><label key={k} className="rounded-2xl border bg-slate-50 p-3 text-sm font-bold"><span>{moduleLabels[k]}</span><select value={rules[k]} onChange={e=>setRules(cur=>({...cur,[k]:e.target.value as VehicleModuleMode}))} className="mt-2 w-full rounded-xl border bg-white px-3 py-2"><option value="required">Required / ON</option><option value="optional">Optional Toggle</option><option value="na">Not Applicable / OFF</option></select></label>)}</div></div>}<div className="flex justify-end gap-2 md:col-span-2"><button type="button" disabled={saving} onClick={()=>setOpen(false)} className="rounded-xl border px-5 py-3">Cancel</button><button disabled={saving} className="rounded-xl bg-blue-700 px-5 py-3 font-bold text-white">{saving?"Saving...":"Save"}</button></div></form></Modal>}
+    {viewing&&<Modal title={viewing.name} saving={false} close={()=>setViewing(undefined)}><dl className="grid gap-3 md:grid-cols-2">{Object.entries(viewing).filter(([k])=>!["id","type"].includes(k)).map(([k,v])=><div key={k} className="rounded-xl bg-slate-50 p-3"><dt className="text-xs font-bold uppercase text-slate-400">{k.replaceAll("_"," ")}</dt><dd className="break-words font-semibold">{typeof v==="object"?JSON.stringify(v):String(v??"—")}</dd></div>)}</dl></Modal>}
   </main>;
 }
 
-function Modal({ title, children, close, saving }: { title: string; children: React.ReactNode; close: () => void; saving: boolean }) { return <div onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) close(); }} className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/60 p-4"><section className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl"><div className="mb-5 flex justify-between"><h2 className="text-xl font-black">{title}</h2><button type="button" disabled={saving} onClick={close} aria-label="Close">×</button></div>{children}</section></div>; }
-function Field({ name, label, defaultValue = "", required = false }: { name: string; label: string; defaultValue?: string; required?: boolean }) { return <label className="text-sm font-semibold">{label}<input name={name} required={required} defaultValue={defaultValue} className="mt-2 w-full rounded-xl border px-4 py-3 font-normal" /></label>; }
+function Modal({title,children,close,saving}:{title:string;children:React.ReactNode;close:()=>void;saving:boolean}){return <div onMouseDown={e=>{if(e.target===e.currentTarget&&!saving)close()}} className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/60 p-4"><section className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[24px] bg-white p-6 shadow-2xl"><div className="mb-5 flex justify-between"><h2 className="text-xl font-black">{title}</h2><button type="button" disabled={saving} onClick={close} aria-label="Close">×</button></div>{children}</section></div>}
+function Field({name,label,defaultValue="",required=false}:{name:string;label:string;defaultValue?:string;required?:boolean}){return <label className="text-sm font-semibold">{label}<input name={name} required={required} defaultValue={defaultValue} className="mt-2 w-full rounded-xl border px-4 py-3 font-normal"/></label>}
