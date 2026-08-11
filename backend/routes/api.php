@@ -5,6 +5,7 @@ use App\Features\Accounting\Controllers\BusinessReportsController;
 use App\Features\Accounting\Controllers\FinanceControlController;
 use App\Features\Accounting\Controllers\InsuranceAccountingController;
 use App\Features\Accounting\Controllers\LedgerController;
+use App\Features\Accounting\Controllers\OtherInsuranceController;
 use App\Features\Accounting\Controllers\ServiceWorkController;
 use App\Features\Customers\Controllers\CustomerController;
 use App\Features\Identity\Controllers\AuthController;
@@ -50,6 +51,12 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('reports/hsrp', [BusinessReportsController::class, 'hsrp']);
     Route::get('reports/vehicles', [BusinessReportsController::class, 'vehicles']);
     Route::get('reports/agent-work', [BusinessReportsController::class, 'agentWork']);
+
+    Route::get('other-insurance/{line}', [OtherInsuranceController::class, 'index']);
+    Route::post('other-insurance/{line}', [OtherInsuranceController::class, 'store']);
+    Route::put('other-insurance/{line}/{id}', [OtherInsuranceController::class, 'update']);
+    Route::delete('other-insurance/{line}/{id}', [OtherInsuranceController::class, 'destroy']);
+
     Route::get('service-works/{type}', [ServiceWorkController::class, 'index']);
     Route::post('service-works/{type}', [ServiceWorkController::class, 'store']);
     Route::put('service-works/{type}/{id}', [ServiceWorkController::class, 'update']);
