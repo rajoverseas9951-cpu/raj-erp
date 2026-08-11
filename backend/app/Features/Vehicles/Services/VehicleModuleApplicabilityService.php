@@ -16,149 +16,88 @@ class VehicleModuleApplicabilityService
         'finance' => ['payment'],
     ];
 
-    /**
-     * Single business matrix for every vehicle profile.
-     *
-     * Base services for Two Wheeler / Private Car:
-     * Insurance, PUC, HSRP, RTO Process, Payment.
-     *
-     * LGV / Pickup adds Fitness.
-     * Taxi adds Fitness, Permit, SLD, VLTD; Tax is optional per vehicle.
-     * HGV / Bus / Ambulance / other heavy commercial gets the complete set,
-     * including Tax by default.
-     */
     public function modules(Vehicle $vehicle): array
     {
-        $profile = $this->profile($vehicle);
+        $enabled = ['vehicle_details' => true];
+        $class = $this->classMaster($vehicle);
+        $rules = $class ? $this->decodeRules($class->module_rules ?? null) : [];
 
-        // Vehicle details is the profile itself. The remaining five are the
-        // standard service workflows for every supported road vehicle.
-        $enabled = array_fill_keys([
-            'vehicle_details',
-            'insurance',
-            'puc',
-            'hsrp',
-            'rto_process',
-            'payment',
-        ], true);
-
-        if (in_array($profile, ['lgv', 'taxi', 'hgv', 'bus', 'ambulance', 'commercial'], true)) {
-            $enabled['fitness'] = true;
-        }
-
-        if (in_array($profile, ['taxi', 'hgv', 'bus', 'ambulance', 'commercial'], true)) {
-            $enabled['permit'] = true;
-            $enabled['sld'] = true;
-            $enabled['vltd'] = true;
-        }
-
-        // Taxi tax is optional. A saved module override can switch it on.
-        // Heavy commercial, buses and ambulances always start with Tax enabled.
-        if (in_array($profile, ['hgv', 'bus', 'ambulance', 'commercial'], true)) {
-            $enabled['tax'] = true;
-        } elseif ($profile === 'taxi') {
-            $enabled['tax'] = false;
+        if ($rules !== []) {
+            foreach ($rules as $module => $mode) {
+                if (! in_array($module, ['insurance','puc','hsrp','fitness','permit','tax','sld','vltd','rto_process','payment'], true)) continue;
+                $enabled[$module] = $mode === 'required';
+                if ($mode === 'optional') $enabled[$module] = false;
+            }
+        } else {
+            // Legacy fallback only for older records that have not yet been mapped to a class master.
+            $profile = $this->legacyProfile($vehicle);
+            foreach (['insurance','puc','hsrp','rto_process','payment'] as $m) $enabled[$m] = true;
+            if (in_array($profile, ['lgv','taxi','hgv','bus','ambulance','commercial'], true)) $enabled['fitness'] = true;
+            if (in_array($profile, ['taxi','hgv','bus','ambulance','commercial'], true)) foreach (['permit','sld','vltd'] as $m) $enabled[$m] = true;
+            if (in_array($profile, ['hgv','bus','ambulance','commercial'], true)) $enabled['tax'] = true;
         }
 
         if (Schema::hasTable('vehicle_module_overrides')) {
             $overrides = DB::table('vehicle_module_overrides')
-                ->where('tenant_id', $vehicle->tenant_id)
-                ->where('vehicle_id', $vehicle->id)
-                ->whereNull('deleted_at')
-                ->get();
-
-            foreach ($overrides as $override) {
-                $enabled[$override->module] = (bool) $override->enabled;
-            }
+                ->where('tenant_id', $vehicle->tenant_id)->where('vehicle_id', $vehicle->id)
+                ->whereNull('deleted_at')->get();
+            foreach ($overrides as $override) $enabled[$override->module] = (bool) $override->enabled;
         }
 
         $groups = [];
         foreach (self::GROUPS as $group => $modules) {
-            $groups[$group] = array_values(array_filter(
-                $modules,
-                fn ($module) => $enabled[$module] ?? false,
-            ));
+            $groups[$group] = array_values(array_filter($modules, fn ($module) => $enabled[$module] ?? false));
         }
 
+        $type = $class?->parent_id ? DB::table('vehicle_masters')->where('id',$class->parent_id)->first(['name','code']) : null;
         return [
             'classification' => [
-                'profile' => $profile,
-                'twoWheeler' => $profile === 'two_wheeler',
-                'privateCar' => $profile === 'private_car',
-                'lgvPickup' => $profile === 'lgv',
-                'taxi' => $profile === 'taxi',
-                'hgv' => $profile === 'hgv',
-                'bus' => $profile === 'bus',
-                'ambulance' => $profile === 'ambulance',
-                'fullCommercial' => in_array($profile, ['taxi', 'hgv', 'bus', 'ambulance', 'commercial'], true),
+                'profile' => strtolower((string) ($type?->code ?? $vehicle->vehicle_type ?? '')),
+                'vehicleClassId' => $class?->id,
+                'vehicleClass' => $class?->name ?? $vehicle->vehicle_class,
+                'vehicleTypeId' => $class?->parent_id ?? $vehicle->vehicle_type_id,
+                'vehicleType' => $type?->name ?? $vehicle->vehicle_type,
+                'transportKind' => $class?->transport_kind ?? null,
+                'moduleRules' => $rules,
+                'twoWheeler' => strtolower((string) ($type?->code ?? $vehicle->vehicle_type)) === 'two_wheeler',
+                'privateCar' => strtolower((string) ($type?->code ?? $vehicle->vehicle_type)) === 'private_car',
+                'lgvPickup' => strtolower((string) ($type?->code ?? $vehicle->vehicle_type)) === 'lgv',
+                'taxi' => strtolower((string) ($type?->code ?? $vehicle->vehicle_type)) === 'taxi',
+                'hgv' => strtolower((string) ($type?->code ?? $vehicle->vehicle_type)) === 'hgv',
+                'bus' => strtolower((string) ($type?->code ?? $vehicle->vehicle_type)) === 'bus',
+                'ambulance' => strtolower((string) ($type?->code ?? $vehicle->vehicle_type)) === 'ambulance',
                 'grossWeight' => is_numeric($vehicle->gross_weight) ? (float) $vehicle->gross_weight : 0.0,
             ],
             'groups' => $groups,
         ];
     }
 
-    /** Resolve the canonical type from the Vehicle Type Directory first. */
-    private function profile(Vehicle $vehicle): string
+    private function classMaster(Vehicle $vehicle): ?object
     {
-        $masterName = '';
-        $masterCode = '';
+        if (! $vehicle->vehicle_class_id || ! Schema::hasTable('vehicle_masters') || ! Schema::hasColumn('vehicle_masters','module_rules')) return null;
+        return DB::table('vehicle_masters')->where('tenant_id',$vehicle->tenant_id)->where('id',$vehicle->vehicle_class_id)
+            ->where('type','vehicle_classes')->where('status','active')->whereNull('deleted_at')->first();
+    }
 
-        if ($vehicle->vehicle_type_id && Schema::hasTable('vehicle_masters')) {
-            $master = DB::table('vehicle_masters')
-                ->where('tenant_id', $vehicle->tenant_id)
-                ->where('id', $vehicle->vehicle_type_id)
-                ->whereNull('deleted_at')
-                ->first(['name', 'code']);
-            $masterName = (string) ($master?->name ?? '');
-            $masterCode = (string) ($master?->code ?? '');
-        }
+    private function decodeRules(mixed $rules): array
+    {
+        if (is_array($rules)) return $rules;
+        if (! is_string($rules) || trim($rules) === '') return [];
+        $decoded = json_decode($rules, true);
+        return is_array($decoded) ? $decoded : [];
+    }
 
-        $text = strtoupper(implode(' ', array_filter([
-            $masterCode,
-            $masterName,
-            $vehicle->vehicle_type,
-            $vehicle->vehicle_class,
-            $vehicle->vehicle_category,
-        ])));
-        $normalized = strtolower(trim((string) $vehicle->vehicle_type));
-
-        if ($normalized === 'two_wheeler' || preg_match('/\b(MCWG|MCWOG|MOTOR ?CYCLE|MOTORCYCLE|SCOOTER|MOPED|TWO ?WHEELER|2W)\b/', $text)) {
-            return 'two_wheeler';
-        }
-
-        if ($normalized === 'private_car' || (preg_match('/\b(PRIVATE ?CAR|MOTOR ?CAR|LMV[- ]?NT|NON[- ]?TRANSPORT|SEDAN|HATCHBACK|SUV)\b/', $text)
-            && ! preg_match('/\b(TAXI|CAB|LPV|PSV|PASSENGER)\b/', $text))) {
-            return 'private_car';
-        }
-
-        if (in_array($normalized, ['lgv', 'lcv'], true) || preg_match('/\b(LGV|LGVT|LCV|PICK ?UP|PICKUP|LIGHT ?GOODS|LIGHT ?GOODS ?VEHICLE)\b/', $text)) {
-            return 'lgv';
-        }
-
-        if ($normalized === 'taxi' || preg_match('/\b(TAXI|MOTOR ?CAB|MAXI ?CAB|LPV|PSV|CONTRACT ?CARRIAGE)\b/', $text)) {
-            return 'taxi';
-        }
-
-        if ($normalized === 'bus' || preg_match('/\b(BUS|OMNI ?BUS|SCHOOL ?BUS|STAGE ?CARRIAGE)\b/', $text)) {
-            return 'bus';
-        }
-
-        if ($normalized === 'ambulance' || preg_match('/\bAMBULANCE\b/', $text)) {
-            return 'ambulance';
-        }
-
-        if (in_array($normalized, ['hgv', 'goods_vehicle', 'commercial', 'transport'], true)
-            || preg_match('/\b(HGV|HGVT|HGMV|HMV|GT|HEAVY ?GOODS|TRUCK|LORRY|TIPPER|DUMPER|TRAILER|MULTI ?AXLE|GOODS ?VEHICLE)\b/', $text)) {
-            return 'hgv';
-        }
-
-        // Unknown transport/commercial master entries get the complete
-        // commercial workflow rather than silently losing compliance modules.
-        if (preg_match('/\b(COMMERCIAL|TRANSPORT|GOODS|CARRIER|PASSENGER)\b/', $text)) {
-            return 'commercial';
-        }
-
-        // Safe default for unknown non-commercial vehicles: private-style base.
+    private function legacyProfile(Vehicle $vehicle): string
+    {
+        $text = strtoupper(implode(' ', array_filter([$vehicle->vehicle_type,$vehicle->vehicle_class,$vehicle->vehicle_category])));
+        $type = strtolower((string) $vehicle->vehicle_type);
+        if ($type === 'two_wheeler' || preg_match('/MCWG|MCWOG|MOTOR ?CYCLE|SCOOTER|MOPED/', $text)) return 'two_wheeler';
+        if ($type === 'private_car' || preg_match('/MOTOR ?CAR|LMV[- ]?NT/', $text)) return 'private_car';
+        if (in_array($type,['lgv','lcv'],true) || preg_match('/LGV|LCV|PICK ?UP|LIGHT ?GOODS/', $text)) return 'lgv';
+        if ($type === 'taxi' || preg_match('/MOTOR ?CAB|MAXI ?CAB|LPV|TAXI/', $text)) return 'taxi';
+        if ($type === 'bus' || preg_match('/BUS|OMNIBUS/', $text)) return 'bus';
+        if ($type === 'ambulance' || preg_match('/AMBULANCE/', $text)) return 'ambulance';
+        if (in_array($type,['hgv','goods_vehicle','commercial','transport'],true) || preg_match('/HGV|HGVT|\bGT\b|TRUCK|TIPPER|DUMPER/', $text)) return 'hgv';
         return 'private_car';
     }
 
