@@ -1,6 +1,7 @@
 <?php
 
 use App\Features\Accounting\Controllers\AccountingController;
+use App\Features\Accounting\Controllers\BusinessReportsController;
 use App\Features\Accounting\Controllers\InsuranceAccountingController;
 use App\Features\Accounting\Controllers\LedgerController;
 use App\Features\Customers\Controllers\CustomerController;
@@ -35,6 +36,11 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('policies', [PolicyController::class, 'index']);
     Route::get('policies/{policy}', [PolicyController::class, 'show']);
     Route::get('reports/policies/summary', [PolicyController::class, 'summary']);
+    Route::get('reports/business/overview', [BusinessReportsController::class, 'overview']);
+    Route::get('reports/insurance', [BusinessReportsController::class, 'insurance']);
+    Route::get('reports/insurance-commission', [BusinessReportsController::class, 'insuranceCommission']);
+    Route::get('reports/rto-work', [BusinessReportsController::class, 'rtoWork']);
+    Route::get('reports/rto-profit', [BusinessReportsController::class, 'rtoProfit']);
     Route::post('ocr', [OcrController::class, 'scan'])->middleware('throttle:30,1');
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::post('auth/refresh', [AuthController::class, 'refresh'])->middleware('throttle:60,1');
