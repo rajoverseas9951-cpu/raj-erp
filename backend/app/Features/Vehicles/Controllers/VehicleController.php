@@ -10,6 +10,7 @@ use App\Features\Vehicles\Requests\BulkVehicleRequest;
 use App\Features\Vehicles\Requests\VehicleRequest;
 use App\Features\Vehicles\Services\RecordDependencyService;
 use App\Features\Vehicles\Services\VehicleService;
+use App\Support\SimplePdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -74,9 +75,29 @@ class VehicleController
 
     public function export(Request $request): StreamedResponse
     {
-        $this->authorize($request, 'vehicle.export'); $rows = $this->vehicles->exportQuery($request->query(), $this->tenant($request));
-        if ($request->query('format') === 'pdf') return response()->streamDownload(function () use ($rows) { echo '<html><body><h1>Vehicles</h1><table border="1" cellpadding="6"><tr><th>Vehicle Number</th><th>Owner</th><th>Type</th></tr>'; foreach ($rows as $vehicle) echo '<tr><td>'.e($vehicle->vehicle_number).'</td><td>'.e(trim(($vehicle->customer->first_name ?? '').' '.($vehicle->customer->last_name ?? ''))).'</td><td>'.e($vehicle->vehicle_type).'</td></tr>'; echo '</table></body></html>'; }, 'vehicles.pdf', ['Content-Type' => 'application/pdf']);
-        return response()->streamDownload(function () use ($rows) { $out = fopen('php://output', 'w'); fputcsv($out, ['Vehicle Number', 'Owner Name', 'Mobile Number', 'Vehicle Type', 'Manufacturer', 'Model', 'Fuel']); foreach ($rows as $vehicle) fputcsv($out, [$vehicle->vehicle_number, trim(($vehicle->customer->first_name ?? '').' '.($vehicle->customer->last_name ?? '')), $vehicle->customer->mobile ?? '', $vehicle->vehicle_type, $vehicle->manufacturer, $vehicle->model, $vehicle->fuel_type]); }, 'vehicles.csv');
+        $this->authorize($request, 'vehicle.export');
+        $rows = $this->vehicles->exportQuery($request->query(), $this->tenant($request));
+        if ($request->query('format') === 'pdf') {
+            $pdfRows = [];
+            foreach ($rows as $vehicle) {
+                $pdfRows[] = [
+                    $vehicle->vehicle_number,
+                    trim(($vehicle->customer->first_name ?? '').' '.($vehicle->customer->last_name ?? '')),
+                    $vehicle->customer->mobile ?? '',
+                    $vehicle->vehicle_type,
+                    $vehicle->manufacturer,
+                    $vehicle->model,
+                    $vehicle->fuel_type,
+                ];
+            }
+            $pdf = SimplePdf::document('Vehicle Report', ['Vehicle No','Owner','Mobile','Type','Make','Model','Fuel'], $pdfRows);
+            return response()->streamDownload(fn () => print($pdf), 'vehicles.pdf', ['Content-Type' => 'application/pdf']);
+        }
+        return response()->streamDownload(function () use ($rows) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['Vehicle Number', 'Owner Name', 'Mobile Number', 'Vehicle Type', 'Manufacturer', 'Model', 'Fuel']);
+            foreach ($rows as $vehicle) fputcsv($out, [$vehicle->vehicle_number, trim(($vehicle->customer->first_name ?? '').' '.($vehicle->customer->last_name ?? '')), $vehicle->customer->mobile ?? '', $vehicle->vehicle_type, $vehicle->manufacturer, $vehicle->model, $vehicle->fuel_type]);
+        }, 'vehicles.csv');
     }
 
     private function tenant(Request $request): string { return (string) $request->user()?->tenant_id; }
