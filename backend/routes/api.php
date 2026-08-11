@@ -37,10 +37,17 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('policies/{policy}', [PolicyController::class, 'show']);
     Route::get('reports/policies/summary', [PolicyController::class, 'summary']);
     Route::get('reports/business/overview', [BusinessReportsController::class, 'overview']);
+    Route::get('reports/expiry', [BusinessReportsController::class, 'expiry']);
+    Route::get('reports/agents', [BusinessReportsController::class, 'agents']);
+    Route::get('reports/brokers', [BusinessReportsController::class, 'brokers']);
     Route::get('reports/insurance', [BusinessReportsController::class, 'insurance']);
     Route::get('reports/insurance-commission', [BusinessReportsController::class, 'insuranceCommission']);
+    Route::get('reports/insurance-due', [BusinessReportsController::class, 'insuranceDue']);
     Route::get('reports/rto-work', [BusinessReportsController::class, 'rtoWork']);
     Route::get('reports/rto-profit', [BusinessReportsController::class, 'rtoProfit']);
+    Route::get('reports/hsrp', [BusinessReportsController::class, 'hsrp']);
+    Route::get('reports/vehicles', [BusinessReportsController::class, 'vehicles']);
+    Route::get('reports/agent-work', [BusinessReportsController::class, 'agentWork']);
     Route::post('ocr', [OcrController::class, 'scan'])->middleware('throttle:30,1');
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::post('auth/refresh', [AuthController::class, 'refresh'])->middleware('throttle:60,1');
