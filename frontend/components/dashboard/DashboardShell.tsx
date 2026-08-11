@@ -15,6 +15,8 @@ const navigation:NavItem[]=[
   {label:"Dashboard",href:"/dashboard",icon:"dashboard",permission:"dashboard.view"},
   {label:"Customers",href:"/customers",icon:"customers",permission:"customer.view"},
   {label:"Vehicles",href:"/vehicles",icon:"vehicle",permission:"vehicle.view"},
+  {label:"Driving Licence",href:"/services/driving-licence",icon:"book"},
+  {label:"Passport",href:"/services/passport",icon:"book"},
   {label:"Policies",href:"/policies",icon:"shield"},
   {label:"Claims",href:"/claims",icon:"reports"},
   {label:"Accounts",href:"/accounts",icon:"book"},
