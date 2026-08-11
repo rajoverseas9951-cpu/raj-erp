@@ -82,14 +82,17 @@ export type VehicleBusinessRelationshipDraft = {
   default_payment_customer_id?:string;
   default_payment_party_name:string;
 };
+export type VehicleFinanceSettlementDraft = Partial<Pick<VehicleBusinessRelationshipDraft,"default_payment_party_type"|"default_payment_customer_id"|"default_payment_party_name">>;
 
 let brokerAgentDraft:VehicleBrokerAgentDraft|null=null;
 let businessRelationshipDraft:VehicleBusinessRelationshipDraft|null=null;
+let financeSettlementDraft:VehicleFinanceSettlementDraft|null=null;
 export function setVehicleBrokerAgentDraft(draft:VehicleBrokerAgentDraft|null){brokerAgentDraft=draft;}
 export function setVehicleBusinessRelationshipDraft(draft:VehicleBusinessRelationshipDraft|null){businessRelationshipDraft=draft;}
+export function setVehicleFinanceSettlementDraft(draft:VehicleFinanceSettlementDraft|null){financeSettlementDraft=draft;}
 function withVehicleDrafts(body:unknown){
   if(!body||typeof body!=="object"||Array.isArray(body)) return body;
-  return {...(body as Record<string,unknown>),...(brokerAgentDraft??{}),...(businessRelationshipDraft??{})};
+  return {...(body as Record<string,unknown>),...(brokerAgentDraft??{}),...(businessRelationshipDraft??{}),...(financeSettlementDraft??{})};
 }
 
 async function mutateVehicle<T>(path:string,init:RequestInit):Promise<T>{
@@ -99,8 +102,8 @@ export const vehicleApi={
   list:(q="")=>authenticatedRequest<VehicleListResponse>(`/vehicles${q}`),
   get:(id:string)=>authenticatedRequest<Vehicle>(`/vehicles/${id}`),
   timeline:(id:string)=>authenticatedRequest<{data:VehicleTimelineEvent[]}>(`/vehicles/${id}/timeline`),
-  create:(body:unknown)=>mutateVehicle<Vehicle>("/vehicles",{method:"POST",body:JSON.stringify(withVehicleDrafts(body))}).finally(()=>{setVehicleBrokerAgentDraft(null);setVehicleBusinessRelationshipDraft(null);}),
-  update:(id:string,body:unknown)=>mutateVehicle<Vehicle>(`/vehicles/${id}`,{method:"PUT",body:JSON.stringify(withVehicleDrafts(body))}).finally(()=>{setVehicleBrokerAgentDraft(null);setVehicleBusinessRelationshipDraft(null);}),
+  create:(body:unknown)=>mutateVehicle<Vehicle>("/vehicles",{method:"POST",body:JSON.stringify(withVehicleDrafts(body))}).finally(()=>{setVehicleBrokerAgentDraft(null);setVehicleBusinessRelationshipDraft(null);setVehicleFinanceSettlementDraft(null);}),
+  update:(id:string,body:unknown)=>mutateVehicle<Vehicle>(`/vehicles/${id}`,{method:"PUT",body:JSON.stringify(withVehicleDrafts(body))}).finally(()=>{setVehicleBrokerAgentDraft(null);setVehicleBusinessRelationshipDraft(null);setVehicleFinanceSettlementDraft(null);}),
   archive:(id:string)=>mutateVehicle<Vehicle>(`/vehicles/${id}/archive`,{method:"POST"}),
   remove:(id:string)=>mutateVehicle<null>(`/vehicles/${id}`,{method:"DELETE"}),
   bulkDelete:(ids:string[])=>mutateVehicle("/vehicles/bulk-delete",{method:"POST",body:JSON.stringify({ids})}),
