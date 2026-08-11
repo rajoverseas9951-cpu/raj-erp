@@ -19,6 +19,7 @@ class VehicleRequest extends FormRequest
         $commercial = $this->isCommercialVehicle();
         return [
             'customer_id' => ['required','uuid','exists:customers,id'],
+            'fleet_id' => ['nullable','uuid'],
             'manufacturer_id' => ['nullable','uuid'], 'model_id' => ['nullable','uuid'], 'colour_id' => ['nullable','uuid'],
             'vehicle_class_id' => ['nullable','uuid'], 'vehicle_category_id' => ['nullable','uuid'], 'fuel_type_id' => ['nullable','uuid'],
             'rto_office_id' => ['nullable','uuid'], 'vehicle_type_id' => ['nullable','uuid'],
@@ -50,6 +51,12 @@ class VehicleRequest extends FormRequest
         if (! $this->filled('gross_weight')) {
             $alias = $this->input('gross_vehicle_weight', $this->input('laden_weight'));
             if ($alias !== null && $alias !== '') $this->merge(['gross_weight' => $alias]);
+        }
+
+        if ($this->filled('fleet_id')) {
+            $tenant=(string)$this->user()?->tenant_id;
+            $valid=DB::table('fleets')->where('tenant_id',$tenant)->where('id',$this->input('fleet_id'))->where('status','active')->whereNull('deleted_at')->exists();
+            if(!$valid)$this->merge(['fleet_id'=>null]);
         }
 
         if ($this->filled('vehicle_class_id')) {
