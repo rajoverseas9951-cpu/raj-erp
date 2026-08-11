@@ -14,26 +14,19 @@ export type BusinessOverview = {
   rto_work_count:number; rto_billing:number; rto_cost:number; rto_profit:number;
   rto_payment_received:number; total_business_profit:number;
 };
-
-export type InsuranceReportRow = {
-  id:string; date:string; policy_number:string; vehicle_number:string; vehicle_type?:string;
-  customer_name:string; mobile?:string; company_name:string; purchase_from:string; insurance_type:string;
-  gross_premium:number; customer_pay:number; gross_commission:number; agent_commission:number;
-  customer_discount:number; net_commission:number; status:string;
-};
-
-export type RtoReportRow = {
-  id:string; module:string; work_type:string; date:string; vehicle_number:string; vehicle_type?:string;
-  vehicle_class?:string; customer_name:string; mobile?:string; reference_number?:string; status?:string;
-  billed:number; cost:number; profit:number;
-};
-
-export type CategoryRow = { module:string; work_count:number; billing:number; cost:number; profit:number };
+export type ReportPayload = { rows:Array<Record<string,unknown>>; summary:Record<string,number>; categories?:Array<Record<string,unknown>> };
 
 export const businessReportsApi = {
   overview: (filters?:Record<string,string|undefined>) => authenticatedRequest<BusinessOverview>(`/reports/business/overview${qs(filters)}`),
-  insurance: (filters?:Record<string,string|undefined>) => authenticatedRequest<{rows:InsuranceReportRow[];summary:Record<string,number>}>(`/reports/insurance${qs(filters)}`),
-  insuranceCommission: (filters?:Record<string,string|undefined>) => authenticatedRequest<{rows:Array<Record<string,string|number>>;summary:Record<string,number>}>(`/reports/insurance-commission${qs(filters)}`),
-  rtoWork: (filters?:Record<string,string|undefined>) => authenticatedRequest<{rows:RtoReportRow[];categories:CategoryRow[];summary:Record<string,number>}>(`/reports/rto-work${qs(filters)}`),
-  rtoProfit: (filters?:Record<string,string|undefined>) => authenticatedRequest<{rows:CategoryRow[];summary:Record<string,number>}>(`/reports/rto-profit${qs(filters)}`),
+  expiry: (filters?:Record<string,string|undefined>) => authenticatedRequest<ReportPayload>(`/reports/expiry${qs(filters)}`),
+  agents: (filters?:Record<string,string|undefined>) => authenticatedRequest<ReportPayload>(`/reports/agents${qs(filters)}`),
+  brokers: (filters?:Record<string,string|undefined>) => authenticatedRequest<ReportPayload>(`/reports/brokers${qs(filters)}`),
+  insurance: (filters?:Record<string,string|undefined>) => authenticatedRequest<ReportPayload>(`/reports/insurance${qs(filters)}`),
+  insuranceCommission: (filters?:Record<string,string|undefined>) => authenticatedRequest<ReportPayload>(`/reports/insurance-commission${qs(filters)}`),
+  insuranceDue: (filters?:Record<string,string|undefined>) => authenticatedRequest<ReportPayload>(`/reports/insurance-due${qs(filters)}`),
+  rtoWork: (filters?:Record<string,string|undefined>) => authenticatedRequest<ReportPayload>(`/reports/rto-work${qs(filters)}`),
+  rtoProfit: (filters?:Record<string,string|undefined>) => authenticatedRequest<ReportPayload>(`/reports/rto-profit${qs(filters)}`),
+  hsrp: (filters?:Record<string,string|undefined>) => authenticatedRequest<ReportPayload>(`/reports/hsrp${qs(filters)}`),
+  vehicles: (filters?:Record<string,string|undefined>) => authenticatedRequest<ReportPayload>(`/reports/vehicles${qs(filters)}`),
+  agentWork: (filters?:Record<string,string|undefined>) => authenticatedRequest<ReportPayload>(`/reports/agent-work${qs(filters)}`),
 };
