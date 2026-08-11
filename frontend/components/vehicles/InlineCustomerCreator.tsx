@@ -21,13 +21,33 @@ export function InlineCustomerCreator() {
   useEffect(()=>{
     const click=(event:MouseEvent)=>{
       const target=event.target as HTMLElement|null;
-      const link=target?.closest('a[href="/customers/new"]');
-      if(!link) return;
+      if(!target) return;
+
+      const vehicleForm=target.closest(".vehicle-onboarding");
+      if(!vehicleForm) return;
+
+      const action=target.closest("a,button") as HTMLAnchorElement|HTMLButtonElement|null;
+      if(!action) return;
+
+      const href=action instanceof HTMLAnchorElement ? (action.getAttribute("href") || "") : "";
+      const text=(action.textContent || "").replace(/\s+/g," ").trim().toLowerCase();
+      const isCustomerCreate=
+        href.startsWith("/customers/new") ||
+        text.includes("create new customer") ||
+        text === "add customer" ||
+        text.includes("new customer");
+
+      if(!isCustomerCreate) return;
+
       event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      setError("");
       setOpen(true);
     };
-    document.addEventListener("click",click);
-    return()=>document.removeEventListener("click",click);
+
+    document.addEventListener("click",click,true);
+    return()=>document.removeEventListener("click",click,true);
   },[]);
 
   useEffect(()=>{
@@ -47,13 +67,15 @@ export function InlineCustomerCreator() {
       if(select.value!==created.id){
         select.value=created.id;
         select.dispatchEvent(new Event("change",{bubbles:true}));
+        select.dispatchEvent(new Event("input",{bubbles:true}));
       }
     };
     sync();
     const observer=new MutationObserver(sync);
     observer.observe(document.body,{childList:true,subtree:true});
-    const timer=window.setInterval(sync,500);
-    return()=>{observer.disconnect();window.clearInterval(timer)};
+    const timer=window.setInterval(sync,300);
+    const stop=window.setTimeout(()=>window.clearInterval(timer),5000);
+    return()=>{observer.disconnect();window.clearInterval(timer);window.clearTimeout(stop)};
   },[created]);
 
   function set<K extends keyof Values>(key:K,value:Values[K]){ setValues(v=>({...v,[key]:value})); }
