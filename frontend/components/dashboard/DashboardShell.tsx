@@ -23,36 +23,40 @@ const navigation:NavItem[]=[
   {label:"Team & Roles",href:"/users",icon:"users",permission:"users.view"},
   {label:"Settings",href:"/settings",icon:"settings",permission:"settings.manage"},
 ];
+
 const accountGroups=[
-  {label:"Accounting",items:[
-    ["Accounts Dashboard","/accounts"],
-    ["Ledger Master","/accounts/ledgers"],
-    ["Voucher Entry","/accounts#voucher"],
-    ["Insurance Accounting","/accounts/insurance"],
+  {label:"Daily Accounts",items:[
+    ["Accounts Overview","/accounts"],
+    ["Party / Ledger Balance","/accounts/ledgers"],
+    ["Cash / Bank Entry","/accounts#voucher"],
+    ["Insurance Accounts","/accounts/insurance"],
   ]},
-  {label:"Financial Statements",items:[
-    ["Day Book","/reports/day-book"],
-    ["Trial Balance","/reports/trial-balance"],
+  {label:"Yearly Accounts",items:[
     ["Profit & Loss","/reports/profit-loss"],
     ["Balance Sheet","/reports/balance-sheet"],
   ]},
-  {label:"Business Control",items:[
-    ["Insurance Commission","/reports/insurance-commission"],
-    ["Insurance Due","/reports/insurance-due"],
-    ["RTO Profit","/reports/rto-profit"],
-  ]},
 ] as const;
+
 const reportGroups=[
-  {label:"Business Reports",items:[
-    ["Expiry Report","/reports/expiry"],["Agent Report","/reports/agent"],["Broker Report","/reports/broker"],
-    ["Insurance Report","/reports/insurance"],["Insurance Commission","/reports/insurance-commission"],["Insurance Due","/reports/insurance-due"],
-    ["RTO Work Report","/reports/rto-work"],["RTO Profit Report","/reports/rto-profit"],["HSRP Report","/reports/hsrp"],
-    ["Vehicle Report","/reports/vehicle"],["Agent Work Report","/reports/agent-work"],
+  {label:"Insurance Reports",items:[
+    ["Expiry Report","/reports/expiry"],
+    ["Insurance Report","/reports/insurance"],
+    ["Commission Report","/reports/insurance-commission"],
+    ["Insurance Due","/reports/insurance-due"],
   ]},
-  {label:"Financial Reports",items:[
-    ["Balance Sheet","/reports/balance-sheet"],["Profit & Loss","/reports/profit-loss"],["Trial Balance","/reports/trial-balance"],["Day Book","/reports/day-book"],
+  {label:"RTO Reports",items:[
+    ["RTO Work Report","/reports/rto-work"],
+    ["RTO Profit Report","/reports/rto-profit"],
+    ["HSRP Report","/reports/hsrp"],
+    ["Agent Work Report","/reports/agent-work"],
+  ]},
+  {label:"General Reports",items:[
+    ["Agent Report","/reports/agent"],
+    ["Broker Report","/reports/broker"],
+    ["Vehicle Report","/reports/vehicle"],
   ]},
 ] as const;
+
 const masterGroups=[{label:"Master Management",items:[["Open Masters Hub","/masters"]] as const}];
 const masterPaths=["/masters","/insurance-companies","/purchase-sources","/vehicle-manufacturers","/vehicle-models","/vehicle-colours","/vehicle-classes","/vehicle-body-types","/fuel-types"];
 
