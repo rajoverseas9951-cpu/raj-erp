@@ -12,7 +12,7 @@ const num=(v=0)=>v.toLocaleString("en-IN");
 const dailyActions=[
  ["New Vehicle","Add vehicle / RC","/vehicles/new","vehicle"],
  ["New Customer","Create customer","/customers/new","customers"],
- ["Motor Insurance","Vehicle policy","/policies","shield"],
+ ["Motor Insurance","Customer → vehicle → policy","/insurance/motor","shield"],
  ["Non-Motor","Fire / property / business","/insurance/non_motor","shield"],
  ["Health","Retail / family / group","/insurance/health","shield"],
  ["Life","Term / savings / pension","/insurance/life","shield"],
