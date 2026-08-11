@@ -10,9 +10,9 @@ export default function AddVehiclePage() {
       <style>{`
         .vehicle-onboarding {
           background:
-            linear-gradient(rgba(255,255,255,.86),rgba(255,255,255,.86)),
-            radial-gradient(circle at 10% 0%,#bfdbfe 0,transparent 32%),
-            radial-gradient(circle at 100% 8%,#dbeafe 0,transparent 30%),
+            linear-gradient(rgba(255,255,255,.87),rgba(255,255,255,.87)),
+            radial-gradient(circle at 8% 0%,#bfdbfe 0,transparent 30%),
+            radial-gradient(circle at 100% 10%,#dbeafe 0,transparent 30%),
             #edf3fb;
         }
 
@@ -25,14 +25,14 @@ export default function AddVehiclePage() {
           box-shadow: none !important;
         }
         .vehicle-onboarding form > section:first-child > div:first-child {
-          min-height: 270px;
+          min-height: 260px;
           border-radius: 32px !important;
-          padding: 38px 42px !important;
+          padding: 36px 40px !important;
           background:
-            radial-gradient(circle at 88% 15%,rgba(56,189,248,.32),transparent 23%),
-            radial-gradient(circle at 78% 110%,rgba(37,99,235,.65),transparent 38%),
+            radial-gradient(circle at 88% 15%,rgba(56,189,248,.30),transparent 23%),
+            radial-gradient(circle at 78% 110%,rgba(37,99,235,.62),transparent 38%),
             linear-gradient(125deg,#031329 0%,#09285a 56%,#0f4bb8 100%) !important;
-          box-shadow: 0 30px 80px rgba(10,31,75,.24) !important;
+          box-shadow: 0 30px 80px rgba(10,31,75,.23) !important;
         }
         .vehicle-onboarding form > section:first-child h1 {
           max-width: 680px;
@@ -41,14 +41,15 @@ export default function AddVehiclePage() {
           letter-spacing: -.055em !important;
         }
         .vehicle-onboarding form > section:first-child h1::after {
-          content: "Fast. Accurate. Organized.";
+          content: "Fast. Accurate. Renewal-ready.";
           display: block;
           margin-top: 16px;
-          font-size: 11px;
-          line-height: 1;
-          letter-spacing: .22em;
-          text-transform: uppercase;
           color: #7dd3fc;
+          font-size: 10px;
+          line-height: 1;
+          font-weight: 900;
+          letter-spacing: .23em;
+          text-transform: uppercase;
         }
 
         .vehicle-onboarding form > section:first-child nav {
@@ -65,7 +66,7 @@ export default function AddVehiclePage() {
           backdrop-filter: blur(16px);
         }
         .vehicle-onboarding form > section:first-child nav a {
-          min-height: 64px;
+          min-height: 62px;
           padding: 10px 14px !important;
           border: 0 !important;
           border-radius: 16px !important;
@@ -92,157 +93,38 @@ export default function AddVehiclePage() {
         }
         .vehicle-onboarding form > section:first-child > div:nth-of-type(2) button {
           position: relative;
-          min-height: 160px;
-          padding: 24px !important;
+          min-height: 145px;
+          padding: 22px !important;
           border: 1px solid #dce7f4 !important;
-          border-radius: 26px !important;
+          border-radius: 24px !important;
           background: linear-gradient(145deg,#fff,#f8fbff) !important;
-          box-shadow: 0 16px 38px rgba(20,53,102,.08) !important;
-        }
-        .vehicle-onboarding form > section:first-child > div:nth-of-type(2) button::after {
-          content: "SELECT";
-          position: absolute;
-          top: 18px;
-          right: 18px;
-          padding: 6px 9px;
-          border-radius: 999px;
-          background: #eff6ff;
-          color: #2563eb;
-          font-size: 8px;
-          font-weight: 900;
-          letter-spacing: .15em;
+          box-shadow: 0 16px 38px rgba(20,53,102,.07) !important;
         }
         .vehicle-onboarding form > section:first-child > div:nth-of-type(2) button[aria-pressed="true"] {
           border-color: #4f8ef7 !important;
-          background:
-            radial-gradient(circle at 82% 0%,rgba(56,189,248,.14),transparent 35%),
-            linear-gradient(145deg,#fafdff,#eef5ff) !important;
-          box-shadow: 0 20px 46px rgba(37,99,235,.16), inset 0 0 0 2px rgba(59,130,246,.08) !important;
-        }
-        .vehicle-onboarding form > section:first-child > div:nth-of-type(2) button[aria-pressed="true"]::after {
-          content: "ACTIVE";
-          color: #047857;
-          background: #ecfdf5;
+          background: linear-gradient(145deg,#fafdff,#eef5ff) !important;
+          box-shadow: 0 20px 46px rgba(37,99,235,.14),inset 0 0 0 2px rgba(59,130,246,.07) !important;
         }
 
-        /* RC UPLOAD WORKSPACE */
         .vehicle-onboarding form > section:first-child > div:nth-of-type(3) {
           position: relative;
           margin-top: 16px;
-          padding: 22px !important;
+          padding: 20px !important;
           gap: 16px !important;
           border: 1px solid #d9e5f4 !important;
-          border-radius: 28px !important;
-          background:
-            radial-gradient(circle at 96% 0%,rgba(59,130,246,.08),transparent 27%),
-            linear-gradient(145deg,#ffffff,#f7fbff) !important;
-          box-shadow: 0 18px 44px rgba(15,23,42,.07) !important;
-        }
-        .vehicle-onboarding form > section:first-child > div:nth-of-type(3)::before {
-          content: "RC DOCUMENT SCAN";
-          grid-column: 1 / -1;
-          display: block;
-          margin-bottom: -2px;
-          color: #2d63bb;
-          font-size: 9px;
-          font-weight: 900;
-          letter-spacing: .22em;
-        }
-        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > div:not(.md\\:col-span-2) {
-          min-height: 190px;
-          padding: 0 !important;
-          overflow: hidden;
-          border: 1.5px dashed #aac5ea !important;
-          border-radius: 22px !important;
-          background: rgba(247,250,255,.9) !important;
-          transition: .18s ease;
-        }
-        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > div:not(.md\\:col-span-2):hover {
-          transform: translateY(-2px);
-          border-color: #4f8ef7 !important;
-          background: #fff !important;
-          box-shadow: 0 14px 30px rgba(37,99,235,.10);
-        }
-        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > div:not(.md\\:col-span-2) > label {
-          display: flex !important;
-          min-height: 190px;
-          width: 100%;
-          flex-direction: column;
-          justify-content: center;
-          padding: 24px !important;
-          color: #0a2147 !important;
-          font-size: 16px !important;
-          font-weight: 900 !important;
-        }
-        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > div:not(.md\\:col-span-2) > label::before {
-          content: "⇧";
-          display: grid;
-          place-items: center;
-          width: 48px;
-          height: 48px;
-          margin-bottom: 16px;
-          border-radius: 15px;
-          background: linear-gradient(145deg,#0b2f6b,#2563eb);
-          color: #fff;
-          font-size: 23px;
-          box-shadow: 0 10px 24px rgba(37,99,235,.22);
-        }
-        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > div:not(.md\\:col-span-2) label span {
-          margin-top: 6px !important;
-          color: #718097 !important;
-          font-size: 11px !important;
-          font-weight: 600 !important;
-        }
-        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) input[type="file"] {
-          min-height: 0 !important;
-          margin-top: 18px !important;
-          padding: 0 !important;
-          border: 0 !important;
-          border-radius: 0 !important;
-          background: transparent !important;
-          box-shadow: none !important;
-          color: #607089 !important;
-          font-size: 11px !important;
-        }
-        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) input[type="file"]::file-selector-button {
-          margin-right: 12px;
-          padding: 10px 15px;
-          border: 0;
-          border-radius: 11px;
-          background: #eaf2ff;
-          color: #154d9f;
-          font-size: 11px;
-          font-weight: 900;
-          cursor: pointer;
-        }
-        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > .md\\:col-span-2 {
-          padding-top: 2px;
-        }
-        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > .md\\:col-span-2 button {
-          min-height: 56px;
-          border-radius: 16px !important;
-          background: linear-gradient(90deg,#082654,#1c64d7,#3286ff) !important;
-          box-shadow: 0 14px 32px rgba(37,99,235,.22) !important;
-          letter-spacing: .01em;
-        }
-        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > .md\\:col-span-2 button:not(:disabled):hover {
-          transform: translateY(-1px);
-          box-shadow: 0 18px 38px rgba(37,99,235,.28) !important;
-        }
-        .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > .md\\:col-span-2 p {
-          color: #a16207 !important;
-          font-size: 10px !important;
-          letter-spacing: .02em;
+          border-radius: 26px !important;
+          background: linear-gradient(145deg,#ffffff,#f7fbff) !important;
+          box-shadow: 0 18px 44px rgba(15,23,42,.065) !important;
         }
 
         .vehicle-onboarding form > div[id^="vehicle-step-"] > section {
           position: relative;
           overflow: hidden;
           border: 1px solid #dbe6f3 !important;
-          border-radius: 30px !important;
+          border-radius: 28px !important;
           padding: 0 26px 28px !important;
           background: #fff !important;
-          box-shadow: 0 18px 48px rgba(15,23,42,.065) !important;
+          box-shadow: 0 18px 48px rgba(15,23,42,.06) !important;
         }
         .vehicle-onboarding form > div[id^="vehicle-step-"] h2 {
           display: flex;
@@ -276,8 +158,6 @@ export default function AddVehiclePage() {
 
         .vehicle-onboarding form > div[id^="vehicle-step-"] label {
           display: block;
-          padding: 4px;
-          border-radius: 16px;
           color: #42516a !important;
           font-size: 12px !important;
           font-weight: 800 !important;
@@ -297,29 +177,117 @@ export default function AddVehiclePage() {
         .vehicle-onboarding form input:hover,
         .vehicle-onboarding form select:hover {
           border-color: #9ebbe4 !important;
-          background: #fff !important;
+          background-color: #fff !important;
         }
         .vehicle-onboarding form input:focus,
         .vehicle-onboarding form select:focus {
           transform: translateY(-1px);
           border-color: #3b82f6 !important;
-          background: #fff !important;
+          background-color: #fff !important;
           box-shadow: 0 0 0 4px rgba(59,130,246,.10),0 10px 24px rgba(37,99,235,.08) !important;
         }
+
+        /* PREMIUM EXPIRY / RENEWAL CAPTURE */
+        .vehicle-onboarding #vehicle-step-4 > section {
+          background:
+            radial-gradient(circle at 100% 0%,rgba(37,99,235,.07),transparent 30%),
+            #fff !important;
+        }
+        .vehicle-onboarding #vehicle-step-4 > section > div {
+          gap: 14px !important;
+        }
+        .vehicle-onboarding #vehicle-step-4 > section > div > div {
+          position: relative;
+          min-height: 178px;
+          overflow: hidden;
+          padding: 17px !important;
+          border: 1px solid #d8e5f5 !important;
+          border-radius: 22px !important;
+          background:
+            radial-gradient(circle at 100% 0%,rgba(59,130,246,.08),transparent 42%),
+            linear-gradient(145deg,#fff,#f7fbff) !important;
+          box-shadow: 0 12px 30px rgba(15,23,42,.045) !important;
+          transition: .2s ease;
+        }
+        .vehicle-onboarding #vehicle-step-4 > section > div > div:hover {
+          transform: translateY(-2px);
+          border-color: #b5cdf0 !important;
+          box-shadow: 0 18px 36px rgba(37,99,235,.09) !important;
+        }
+        .vehicle-onboarding #vehicle-step-4 > section > div > div::after {
+          content: "RENEWAL TRACKING";
+          position: absolute;
+          top: 18px;
+          right: 16px;
+          padding: 5px 8px;
+          border-radius: 999px;
+          background: #edf5ff;
+          color: #2c64bd;
+          font-size: 7px;
+          font-weight: 900;
+          letter-spacing: .13em;
+        }
+        .vehicle-onboarding #vehicle-step-4 > section > div > div > p {
+          margin: 0 0 14px !important;
+          padding-right: 105px;
+          color: #071c40 !important;
+          font-size: 14px !important;
+          font-weight: 900 !important;
+        }
+        .vehicle-onboarding #vehicle-step-4 select {
+          min-height: 44px !important;
+          margin-top: 0 !important;
+          padding: 0 13px !important;
+          border-radius: 12px !important;
+          background-color: #fff !important;
+          color: #40506a !important;
+          font-size: 12px !important;
+          font-weight: 750 !important;
+        }
+        .vehicle-onboarding #vehicle-step-4 input[type="date"] {
+          position: relative;
+          min-height: 56px !important;
+          margin-top: 10px !important;
+          padding: 0 14px 0 16px !important;
+          border: 1px solid #bcd0ed !important;
+          border-radius: 14px !important;
+          background:
+            linear-gradient(90deg,#ffffff 0%,#ffffff 76%,#edf5ff 76%,#edf5ff 100%) !important;
+          color: #0a2147 !important;
+          font-size: 14px !important;
+          font-weight: 800 !important;
+          letter-spacing: .02em;
+          color-scheme: light;
+        }
+        .vehicle-onboarding #vehicle-step-4 input[type="date"]::-webkit-calendar-picker-indicator {
+          width: 24px;
+          height: 24px;
+          padding: 9px;
+          border-radius: 10px;
+          cursor: pointer;
+          opacity: .82;
+        }
+        .vehicle-onboarding #vehicle-step-4 input[type="date"]:focus {
+          border-color: #2874e8 !important;
+          box-shadow: 0 0 0 4px rgba(37,99,235,.10),0 12px 26px rgba(37,99,235,.09) !important;
+        }
+        .vehicle-onboarding #vehicle-step-4 h2::after {
+          content: "Add existing expiry dates here so the ERP can follow upcoming renewals.";
+          margin-left: auto;
+          max-width: 430px;
+          color: #728199;
+          font-size: 10px;
+          font-weight: 700;
+          line-height: 1.45;
+          letter-spacing: 0;
+          text-align: right;
+        }
+
         .vehicle-onboarding form a[href="/customers/new"] {
           padding: 7px 11px;
           border-radius: 10px;
           background: #edf5ff;
           color: #1752b5 !important;
-        }
-
-        .vehicle-onboarding #vehicle-step-4 > section > div > div {
-          min-height: 132px;
-          padding: 16px !important;
-          border: 1px solid #dce7f4 !important;
-          border-radius: 20px !important;
-          background: linear-gradient(145deg,#fff,#f7fbff) !important;
-          box-shadow: 0 10px 24px rgba(15,23,42,.04);
         }
 
         .vehicle-onboarding form > div.fixed {
@@ -342,13 +310,8 @@ export default function AddVehiclePage() {
           background: linear-gradient(90deg,#082654,#1767db) !important;
           box-shadow: 0 14px 32px rgba(26,83,181,.30) !important;
           font-size: 15px !important;
-          letter-spacing: .01em;
         }
         .vehicle-onboarding form > div.fixed button::before { content:"✓  "; }
-        .vehicle-onboarding form > div.fixed button:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 18px 40px rgba(26,83,181,.36) !important;
-        }
 
         @media (max-width: 767px) {
           .vehicle-onboarding form > section:first-child > div:first-child {
@@ -361,27 +324,6 @@ export default function AddVehiclePage() {
             margin-top: -20px !important;
             grid-template-columns: 1fr 1fr !important;
           }
-          .vehicle-onboarding form > section:first-child nav a {
-            min-height: 56px;
-            padding: 8px !important;
-            font-size: 10px !important;
-          }
-          .vehicle-onboarding form > section:first-child nav a span {
-            width: 28px !important;
-            height: 28px !important;
-          }
-          .vehicle-onboarding form > section:first-child > div:nth-of-type(2) button {
-            min-height: 132px;
-            border-radius: 22px !important;
-          }
-          .vehicle-onboarding form > section:first-child > div:nth-of-type(3) {
-            padding: 14px !important;
-            border-radius: 22px !important;
-          }
-          .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > div:not(.md\\:col-span-2),
-          .vehicle-onboarding form > section:first-child > div:nth-of-type(3) > div:not(.md\\:col-span-2) > label {
-            min-height: 160px;
-          }
           .vehicle-onboarding form > div[id^="vehicle-step-"] > section {
             padding: 0 16px 20px !important;
             border-radius: 24px !important;
@@ -391,12 +333,9 @@ export default function AddVehiclePage() {
             padding: 16px !important;
             font-size: 18px !important;
           }
-          .vehicle-onboarding form > div[id^="vehicle-step-"] h2::before {
-            width: 34px;
-            height: 34px;
-            flex-basis: 34px;
-            border-radius: 11px;
-            font-size: 11px;
+          .vehicle-onboarding #vehicle-step-4 h2::after { display:none; }
+          .vehicle-onboarding #vehicle-step-4 > section > div > div {
+            min-height: 165px;
           }
           .vehicle-onboarding form input,
           .vehicle-onboarding form select { min-height: 48px; }
