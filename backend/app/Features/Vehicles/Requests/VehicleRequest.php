@@ -17,8 +17,9 @@ class VehicleRequest extends FormRequest
     public function rules(): array
     {
         $commercial = $this->isCommercialVehicle();
+        $tenant = (string) $this->user()?->tenant_id;
         return [
-            'customer_id' => ['required','uuid','exists:customers,id'],
+            'customer_id' => ['required','uuid',Rule::exists('customers','id')->where(fn($q)=>$q->where('tenant_id',$tenant)->whereNull('deleted_at'))],
             'fleet_id' => ['nullable','uuid'],
             'manufacturer_id' => ['nullable','uuid'], 'model_id' => ['nullable','uuid'], 'colour_id' => ['nullable','uuid'],
             'vehicle_class_id' => ['nullable','uuid'], 'vehicle_category_id' => ['nullable','uuid'], 'fuel_type_id' => ['nullable','uuid'],
@@ -34,8 +35,13 @@ class VehicleRequest extends FormRequest
             'chassis_number' => ['required','string','max:120'], 'engine_number' => ['required','string','max:120'],
             'hypothecation' => ['boolean'], 'financier' => ['nullable','string','max:200'],
             'broker_agent_enabled' => ['boolean'],
-            'broker_name' => [Rule::requiredIf($this->boolean('broker_agent_enabled')),'nullable','string','max:200'],
-            'agent_name' => [Rule::requiredIf($this->boolean('broker_agent_enabled')),'nullable','string','max:200'],
+            'broker_name' => ['nullable','string','max:200'],
+            'agent_name' => ['nullable','string','max:200'],
+            'business_source_type' => ['required',Rule::in(['direct','agent','broker','dealer','fleet','other'])],
+            'business_source_name' => [Rule::requiredIf(fn()=>in_array($this->input('business_source_type'),['agent','broker','dealer','other'],true)),'nullable','string','max:160'],
+            'default_payment_party_type' => ['required',Rule::in(['customer','source','fleet','other'])],
+            'default_payment_customer_id' => ['nullable','uuid',Rule::exists('customers','id')->where(fn($q)=>$q->where('tenant_id',$tenant)->whereNull('deleted_at'))],
+            'default_payment_party_name' => [Rule::requiredIf($this->input('default_payment_party_type') === 'other'),'nullable','string','max:160'],
             'insurance_status' => ['required','in:not_added,active,expired,expiring_soon'],
             'fitness_status' => ['required','in:not_added,valid,expired,expiring_soon'],
             'permit_status' => ['required','in:not_added,valid,expired,expiring_soon'],
@@ -79,6 +85,24 @@ class VehicleRequest extends FormRequest
         $enabled = $this->boolean('broker_agent_enabled');
         $this->merge(['broker_agent_enabled' => $enabled]);
         if (! $enabled) $this->merge(['broker_name' => null, 'agent_name' => null]);
+
+        $source = $this->input('business_source_type', 'direct');
+        $paymentType = $this->input('default_payment_party_type', 'customer');
+        $merge = ['business_source_type' => $source, 'default_payment_party_type' => $paymentType];
+        if ($source === 'direct') $merge['business_source_name'] = null;
+        if ($paymentType === 'customer') {
+            $merge['default_payment_customer_id'] = $this->input('customer_id');
+            $merge['default_payment_party_name'] = null;
+        } elseif ($paymentType === 'source') {
+            $merge['default_payment_customer_id'] = null;
+            $merge['default_payment_party_name'] = $this->input('business_source_name');
+        } elseif ($paymentType === 'fleet') {
+            $merge['default_payment_customer_id'] = null;
+            $merge['default_payment_party_name'] = null;
+        } else {
+            $merge['default_payment_customer_id'] = null;
+        }
+        $this->merge($merge);
     }
 
     private function isCommercialVehicle(): bool
