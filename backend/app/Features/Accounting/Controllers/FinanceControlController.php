@@ -2,11 +2,13 @@
 
 namespace App\Features\Accounting\Controllers;
 
+use App\Support\SimplePdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FinanceControlController
 {
@@ -26,12 +28,58 @@ class FinanceControlController
 
     public function outstanding(Request $request)
     {
-        $tenant=$this->tenant($request); $ledgers=DB::table('accounting_ledgers')->where('tenant_id',$tenant)->whereIn('ledger_group',['Sundry Debtors','Sundry Creditors'])->orderBy('ledger_name')->get();
-        $movements=DB::table('accounting_voucher_entries as e')->join('accounting_vouchers as v','v.id','=','e.voucher_id')->where('e.tenant_id',$tenant)->where('v.status','posted')->select('e.ledger_id',DB::raw("SUM(CASE WHEN e.entry_type='debit' THEN e.amount ELSE 0 END) debit"),DB::raw("SUM(CASE WHEN e.entry_type='credit' THEN e.amount ELSE 0 END) credit"))->groupBy('e.ledger_id')->get()->keyBy('ledger_id');
-        $rows=$ledgers->map(function($l) use($movements){$m=$movements->get($l->id);$opening=(float)$l->opening_balance*($l->balance_type==='debit'?1:-1);$balance=$opening+(float)($m->debit??0)-(float)($m->credit??0);return ['id'=>$l->id,'name'=>$l->ledger_name,'group'=>$l->ledger_group,'receivable'=>$balance>0?round($balance,2):0,'payable'=>$balance<0?round(abs($balance),2):0];})->filter(fn($r)=>$r['receivable']>0||$r['payable']>0)->values();
-        $insuranceDue=0.0;if(Schema::hasTable('insurance_commissions'))$insuranceDue=(float)(DB::table('insurance_commissions')->where('tenant_id',$tenant)->whereNull('deleted_at')->selectRaw('COALESCE(SUM(GREATEST(COALESCE(net_receivable,0)-COALESCE(received_amount,0),0)),0) total')->value('total')??0);
-        $serviceDue=0.0;if(Schema::hasTable('service_works'))$serviceDue=(float)(DB::table('service_works')->where('tenant_id',$tenant)->whereNull('deleted_at')->selectRaw('COALESCE(SUM(GREATEST(COALESCE(amount,0)-COALESCE(received_amount,0),0)),0) total')->value('total')??0);
-        return response()->json(['success'=>true,'data'=>['rows'=>$rows,'summary'=>['party_receivable'=>round($rows->sum('receivable'),2),'party_payable'=>round($rows->sum('payable'),2),'insurance_commission_due'=>round($insuranceDue,2),'service_customer_due'=>round($serviceDue,2)]]]);
+        $payload=$this->outstandingPayload($this->tenant($request));
+        return response()->json(['success'=>true,'data'=>$payload]);
+    }
+
+    public function outstandingExport(Request $request): StreamedResponse
+    {
+        $type=$request->query('type','receivable');
+        abort_unless(in_array($type,['receivable','payable'],true),422,'Invalid outstanding report type.');
+        $payload=$this->outstandingPayload($this->tenant($request));
+        $amountKey=$type==='receivable'?'receivable':'payable';
+        $title=$type==='receivable'?'Party Receivable Report':'Party Payable Report';
+        $rows=[];
+        foreach($payload['rows'] as $row){
+            if((float)$row[$amountKey]<=0) continue;
+            $rows[]=[$row['name'],$row['group'],'Rs. '.number_format((float)$row[$amountKey],2)];
+        }
+        $total=array_sum(array_map(fn($row)=>(float)$row[$amountKey],$payload['rows']));
+        $rows[]=['','',''];
+        $rows[]=['TOTAL','', 'Rs. '.number_format($total,2)];
+        $pdf=SimplePdf::document($title,['Party','Type',$type==='receivable'?'To Receive':'To Pay'],$rows);
+        $filename=$type==='receivable'?'party-receivable.pdf':'party-payable.pdf';
+        return response()->streamDownload(fn()=>print($pdf),$filename,['Content-Type'=>'application/pdf']);
+    }
+
+    private function outstandingPayload(string $tenant): array
+    {
+        $rows=collect();
+        if(Schema::hasTable('accounting_ledgers')){
+            $ledgers=DB::table('accounting_ledgers')->where('tenant_id',$tenant)->whereIn('ledger_group',['Sundry Debtors','Sundry Creditors'])->orderBy('ledger_name')->get();
+            $movements=collect();
+            if(Schema::hasTable('accounting_voucher_entries')&&Schema::hasTable('accounting_vouchers')){
+                $movements=DB::table('accounting_voucher_entries as e')->join('accounting_vouchers as v','v.id','=','e.voucher_id')->where('e.tenant_id',$tenant)->where('v.status','posted')->select('e.ledger_id',DB::raw("SUM(CASE WHEN e.entry_type='debit' THEN e.amount ELSE 0 END) debit"),DB::raw("SUM(CASE WHEN e.entry_type='credit' THEN e.amount ELSE 0 END) credit"))->groupBy('e.ledger_id')->get()->keyBy('ledger_id');
+            }
+            $rows=$ledgers->map(function($l) use($movements){$m=$movements->get($l->id);$opening=(float)($l->opening_balance??0)*(($l->balance_type??'debit')==='debit'?1:-1);$balance=$opening+(float)($m->debit??0)-(float)($m->credit??0);return ['id'=>$l->id,'name'=>$l->ledger_name,'group'=>$l->ledger_group,'receivable'=>$balance>0?round($balance,2):0,'payable'=>$balance<0?round(abs($balance),2):0];})->filter(fn($r)=>$r['receivable']>0||$r['payable']>0)->values();
+        }
+
+        $insuranceDue=0.0;
+        if(Schema::hasTable('insurance_commissions')&&Schema::hasColumn('insurance_commissions','net_receivable')){
+            $q=DB::table('insurance_commissions')->where('tenant_id',$tenant);
+            if(Schema::hasColumn('insurance_commissions','deleted_at')) $q->whereNull('deleted_at');
+            if(Schema::hasColumn('insurance_commissions','received_amount')) $insuranceDue=(float)($q->selectRaw('COALESCE(SUM(CASE WHEN COALESCE(net_receivable,0)-COALESCE(received_amount,0)>0 THEN COALESCE(net_receivable,0)-COALESCE(received_amount,0) ELSE 0 END),0) total')->value('total')??0);
+            else $insuranceDue=(float)($q->sum('net_receivable')??0);
+        }
+
+        $serviceDue=0.0;
+        if(Schema::hasTable('service_works')&&Schema::hasColumn('service_works','amount')){
+            $q=DB::table('service_works')->where('tenant_id',$tenant);
+            if(Schema::hasColumn('service_works','deleted_at')) $q->whereNull('deleted_at');
+            if(Schema::hasColumn('service_works','received_amount')) $serviceDue=(float)($q->selectRaw('COALESCE(SUM(CASE WHEN COALESCE(amount,0)-COALESCE(received_amount,0)>0 THEN COALESCE(amount,0)-COALESCE(received_amount,0) ELSE 0 END),0) total')->value('total')??0);
+        }
+
+        return ['rows'=>$rows,'summary'=>['party_receivable'=>round($rows->sum('receivable'),2),'party_payable'=>round($rows->sum('payable'),2),'insurance_commission_due'=>round($insuranceDue,2),'service_customer_due'=>round($serviceDue,2)]];
     }
 
     public function openingBalances(Request $request){$rows=DB::table('accounting_ledgers')->where('tenant_id',$this->tenant($request))->orderBy('ledger_name')->get(['id','ledger_name','ledger_group','opening_balance','balance_type']);return response()->json(['success'=>true,'data'=>$rows]);}
