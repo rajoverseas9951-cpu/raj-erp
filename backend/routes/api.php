@@ -4,6 +4,7 @@ use App\Features\Accounting\Controllers\AccountingController;
 use App\Features\Accounting\Controllers\BusinessReportsController;
 use App\Features\Accounting\Controllers\FinanceControlController;
 use App\Features\Accounting\Controllers\InsuranceAccountingController;
+use App\Features\Accounting\Controllers\InsurancePolicySettlementController;
 use App\Features\Accounting\Controllers\LedgerController;
 use App\Features\Accounting\Controllers\OtherInsuranceController;
 use App\Features\Accounting\Controllers\ServiceWorkController;
@@ -54,12 +55,10 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('reports/agent-work', [BusinessReportsController::class, 'agentWork']);
 
     Route::apiResource('fleets', FleetController::class)->except(['create','edit']);
-
     Route::get('other-insurance/{line}', [OtherInsuranceController::class, 'index']);
     Route::post('other-insurance/{line}', [OtherInsuranceController::class, 'store']);
     Route::put('other-insurance/{line}/{id}', [OtherInsuranceController::class, 'update']);
     Route::delete('other-insurance/{line}/{id}', [OtherInsuranceController::class, 'destroy']);
-
     Route::get('service-works/{type}', [ServiceWorkController::class, 'index']);
     Route::post('service-works/{type}', [ServiceWorkController::class, 'store']);
     Route::put('service-works/{type}/{id}', [ServiceWorkController::class, 'update']);
@@ -130,6 +129,8 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::post('vehicles/{vehicle}/insurances/{insurance}/archive', [VehicleInsuranceController::class, 'archive']);
     Route::post('vehicles/{vehicle}/insurances/{insurance}/cancel', [VehicleInsuranceController::class, 'cancel']);
     Route::get('vehicles/{vehicle}/insurances/{insurance}/document', [VehicleInsuranceController::class, 'document']);
+    Route::get('vehicles/{vehicle}/insurances/{insurance}/settlement', [InsurancePolicySettlementController::class, 'show']);
+    Route::post('vehicles/{vehicle}/insurances/{insurance}/settlement', [InsurancePolicySettlementController::class, 'store']);
     Route::apiResource('vehicles', VehicleController::class);
 
     Route::get('customers/export', [CustomerController::class, 'export']);
