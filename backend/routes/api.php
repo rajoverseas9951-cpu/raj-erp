@@ -4,6 +4,7 @@ use App\Features\Accounting\Controllers\AccountingController;
 use App\Features\Accounting\Controllers\BusinessReportsController;
 use App\Features\Accounting\Controllers\InsuranceAccountingController;
 use App\Features\Accounting\Controllers\LedgerController;
+use App\Features\Accounting\Controllers\ServiceWorkController;
 use App\Features\Customers\Controllers\CustomerController;
 use App\Features\Identity\Controllers\AuthController;
 use App\Features\Identity\Controllers\OrganizationController;
@@ -48,6 +49,10 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('reports/hsrp', [BusinessReportsController::class, 'hsrp']);
     Route::get('reports/vehicles', [BusinessReportsController::class, 'vehicles']);
     Route::get('reports/agent-work', [BusinessReportsController::class, 'agentWork']);
+    Route::get('service-works/{type}', [ServiceWorkController::class, 'index']);
+    Route::post('service-works/{type}', [ServiceWorkController::class, 'store']);
+    Route::put('service-works/{type}/{id}', [ServiceWorkController::class, 'update']);
+    Route::delete('service-works/{type}/{id}', [ServiceWorkController::class, 'destroy']);
     Route::post('ocr', [OcrController::class, 'scan'])->middleware('throttle:30,1');
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::post('auth/refresh', [AuthController::class, 'refresh'])->middleware('throttle:60,1');
