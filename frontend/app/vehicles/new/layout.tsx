@@ -1,11 +1,14 @@
 import type { ReactNode } from "react";
+import { Suspense } from "react";
 import VehicleBrokerAgentBridge from "@/components/vehicles/VehicleBrokerAgentBridge";
 import { ComplianceExpiryEnhancer } from "@/components/vehicles/ComplianceExpiryEnhancer";
 import { InlineCustomerCreator } from "@/components/vehicles/InlineCustomerCreator";
+import { FleetVehiclePicker } from "@/components/fleets/FleetVehiclePicker";
 
 export default function NewVehicleLayout({ children }: { children: ReactNode }) {
   return (
     <div className="vehicle-new-footer-sync">
+      <Suspense fallback={null}><FleetVehiclePicker /></Suspense>
       {children}
       <VehicleBrokerAgentBridge />
       <ComplianceExpiryEnhancer />
@@ -28,7 +31,6 @@ export default function NewVehicleLayout({ children }: { children: ReactNode }) 
           box-shadow: 0 18px 50px rgba(7,26,60,.18) !important;
           backdrop-filter: blur(20px) saturate(160%) !important;
         }
-
         .vehicle-new-footer-sync .vehicle-onboarding form > div.fixed > div {
           width: 100% !important;
           max-width: none !important;
@@ -39,7 +41,6 @@ export default function NewVehicleLayout({ children }: { children: ReactNode }) 
           justify-content: flex-end !important;
           gap: 8px !important;
         }
-
         .vehicle-new-footer-sync .vehicle-onboarding form > div.fixed a {
           min-height: 48px !important;
           display: inline-flex !important;
@@ -54,7 +55,6 @@ export default function NewVehicleLayout({ children }: { children: ReactNode }) 
           font-weight: 800 !important;
           box-shadow: none !important;
         }
-
         .vehicle-new-footer-sync .vehicle-onboarding form > div.fixed button[type="submit"],
         .vehicle-new-footer-sync .vehicle-onboarding form > div.fixed button:not([type="button"]) {
           min-width: 180px !important;
@@ -68,16 +68,13 @@ export default function NewVehicleLayout({ children }: { children: ReactNode }) 
           font-weight: 900 !important;
           box-shadow: 0 12px 28px rgba(37,99,235,.28) !important;
         }
-
         @media (max-width: 640px) {
           .vehicle-new-footer-sync .vehicle-onboarding form > div.fixed {
             bottom: 8px !important;
             border-radius: 18px !important;
             padding: 9px !important;
           }
-          .vehicle-new-footer-sync .vehicle-onboarding form > div.fixed > div {
-            gap: 7px !important;
-          }
+          .vehicle-new-footer-sync .vehicle-onboarding form > div.fixed > div { gap: 7px !important; }
           .vehicle-new-footer-sync .vehicle-onboarding form > div.fixed a {
             min-height: 44px !important;
             padding: 0 14px !important;
