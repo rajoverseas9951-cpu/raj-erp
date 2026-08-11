@@ -29,7 +29,7 @@ const navigation:NavItem[]=[
 const insuranceGroups=[
   {label:"Insurance Business",items:[
     ["Insurance Overview","/insurance"],
-    ["Motor Insurance","/policies"],
+    ["Motor Insurance","/insurance/motor"],
     ["Non-Motor / Property","/insurance/non_motor"],
     ["Health Insurance","/insurance/health"],
     ["Life Insurance","/insurance/life"],
