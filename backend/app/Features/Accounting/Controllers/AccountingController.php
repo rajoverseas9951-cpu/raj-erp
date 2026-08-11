@@ -7,6 +7,7 @@ use App\Features\Accounting\Models\Voucher;
 use App\Features\Accounting\Models\VoucherEntry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -151,14 +152,17 @@ class AccountingController
         $agentCommission = round((float) (clone $policies)->sum('agent_commission'), 2);
         $tds = round((float) DB::table('insurance_commissions')->where('tenant_id', $tenant)
             ->whereNull('deleted_at')->sum('tds_amount'), 2);
+        [$rtoIncome, $rtoCost] = $this->rtoOperationalTotals($tenant);
         $recordedExpenses = round((float) DB::table('accounting_vouchers')->where('tenant_id', $tenant)
             ->where('status', 'posted')->where('voucher_type', 'payment')->sum('total_debit'), 2);
-        $expense = round($tds + $agentCommission + $recordedExpenses, 2);
+        $income = round($grossCommission + $rtoIncome, 2);
+        $expense = round($tds + $agentCommission + $rtoCost + $recordedExpenses, 2);
         return response()->json(['success' => true, 'data' => [
-            'income' => $grossCommission, 'expense' => $expense,
-            'gross_commission' => $grossCommission, 'tds' => $tds,
-            'agent_commission' => $agentCommission, 'recorded_expenses' => $recordedExpenses,
-            'net_profit' => round($grossCommission - $expense, 2),
+            'income' => $income, 'expense' => $expense,
+            'insurance_commission' => $grossCommission, 'insurance_agent_commission' => $agentCommission, 'tds' => $tds,
+            'rto_income' => $rtoIncome, 'rto_cost' => $rtoCost, 'rto_profit' => round($rtoIncome - $rtoCost, 2),
+            'recorded_expenses' => $recordedExpenses,
+            'net_profit' => round($income - $expense, 2),
         ]])->header('Cache-Control', 'private, no-store, no-cache, must-revalidate');
     }
 
@@ -167,9 +171,39 @@ class AccountingController
         $trial = collect($this->trialData($request));
         $assetGroups = ['Bank Accounts','Cash-in-Hand','Fixed Assets','Current Assets','Sundry Debtors'];
         $liabilityGroups = ['Loans & Liabilities','Capital Account','Sundry Creditors'];
-        $assets = $trial->whereIn('ledger_group', $assetGroups)->sum(fn ($r) => $r['debit'] - $r['credit']);
-        $liabilities = $trial->whereIn('ledger_group', $liabilityGroups)->sum(fn ($r) => $r['credit'] - $r['debit']);
-        return response()->json(['success' => true, 'data' => ['assets' => $assets, 'liabilities' => $liabilities, 'difference' => $assets - $liabilities]]);
+        $assets = round((float)$trial->whereIn('ledger_group', $assetGroups)->sum(fn ($r) => $r['debit'] - $r['credit']),2);
+        $bookLiabilities = round((float)$trial->whereIn('ledger_group', $liabilityGroups)->sum(fn ($r) => $r['credit'] - $r['debit']),2);
+        $pl = $this->profitLoss($request)->getData(true)['data'];
+        $currentProfit = round((float)($pl['net_profit'] ?? 0),2);
+        $liabilities = round($bookLiabilities + $currentProfit,2);
+        return response()->json(['success' => true, 'data' => [
+            'assets' => $assets,
+            'book_liabilities' => $bookLiabilities,
+            'current_year_profit' => $currentProfit,
+            'liabilities' => $liabilities,
+            'difference' => round($assets - $liabilities,2),
+        ]]);
+    }
+
+    private function rtoOperationalTotals(string $tenant): array
+    {
+        $income = 0.0; $cost = 0.0;
+        $tables = ['vehicle_rto_processes','vehicle_pucs','vehicle_fitnesses','vehicle_permits','vehicle_taxes','vehicle_counter_taxes','vehicle_hsrp_records','vehicle_sld_records','vehicle_transfer_processes'];
+        foreach ($tables as $table) {
+            if (!Schema::hasTable($table)) continue;
+            $rows = DB::table($table)->where('tenant_id',$tenant)->whereNull('deleted_at')->get();
+            foreach ($rows as $r) {
+                $amount=(float)($r->amount ?? 0); $party=(float)($r->party_amount ?? 0);
+                if ($table === 'vehicle_rto_processes') { $income += $amount; $cost += (float)($r->agent_amount ?? 0); continue; }
+                $income += $party > 0 ? $party : $amount;
+                $cost += $party > 0 ? $amount : 0;
+            }
+        }
+        if (Schema::hasTable('service_works')) {
+            $works=DB::table('service_works')->where('tenant_id',$tenant)->whereNull('deleted_at')->whereIn('service_type',['driving_licence','passport'])->get();
+            $income += (float)$works->sum('amount'); $cost += (float)$works->sum('cost');
+        }
+        return [round($income,2),round($cost,2)];
     }
 
     private function trialData(Request $request): array
