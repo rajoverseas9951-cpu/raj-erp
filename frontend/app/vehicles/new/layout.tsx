@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import VehicleBrokerAgentBridge from "@/components/vehicles/VehicleBrokerAgentBridge";
 import { ComplianceExpiryEnhancer } from "@/components/vehicles/ComplianceExpiryEnhancer";
+import { InlineCustomerCreator } from "@/components/vehicles/InlineCustomerCreator";
 
 export default function NewVehicleLayout({ children }: { children: ReactNode }) {
   return (
@@ -8,6 +9,7 @@ export default function NewVehicleLayout({ children }: { children: ReactNode }) 
       {children}
       <VehicleBrokerAgentBridge />
       <ComplianceExpiryEnhancer />
+      <InlineCustomerCreator />
       <style>{`
         .vehicle-new-footer-sync .vehicle-onboarding form > div.fixed {
           position: sticky !important;
