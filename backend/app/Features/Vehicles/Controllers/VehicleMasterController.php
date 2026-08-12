@@ -12,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 
 class VehicleMasterController
 {
-    private const TYPES = ['manufacturers', 'models', 'variants', 'colours', 'vehicle_types', 'vehicle_classes', 'body_types', 'fuel_types', 'rto_offices'];
+    private const TYPES = ['manufacturers', 'models', 'variants', 'colours', 'vehicle_types', 'vehicle_classes', 'body_types', 'fuel_types', 'rto_offices', 'fitness_centers'];
     private const CLASS_MODULES = ['insurance','puc','hsrp','fitness','permit','tax','sld','vltd','rto_process','payment'];
 
     public function __construct(private VehicleMasterResolver $resolver) {}
