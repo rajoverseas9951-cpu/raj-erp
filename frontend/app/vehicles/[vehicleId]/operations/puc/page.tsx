@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { OperationalRecord, vehicleOperationsApi } from '@/lib/vehicle-operations';
+import { Ledger, ledgerApi } from '@/lib/ledgers';
 
 const inputClass = 'h-12 w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-50';
 const labelClass = 'grid gap-1.5 text-[11px] font-black uppercase tracking-[.04em] text-slate-500';
@@ -11,6 +12,7 @@ const money = (value: number) => `₹${value.toLocaleString('en-IN', { minimumFr
 export default function PucPage() {
   const { vehicleId } = useParams<{ vehicleId: string }>();
   const [rows, setRows] = useState<OperationalRecord[]>([]);
+  const [vendorLedgers, setVendorLedgers] = useState<Ledger[]>([]);
   const [period, setPeriod] = useState('');
   const [issueDate, setIssueDate] = useState('');
   const [customerCharge, setCustomerCharge] = useState('');
@@ -24,18 +26,48 @@ export default function PucPage() {
     try { setRows(await vehicleOperationsApi.list(vehicleId, 'puc')); }
     catch (e) { setError(e instanceof Error ? e.message : 'PUC records could not be loaded.'); }
   };
-  useEffect(() => { void load(); }, [vehicleId]);
+
+  const loadVendors = async () => {
+    try {
+      const ledgers = await ledgerApi.list();
+      setVendorLedgers(ledgers.filter((l) => l.status === 'active' && l.ledger_group === 'Sundry Creditors').sort((a, b) => a.ledger_name.localeCompare(b.ledger_name)));
+    } catch {
+      setVendorLedgers([]);
+    }
+  };
+
+  useEffect(() => { void load(); void loadVendors(); }, [vehicleId]);
 
   const expiry = useMemo(() => addMonths(issueDate, Number(period || 0)), [issueDate, period]);
   const charge = Number(customerCharge || 0);
   const cost = Number(vendorCost || 0);
   const margin = charge - cost;
-  const vendorOptions = useMemo(() => Array.from(new Set(rows.map((row) => String(row.vendor ?? '').trim()).filter(Boolean))).sort(), [rows]);
   const visible = rows.filter((row) => JSON.stringify(row).toLowerCase().includes(search.toLowerCase()));
+
+  async function addVendorLedger() {
+    const name = prompt('PUC vendor name');
+    if (!name?.trim()) return;
+    try {
+      const created = await ledgerApi.create({
+        ledger_name: name.trim(),
+        ledger_group: 'Sundry Creditors',
+        opening_balance: 0,
+        balance_type: 'credit',
+        credit_limit: 0,
+        credit_days: 30,
+        gst_applicable: false,
+        status: 'active',
+      });
+      setVendorLedgers((current) => [...current.filter((x) => x.id !== created.id), created].sort((a, b) => a.ledger_name.localeCompare(b.ledger_name)));
+      setVendor(created.ledger_name);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Vendor ledger could not be created.');
+    }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (cost > 0 && !vendor.trim()) { setError('Select or enter the PUC vendor when outsourced cost is entered.'); return; }
+    if (cost > 0 && !vendor.trim()) { setError('Select the PUC vendor ledger when outsourced cost is entered.'); return; }
     setSaving(true); setError('');
     let createdId = '';
     try {
@@ -50,7 +82,6 @@ export default function PucPage() {
       });
       createdId = created.id;
 
-      // Customer billing: creates the receivable immediately if the customer has not paid yet.
       if (charge > 0) {
         await vehicleOperationsApi.create(vehicleId, 'payment', {
           payment_type: 'PUC Bill',
@@ -62,16 +93,15 @@ export default function PucPage() {
         });
       }
 
-      // Vendor is not paid here. Cost is accrued as a payable and can be settled monthly from Agent/Vendor Payment.
       if (cost > 0) {
         await vehicleOperationsApi.create(vehicleId, 'agent_payment', {
           party_name: vendor.trim(),
-          account: 'PUC VENDOR PAYABLE',
+          account: vendor.trim(),
           issue_date: issueDate,
           billed_amount: cost,
           paid_amount: 0,
           reference_number: `PUC-${issueDate}`,
-          notes: `PUC vendor cost accrued for monthly settlement | PUC record ${created.id}`,
+          notes: `PUC vendor payable accrued for monthly settlement | PUC record ${created.id}`,
         });
       }
 
@@ -89,7 +119,7 @@ export default function PucPage() {
     <div className="mx-auto max-w-7xl space-y-4">
       <section className="relative overflow-hidden rounded-[28px] border border-[#173d78] bg-[#071a3c] p-5 text-white shadow-[0_24px_70px_rgba(7,26,60,.20)] sm:p-7">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_90%_10%,rgba(43,117,255,.48),transparent_34%),linear-gradient(135deg,#06152f,#0a2555_60%,#0c3478)]" />
-        <div className="relative flex items-center justify-between gap-4"><div><a href={`/vehicles/${vehicleId}`} className="text-xs font-bold text-blue-200">← Vehicle Profile</a><p className="mt-5 text-[9px] font-black uppercase tracking-[.24em] text-cyan-300">Emission & compliance</p><h1 className="mt-1 text-3xl font-black sm:text-4xl">PUC</h1><p className="mt-2 text-xs text-blue-100/70">Customer billing and monthly vendor payable in one entry.</p></div><div className="grid h-20 w-20 place-items-center rounded-[24px] border border-white/10 bg-white/10 text-4xl">🌿</div></div>
+        <div className="relative flex items-center justify-between gap-4"><div><a href={`/vehicles/${vehicleId}`} className="text-xs font-bold text-blue-200">← Vehicle Profile</a><p className="mt-5 text-[9px] font-black uppercase tracking-[.24em] text-cyan-300">Emission & compliance</p><h1 className="mt-1 text-3xl font-black sm:text-4xl">PUC</h1><p className="mt-2 text-xs text-blue-100/70">Customer billing and monthly vendor settlement in one entry.</p></div><div className="grid h-20 w-20 place-items-center rounded-[24px] border border-white/10 bg-white/10 text-4xl">🌿</div></div>
       </section>
 
       {error && <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700">{error}</div>}
@@ -103,8 +133,8 @@ export default function PucPage() {
           <label className={labelClass}>Expire Date<input type="date" readOnly value={expiry} className={`${inputClass} cursor-not-allowed bg-blue-50/60`}/></label>
 
           <label className={labelClass}>Customer Charge *<div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-slate-400">₹</span><input type="number" min="0" step="0.01" required value={customerCharge} onChange={(e)=>setCustomerCharge(e.target.value)} className={`${inputClass} pl-7`} placeholder="100 / 200 / 0"/></div><span className="normal-case font-semibold tracking-normal text-slate-400">Free PUC ho to ₹0.</span></label>
-          <label className={labelClass}>PUC Vendor Cost<div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-slate-400">₹</span><input type="number" min="0" step="0.01" value={vendorCost} onChange={(e)=>setVendorCost(e.target.value)} className={`${inputClass} pl-7`} placeholder="25 / 50"/></div><span className="normal-case font-semibold tracking-normal text-slate-400">Abhi payment nahi — monthly payable banega.</span></label>
-          <label className={labelClass}>PUC Vendor{cost > 0 ? ' *' : ''}<input list="puc-vendors" required={cost > 0} value={vendor} onChange={(e)=>setVendor(e.target.value)} className={inputClass} placeholder="Select / enter vendor"/><datalist id="puc-vendors">{vendorOptions.map((name)=><option key={name} value={name}/>)}</datalist></label>
+          <label className={labelClass}>PUC Vendor Cost<div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-slate-400">₹</span><input type="number" min="0" step="0.01" value={vendorCost} onChange={(e)=>setVendorCost(e.target.value)} className={`${inputClass} pl-7`} placeholder="25 / 50"/></div><span className="normal-case font-semibold tracking-normal text-slate-400">Monthly vendor payable.</span></label>
+          <label className={labelClass}>PUC Vendor Ledger{cost > 0 ? ' *' : ''}<div className="flex gap-2"><select required={cost > 0} value={vendor} onChange={(e)=>setVendor(e.target.value)} className={inputClass}><option value="">Select Vendor</option>{vendorLedgers.map((ledger)=><option key={ledger.id} value={ledger.ledger_name}>{ledger.ledger_name}</option>)}</select><button type="button" onClick={()=>void addVendorLedger()} className="h-12 shrink-0 rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-lg font-black text-emerald-700" title="Add vendor ledger">+</button></div><span className="normal-case font-semibold tracking-normal text-slate-400">Vendor = Sundry Creditor ledger. Monthly balance isi party ke naam se track hoga.</span></label>
         </div>
 
         <div className="mx-5 mb-5 grid gap-3 rounded-2xl border border-slate-200 bg-[#f8fbff] p-4 sm:mx-6 sm:grid-cols-3">
@@ -113,7 +143,7 @@ export default function PucPage() {
           <MoneyCard label="PUC Margin" value={margin} tone={margin < 0 ? 'red' : 'green'} />
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-slate-100 bg-[#f8fbff] p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"><p className="text-[10px] font-semibold text-slate-500">Vendor cost is accrued now and paid later in the monthly vendor settlement. It is not treated as an immediate bank payment.</p><button disabled={saving || !expiry} className="min-w-[190px] rounded-2xl bg-gradient-to-r from-[#064e3b] to-[#059669] px-6 py-3.5 text-sm font-black text-white shadow-[0_12px_28px_rgba(5,150,105,.25)] disabled:opacity-50">{saving ? 'Saving…' : '+ Add PUC'}</button></div>
+        <div className="flex flex-col gap-3 border-t border-slate-100 bg-[#f8fbff] p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"><p className="text-[10px] font-semibold text-slate-500">Vendor cost is accrued against the selected creditor ledger and paid later in monthly settlement.</p><button disabled={saving || !expiry} className="min-w-[190px] rounded-2xl bg-gradient-to-r from-[#064e3b] to-[#059669] px-6 py-3.5 text-sm font-black text-white shadow-[0_12px_28px_rgba(5,150,105,.25)] disabled:opacity-50">{saving ? 'Saving…' : '+ Add PUC'}</button></div>
       </form>
 
       <section className="overflow-hidden rounded-[28px] border border-[#d9e5f7] bg-white shadow-[0_14px_40px_rgba(26,64,120,.07)]">
