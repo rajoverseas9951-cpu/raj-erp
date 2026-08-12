@@ -30,18 +30,53 @@ class FinanceControlController
 
     public function outstandingExport(Request $request): StreamedResponse
     {
-        $type=$request->query('type','receivable'); abort_unless(in_array($type,['receivable','payable'],true),422,'Invalid outstanding report type.'); $payload=$this->outstandingPayload($this->tenant($request)); $amountKey=$type==='receivable'?'receivable':'payable'; $title=$type==='receivable'?'Party Receivable Report':'Party Payable Report'; $rows=[];
+        $type=$request->query('type','receivable'); abort_unless(in_array($type,['receivable','payable'],true),422,'Invalid outstanding report type.'); $payload=$this->outstandingPayload($this->tenant($request)); $amountKey=$type==='receivable'?'receivable':'payable'; $title=$type==='receivable'?'Customer / Party Receivable Report':'Party Payable Report'; $rows=[];
         foreach($payload['rows'] as $row){if((float)$row[$amountKey]<=0)continue;$rows[]=[$row['name'],$row['group'],'Rs. '.number_format((float)$row[$amountKey],2)];}
-        $total=array_sum(array_map(fn($row)=>(float)$row[$amountKey],$payload['rows'])); $rows[]=['','','']; $rows[]=['TOTAL','', 'Rs. '.number_format($total,2)]; $pdf=SimplePdf::document($title,['Party','Type',$type==='receivable'?'To Receive':'To Pay'],$rows); $filename=$type==='receivable'?'party-receivable.pdf':'party-payable.pdf'; return response()->streamDownload(fn()=>print($pdf),$filename,['Content-Type'=>'application/pdf']);
+        $total=array_sum(array_map(fn($row)=>(float)$row[$amountKey],$payload['rows'])); $rows[]=['','','']; $rows[]=['TOTAL','', 'Rs. '.number_format($total,2)]; $pdf=SimplePdf::document($title,['Party','Type',$type==='receivable'?'To Receive':'To Pay'],$rows); $filename=$type==='receivable'?'customer-party-receivable.pdf':'party-payable.pdf'; return response()->streamDownload(fn()=>print($pdf),$filename,['Content-Type'=>'application/pdf']);
     }
 
     private function outstandingPayload(string $tenant): array
     {
         $rows=collect();
+        $ledgerReceivable=0.0;
+
         if(Schema::hasTable('accounting_ledgers')){
             $ledgers=DB::table('accounting_ledgers')->where('tenant_id',$tenant)->whereIn('ledger_group',['Sundry Debtors','Sundry Creditors'])->orderBy('ledger_name')->get(); $movements=collect();
             if(Schema::hasTable('accounting_voucher_entries')&&Schema::hasTable('accounting_vouchers')) $movements=DB::table('accounting_voucher_entries as e')->join('accounting_vouchers as v','v.id','=','e.voucher_id')->where('e.tenant_id',$tenant)->where('v.status','posted')->select('e.ledger_id',DB::raw("SUM(CASE WHEN e.entry_type='debit' THEN e.amount ELSE 0 END) debit"),DB::raw("SUM(CASE WHEN e.entry_type='credit' THEN e.amount ELSE 0 END) credit"))->groupBy('e.ledger_id')->get()->keyBy('ledger_id');
             $rows=$ledgers->map(function($l) use($movements){$m=$movements->get($l->id);$opening=(float)($l->opening_balance??0)*(($l->balance_type??'debit')==='debit'?1:-1);$balance=$opening+(float)($m->debit??0)-(float)($m->credit??0);return ['id'=>$l->id,'name'=>$l->ledger_name,'group'=>$l->ledger_group,'receivable'=>$balance>0?round($balance,2):0,'payable'=>$balance<0?round(abs($balance),2):0];})->filter(fn($r)=>$r['receivable']>0||$r['payable']>0)->values();
+            $ledgerReceivable=(float)$rows->sum('receivable');
+        }
+
+        // Operational customer receivable is driven by actual billed-vs-received vehicle work.
+        // This includes unpaid insurance premium billed to the customer. Insurance commission is NOT included here.
+        $customerReceivable=0.0;
+        if(Schema::hasTable('vehicle_payments')&&Schema::hasColumn('vehicle_payments','billed_amount')&&Schema::hasColumn('vehicle_payments','paid_amount')){
+            $q=DB::table('vehicle_payments as p')->join('vehicles as v',function($join){$join->on('v.id','=','p.vehicle_id')->on('v.tenant_id','=','p.tenant_id');})->where('p.tenant_id',$tenant);
+            if(Schema::hasColumn('vehicle_payments','deleted_at'))$q->whereNull('p.deleted_at');
+            if(Schema::hasColumn('vehicles','deleted_at'))$q->whereNull('v.deleted_at');
+            if(Schema::hasTable('customers'))$q->leftJoin('customers as c',function($join){$join->on('c.id','=','v.customer_id')->on('c.tenant_id','=','v.tenant_id');});
+            $select=['p.id','p.vehicle_id','p.billed_amount','p.paid_amount'];
+            if(Schema::hasColumn('vehicle_payments','party_name'))$select[]='p.party_name';
+            if(Schema::hasColumn('vehicle_payments','purpose'))$select[]='p.purpose';
+            if(Schema::hasColumn('vehicles','registration_number'))$select[]='v.registration_number';
+            elseif(Schema::hasColumn('vehicles','registration_no'))$select[]='v.registration_no';
+            if(Schema::hasTable('customers')){
+                foreach(['first_name','middle_name','last_name','company_name'] as $column)if(Schema::hasColumn('customers',$column))$select[]='c.'.$column;
+            }
+            $payments=$q->get($select); $pending=[];
+            foreach($payments as $payment){
+                $due=max(0,round((float)($payment->billed_amount??0)-(float)($payment->paid_amount??0),2)); if($due<=0)continue;
+                $party=trim((string)($payment->party_name??''));
+                if($party===''){
+                    $customerParts=[]; foreach(['first_name','middle_name','last_name'] as $field){$value=trim((string)($payment->{$field}??'')); if($value!=='')$customerParts[]=$value;}
+                    $party=trim(implode(' ',$customerParts)); if($party==='')$party=trim((string)($payment->company_name??''));
+                }
+                $registration=trim((string)($payment->registration_number??$payment->registration_no??''));
+                if($party==='')$party=$registration!==''?'Vehicle '.$registration:'Customer';
+                $key=strtolower($party); if(!isset($pending[$key]))$pending[$key]=['id'=>'customer-receivable-'.md5($key),'name'=>$party,'group'=>'Customer Receivable','receivable'=>0,'payable'=>0];
+                $pending[$key]['receivable']=round($pending[$key]['receivable']+$due,2); $customerReceivable=round($customerReceivable+$due,2);
+            }
+            foreach($pending as $row)$rows->push($row);
         }
 
         // A saved policy creates an operational liability to the insurer/purchase source until company funding is recorded.
@@ -59,9 +94,20 @@ class FinanceControlController
             foreach($pending as $row)$rows->push($row);
         }
 
+        // Commission due is kept completely separate from customer receivable: it is money due from insurer/source to the agency.
         $insuranceDue=0.0; if(Schema::hasTable('insurance_commissions')&&Schema::hasColumn('insurance_commissions','net_receivable')){$q=DB::table('insurance_commissions')->where('tenant_id',$tenant);if(Schema::hasColumn('insurance_commissions','deleted_at'))$q->whereNull('deleted_at');if(Schema::hasColumn('insurance_commissions','received_amount'))$insuranceDue=(float)($q->selectRaw('COALESCE(SUM(CASE WHEN COALESCE(net_receivable,0)-COALESCE(received_amount,0)>0 THEN COALESCE(net_receivable,0)-COALESCE(received_amount,0) ELSE 0 END),0) total')->value('total')??0);else$insuranceDue=(float)($q->sum('net_receivable')??0);}
         $serviceDue=0.0; if(Schema::hasTable('service_works')&&Schema::hasColumn('service_works','amount')){$q=DB::table('service_works')->where('tenant_id',$tenant);if(Schema::hasColumn('service_works','deleted_at'))$q->whereNull('deleted_at');if(Schema::hasColumn('service_works','received_amount'))$serviceDue=(float)($q->selectRaw('COALESCE(SUM(CASE WHEN COALESCE(amount,0)-COALESCE(received_amount,0)>0 THEN COALESCE(amount,0)-COALESCE(received_amount,0) ELSE 0 END),0) total')->value('total')??0);}
-        return ['rows'=>$rows->values(),'summary'=>['party_receivable'=>round($rows->sum('receivable'),2),'party_payable'=>round($rows->sum('payable'),2),'insurance_commission_due'=>round($insuranceDue,2),'service_customer_due'=>round($serviceDue,2)]];
+
+        $payable=(float)$rows->sum('payable');
+        return ['rows'=>$rows->values(),'summary'=>[
+            'customer_receivable'=>round($customerReceivable,2),
+            'ledger_receivable'=>round($ledgerReceivable,2),
+            'total_receivable'=>round($customerReceivable+$ledgerReceivable,2),
+            'party_receivable'=>round($ledgerReceivable,2),
+            'party_payable'=>round($payable,2),
+            'insurance_commission_due'=>round($insuranceDue,2),
+            'service_customer_due'=>round($serviceDue,2),
+        ]];
     }
 
     public function openingBalances(Request $request){$rows=DB::table('accounting_ledgers')->where('tenant_id',$this->tenant($request))->orderBy('ledger_name')->get(['id','ledger_name','ledger_group','opening_balance','balance_type']);return response()->json(['success'=>true,'data'=>$rows]);}
