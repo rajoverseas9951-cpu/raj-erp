@@ -150,7 +150,45 @@ class VehicleOperationsController
     private function vehicle(Request $request, string $id): Vehicle { return Vehicle::where('tenant_id', (string) $request->user()?->tenant_id)->findOrFail($id); }
     private function financial(Request $request): bool { return (bool) ($request->user()?->is_admin || $request->user()?->can('vehicle.financial.view')); }
     private function guardFinancial(Request $request, string $module, bool $edit = false): void { if (in_array($module, self::FINANCIAL, true)) abort_unless($request->user()?->is_admin || $request->user()?->can($edit ? 'vehicle.financial.edit' : 'vehicle.financial.view'), 403); }
-    private function guardApplicable(Vehicle $vehicle, string $module): void { $rules = app(VehicleModuleApplicabilityService::class)->modules($vehicle); abort_unless($this->isEnabled($rules, $module), 422, 'Module is not applicable to this vehicle.'); }
+    private function guardApplicable(Vehicle $vehicle, string $module): void
+    {
+        // Fitness is a hard operational requirement for light/heavy commercial goods vehicles.
+        // Do not let stale class-master or per-vehicle overrides block an LGV/LCV/Pickup/Goods Carrier.
+        if ($module === 'fitness' && $this->fitnessCommercialVehicle($vehicle)) return;
+
+        $rules = app(VehicleModuleApplicabilityService::class)->modules($vehicle);
+        abort_unless($this->isEnabled($rules, $module), 422, 'Module is not applicable to this vehicle.');
+    }
+    private function fitnessCommercialVehicle(Vehicle $vehicle): bool
+    {
+        $parts = [
+            $vehicle->vehicle_type,
+            $vehicle->vehicle_class,
+            $vehicle->vehicle_category,
+            $vehicle->model,
+        ];
+
+        foreach (['vehicle_type_id', 'vehicle_class_id'] as $field) {
+            $id = $vehicle->{$field} ?? null;
+            if (! $id) continue;
+            $master = DB::table('vehicle_masters')->where('tenant_id', $vehicle->tenant_id)->where('id', $id)->whereNull('deleted_at')->first();
+            if (! $master) continue;
+            $parts[] = $master->name ?? null;
+            $parts[] = $master->code ?? null;
+            $parts[] = $master->transport_kind ?? null;
+            if (! empty($master->parent_id)) {
+                $parent = DB::table('vehicle_masters')->where('tenant_id', $vehicle->tenant_id)->where('id', $master->parent_id)->whereNull('deleted_at')->first();
+                if ($parent) {
+                    $parts[] = $parent->name ?? null;
+                    $parts[] = $parent->code ?? null;
+                    $parts[] = $parent->transport_kind ?? null;
+                }
+            }
+        }
+
+        $identity = strtoupper(implode(' ', array_filter($parts)));
+        return (bool) preg_match('/\bLGV\b|\bLCV\b|PICK ?UP|PICKUP|LIGHT ?GOODS|GOODS ?CARRIER|COMMERCIAL|TRANSPORT|HGV|HGVT|TRUCK|TIPPER|DUMPER/', $identity);
+    }
     private function isEnabled(array $rules, string $module): bool { return collect($rules['groups'])->flatten()->contains($module); }
     private function authorize(Request $request, string $permission): void { abort_unless($request->user()?->can($permission), 403); }
     private function timeline(Vehicle $vehicle, Request $request, string $type, string $title, string $record): void { DB::table('vehicle_timeline_events')->insert(['id' => (string) Str::uuid(), 'tenant_id' => $vehicle->tenant_id, 'vehicle_id' => $vehicle->id, 'actor_id' => $request->user()?->id, 'event_type' => $type, 'title' => $title, 'description' => null, 'metadata' => json_encode(['record_id' => $record]), 'created_at' => now(), 'updated_at' => now()]); }
