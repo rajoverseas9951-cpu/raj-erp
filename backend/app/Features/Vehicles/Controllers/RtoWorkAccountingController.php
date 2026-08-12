@@ -40,9 +40,19 @@ class RtoWorkAccountingController
             'government_fee_bank_ledger_id' => ['nullable', 'uuid'],
         ]);
 
-        $serviceFee = round((float) $data['amount'], 2);
+        // IMPORTANT ACCOUNTING SEMANTICS:
+        // amount = total package/customer quote INCLUDING government fee.
+        // government_fee = statutory/pass-through component only.
+        // service/other charge = amount - government_fee and is the only RTO income.
+        $totalAmount = round((float) $data['amount'], 2);
         $governmentFee = round((float) ($data['government_fee'] ?? 0), 2);
         $paidBy = $data['government_fee_paid_by'];
+
+        if ($governmentFee > $totalAmount) {
+            throw ValidationException::withMessages(['government_fee' => ['Government fee cannot be more than the total amount charged.']]);
+        }
+
+        $serviceCharge = round($totalAmount - $governmentFee, 2);
 
         if ($governmentFee > 0 && $paidBy === 'us') {
             $bank = DB::table('accounting_ledgers')->where('tenant_id', $tenant)->where('id', $data['government_fee_bank_ledger_id'] ?? null)->first();
@@ -54,14 +64,22 @@ class RtoWorkAccountingController
             throw ValidationException::withMessages(['external_agent' => ['Select/enter the RTO agent who paid the government fee.']]);
         }
 
-        $customerBill = round($serviceFee + ($paidBy === 'owner' ? 0 : $governmentFee), 2);
+        // If owner paid statutory fee directly, we never collected/paid that component.
+        $customerBill = round($paidBy === 'owner' ? $serviceCharge : $totalAmount, 2);
         $id = (string) Str::uuid();
         $actor = $request->user()?->id;
 
-        DB::transaction(function () use ($data, $id, $model, $tenant, $actor, $serviceFee, $governmentFee, $paidBy, $customerBill) {
-            $invoiceVoucher = $this->postCustomerInvoice($model, $data['receipt_date'], $data['reference_number'], $serviceFee, $paidBy === 'owner' ? 0 : $governmentFee, $actor);
-            $governmentVoucher = null;
+        DB::transaction(function () use ($data, $id, $model, $tenant, $actor, $totalAmount, $serviceCharge, $governmentFee, $paidBy, $customerBill) {
+            $invoiceVoucher = $this->postCustomerInvoice(
+                $model,
+                $data['receipt_date'],
+                $data['reference_number'],
+                $serviceCharge,
+                $paidBy === 'owner' ? 0 : $governmentFee,
+                $actor
+            );
 
+            $governmentVoucher = null;
             if ($governmentFee > 0 && $paidBy === 'us') {
                 $governmentVoucher = $this->postGovernmentPaymentToBank($tenant, $data['receipt_date'], $data['reference_number'], $governmentFee, (string) $data['government_fee_bank_ledger_id'], $actor);
             } elseif ($governmentFee > 0 && $paidBy === 'agent') {
@@ -74,7 +92,7 @@ class RtoWorkAccountingController
                 'vehicle_id' => $model->id,
                 'work_type' => $data['work_type'],
                 'receipt_date' => $data['receipt_date'],
-                'amount' => $serviceFee,
+                'amount' => $totalAmount,
                 'reference_number' => $data['reference_number'],
                 'rto_office' => $data['rto_office'],
                 'external_agent' => $data['external_agent'] ?? null,
@@ -104,7 +122,14 @@ class RtoWorkAccountingController
             DB::table('vehicle_timeline_events')->insert([
                 'id' => (string) Str::uuid(), 'tenant_id' => $tenant, 'vehicle_id' => $model->id, 'actor_id' => $actor,
                 'event_type' => 'vehicle.rto_process.created', 'title' => 'RTO Process added', 'description' => $data['reference_number'],
-                'metadata' => json_encode(['record_id' => $id, 'service_fee' => $serviceFee, 'government_fee' => $governmentFee, 'government_fee_paid_by' => $paidBy, 'customer_bill_amount' => $customerBill]),
+                'metadata' => json_encode([
+                    'record_id' => $id,
+                    'total_amount' => $totalAmount,
+                    'service_other_charge' => $serviceCharge,
+                    'government_fee' => $governmentFee,
+                    'government_fee_paid_by' => $paidBy,
+                    'customer_bill_amount' => $customerBill,
+                ]),
                 'created_at' => now(), 'updated_at' => now(),
             ]);
         });
@@ -112,9 +137,9 @@ class RtoWorkAccountingController
         return response()->json(['success' => true, 'data' => DB::table('vehicle_rto_processes')->where('id', $id)->first()], 201);
     }
 
-    private function postCustomerInvoice(Vehicle $vehicle, string $date, string $reference, float $serviceFee, float $recoverableGovernmentFee, ?string $actor): ?string
+    private function postCustomerInvoice(Vehicle $vehicle, string $date, string $reference, float $serviceCharge, float $recoverableGovernmentFee, ?string $actor): ?string
     {
-        $total = round($serviceFee + $recoverableGovernmentFee, 2);
+        $total = round($serviceCharge + $recoverableGovernmentFee, 2);
         if ($total <= 0) return null;
 
         $customer = $vehicle->customer;
@@ -124,7 +149,7 @@ class RtoWorkAccountingController
         $incomeLedger = $this->ensureLedger((string) $vehicle->tenant_id, 'RTO SERVICE INCOME', 'Direct Incomes', 'credit', $actor);
         $govLedger = $recoverableGovernmentFee > 0 ? $this->ensureLedger((string) $vehicle->tenant_id, 'GOVERNMENT FEES RECOVERABLE', 'Current Assets', 'debit', $actor) : null;
 
-        $entries = [[$customerLedger, 'debit', $total], [$incomeLedger, 'credit', $serviceFee]];
+        $entries = [[$customerLedger, 'debit', $total], [$incomeLedger, 'credit', $serviceCharge]];
         if ($recoverableGovernmentFee > 0 && $govLedger) $entries[] = [$govLedger, 'credit', $recoverableGovernmentFee];
         return $this->voucher((string) $vehicle->tenant_id, 'journal', $date, $reference, 'RTO customer bill: '.$vehicle->vehicle_number, $entries, $actor);
     }
