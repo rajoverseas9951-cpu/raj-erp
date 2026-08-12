@@ -25,8 +25,7 @@ class VehicleModuleApplicabilityService
         if ($rules !== []) {
             foreach ($rules as $module => $mode) {
                 if (! in_array($module, ['insurance','puc','hsrp','fitness','permit','tax','sld','vltd','rto_process','payment'], true)) continue;
-                // "required" and "optional" both mean the module is applicable and must be available in UI/API.
-                // "required" is a business/validation distinction; only "na" means not applicable.
+                // required + optional both mean the module is applicable. Only na means unavailable.
                 $enabled[$module] = in_array($mode, ['required', 'optional'], true);
             }
         } else {
@@ -45,6 +44,18 @@ class VehicleModuleApplicabilityService
             foreach ($overrides as $override) $enabled[$override->module] = (bool) $override->enabled;
         }
 
+        // Hard business invariant: LGV / pickup / light-goods vehicles always have Fitness.
+        // This protects older/bad class-master mappings (e.g. GOODS CARRIER with fitness=na)
+        // and prevents the UI from opening Fitness while the API rejects it.
+        $identity = strtoupper(implode(' ', array_filter([
+            $vehicle->vehicle_type,
+            $vehicle->vehicle_class,
+            $vehicle->vehicle_category,
+            $vehicle->model,
+        ])));
+        $lgvFitnessRequired = (bool) preg_match('/\bLGV\b|\bLCV\b|PICK ?UP|PICKUP|LIGHT ?GOODS|GOODS ?CARRIER ?LGV/', $identity);
+        if ($lgvFitnessRequired) $enabled['fitness'] = true;
+
         $groups = [];
         foreach (self::GROUPS as $group => $modules) {
             $groups[$group] = array_values(array_filter($modules, fn ($module) => $enabled[$module] ?? false));
@@ -62,7 +73,7 @@ class VehicleModuleApplicabilityService
                 'moduleRules' => $rules,
                 'twoWheeler' => strtolower((string) ($type?->code ?? $vehicle->vehicle_type)) === 'two_wheeler',
                 'privateCar' => strtolower((string) ($type?->code ?? $vehicle->vehicle_type)) === 'private_car',
-                'lgvPickup' => strtolower((string) ($type?->code ?? $vehicle->vehicle_type)) === 'lgv',
+                'lgvPickup' => $lgvFitnessRequired || strtolower((string) ($type?->code ?? $vehicle->vehicle_type)) === 'lgv',
                 'taxi' => strtolower((string) ($type?->code ?? $vehicle->vehicle_type)) === 'taxi',
                 'hgv' => strtolower((string) ($type?->code ?? $vehicle->vehicle_type)) === 'hgv',
                 'bus' => strtolower((string) ($type?->code ?? $vehicle->vehicle_type)) === 'bus',
