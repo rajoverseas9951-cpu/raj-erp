@@ -13,6 +13,7 @@ final class InsuranceCalculationService
     public function calculate(array $input, ?string $vehicleType = null): array
     {
         $policyType = strtolower((string) ($input['insurance_type'] ?? 'comprehensive'));
+        $normalizedVehicleType = strtolower(trim((string) $vehicleType));
         $hasOd = array_key_exists('has_od_cover', $input)
             ? filter_var($input['has_od_cover'], FILTER_VALIDATE_BOOLEAN)
             : $policyType !== 'third_party';
@@ -25,10 +26,16 @@ final class InsuranceCalculationService
         $addonPremium = $this->money($input['addon_premium'] ?? 0);
         $otherCharges = $this->money($input['other_charges'] ?? 0);
         $customerDiscount = $this->money($input['customer_discount'] ?? 0);
-        $gstPercent = $this->percent($input['gst_percent'] ?? 18);
+        $requestedGstPercent = $this->percent($input['gst_percent'] ?? 18);
 
         $netPremium = $this->money($odPremium + $tpPremium + $addonPremium);
-        $gstAmount = $this->money($netPremium * $gstPercent / 100);
+        [$gstAmount, $gstMode, $odAddonGstPercent, $tpGstPercent] = $this->gst(
+            $normalizedVehicleType,
+            $odPremium,
+            $tpPremium,
+            $addonPremium,
+            $requestedGstPercent
+        );
         $grossPremium = $this->money($netPremium + $gstAmount + $otherCharges);
         $customerPay = $this->money($grossPremium - $customerDiscount);
 
@@ -41,7 +48,7 @@ final class InsuranceCalculationService
         $basis = $this->basis(
             $input['commission_basis'] ?? null,
             $policyType,
-            strtolower((string) $vehicleType)
+            $normalizedVehicleType
         );
         $commissionPercent = $this->percent(
             $input['commission_percent'] ?? $input['od_commission_percent'] ?? 0
@@ -62,8 +69,11 @@ final class InsuranceCalculationService
             'tp_premium' => $tpPremium,
             'addon_premium' => $addonPremium,
             'net_premium' => $netPremium,
-            'gst_percent' => $gstPercent,
+            'gst_percent' => $requestedGstPercent,
             'gst_amount' => $gstAmount,
+            'gst_mode' => $gstMode,
+            'od_addon_gst_percent' => $odAddonGstPercent,
+            'tp_gst_percent' => $tpGstPercent,
             'other_charges' => $otherCharges,
             'gross_premium' => $grossPremium,
             'customer_discount' => $customerDiscount,
@@ -73,6 +83,22 @@ final class InsuranceCalculationService
             'commission_percent' => $commissionPercent,
             'gross_commission' => $grossCommission,
         ];
+    }
+
+    private function gst(string $vehicleType, float $odPremium, float $tpPremium, float $addonPremium, float $requestedPercent): array
+    {
+        // GST law currently gives a specific 12% rate only to third-party insurance of goods carriage.
+        // Own-damage / add-on insurance remains 18%. Passenger commercial vehicles and tractors remain at the normal rate.
+        $goodsCarriage = in_array($vehicleType, ['lgv', 'lcv', 'hgv', 'goods_carrier', 'goods_carriage'], true);
+        if ($goodsCarriage) {
+            $odAddonRate = 18.0;
+            $tpRate = 12.0;
+            $amount = $this->money((($odPremium + $addonPremium) * $odAddonRate / 100) + ($tpPremium * $tpRate / 100));
+            return [$amount, 'mixed_goods_carriage', $odAddonRate, $tpRate];
+        }
+
+        $amount = $this->money(($odPremium + $tpPremium + $addonPremium) * $requestedPercent / 100);
+        return [$amount, 'single_rate', $requestedPercent, $requestedPercent];
     }
 
     private function basis(mixed $requested, string $policyType, string $vehicleType): string
