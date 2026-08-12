@@ -74,6 +74,10 @@ export type InsuranceCalculation = {
   gross_commission: number;
 };
 
+function notifyPolicySaved(vehicleId:string, policyId:string){
+  if(typeof window!=='undefined') window.dispatchEvent(new CustomEvent('raj:policy-saved',{detail:{vehicleId,policyId}}));
+}
+
 async function multipart<T>(path: string, body: FormData): Promise<T> {
   const result = await authenticatedRequest<T>(path, { method: 'POST', body });
   invalidateDashboard();
@@ -92,18 +96,19 @@ export const vehicleInsuranceApi = {
     method: 'POST',
     body: JSON.stringify(body),
   }),
-  create: (vehicleId: string, body: unknown) => request<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances`, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  }, true),
-  saveForm: (vehicleId: string, body: FormData, policyId?: string) => {
-    if (policyId) body.append('_method', 'PUT');
-    return multipart<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances${policyId ? `/${policyId}` : ''}`, body);
+  create: async (vehicleId: string, body: unknown) => {
+    const result=await request<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances`, {method:'POST',body:JSON.stringify(body)}, true);
+    notifyPolicySaved(vehicleId,result.id);return result;
   },
-  update: (vehicleId: string, policyId: string, body: unknown) => request<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances/${policyId}`, {
-    method: 'PUT',
-    body: JSON.stringify(body),
-  }, true),
+  saveForm: async (vehicleId: string, body: FormData, policyId?: string) => {
+    if (policyId) body.append('_method', 'PUT');
+    const result=await multipart<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances${policyId ? `/${policyId}` : ''}`, body);
+    notifyPolicySaved(vehicleId,result.id);return result;
+  },
+  update: async (vehicleId: string, policyId: string, body: unknown) => {
+    const result=await request<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances/${policyId}`, {method:'PUT',body:JSON.stringify(body)}, true);
+    notifyPolicySaved(vehicleId,result.id);return result;
+  },
   remove: (vehicleId: string, policyId: string) => request<null>(`/vehicles/${vehicleId}/insurances/${policyId}`, {
     method: 'DELETE',
   }, true),
