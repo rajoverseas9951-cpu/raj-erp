@@ -55,7 +55,16 @@ export default function FitnessPage(){
  }
  async function addAgentLedger(){const name=prompt('Fitness agent / vendor name');if(!name?.trim())return;const added=await ledgerApi.create({ledger_name:name.trim(),ledger_group:'Sundry Creditors',opening_balance:0,balance_type:'credit',credit_limit:0,credit_days:30,gst_applicable:false,status:'active'});setLedgers(c=>[...c,added]);setAgentLedgerId(added.id)}
  async function ensureClearing(){if(govt<=0||govtPaidBy==='owner')return;const exists=ledgers.find(l=>l.ledger_name.toUpperCase()==='GOVERNMENT FEE CLEARING');if(!exists){const added=await ledgerApi.create({ledger_name:'GOVERNMENT FEE CLEARING',ledger_group:'Current Assets',opening_balance:0,balance_type:'debit',credit_limit:0,credit_days:0,gst_applicable:false,status:'active'});setLedgers(c=>[...c,added])}}
- async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();if(splitInvalid){setError('Government fee cannot be more than total amount.');return}if(!selectedCenter){setError('Select Fitness / Inspection Center.');return}if((outsourced||govtPaidBy==='agent')&&!agentLedgerId){setError('Select Fitness Agent ledger.');return}setSaving(true);setError('');const fd=new FormData(e.currentTarget);let createdId='';try{
+ async function submit(e:FormEvent<HTMLFormElement>){
+  e.preventDefault();
+  const form=e.currentTarget;
+  if(splitInvalid){setError('Government fee cannot be more than total amount.');return}
+  if(!selectedCenter){setError('Select Fitness / Inspection Center.');return}
+  if((outsourced||govtPaidBy==='agent')&&!agentLedgerId){setError('Select Fitness Agent ledger.');return}
+  setSaving(true);setError('');
+  const fd=new FormData(form);
+  let createdId='';
+  try{
    await ensureClearing();
    const center=selectedCenter;
    const created=await vehicleOperationsApi.create(vehicleId,'fitness',{period,issue_date:issueDate,expiry_date:expiry,reference_number:fd.get('reference_number'),receipt_date:fd.get('receipt_date'),party_amount:customerReceivable,amount:total,vendor:selectedAgent?.ledger_name||undefined,notes:`Fitness Center: ${center} | Total ${money(total)} | Govt Fee ${money(govt)} | Service ${money(service)} | Govt paid by ${govtPaidBy}${outsourced?` | Agent cost ${money(agent)}`:''}`});createdId=created.id;
@@ -63,8 +72,11 @@ export default function FitnessPage(){
    if(outsourced&&agent>0)await vehicleOperationsApi.create(vehicleId,'agent_payment',{party_name:selectedAgent?.ledger_name,account:'FITNESS AGENT PAYABLE',issue_date:issueDate,billed_amount:agent,paid_amount:0,reference_number:`FIT-${created.id}`,notes:`Fitness outsourced cost accrued | record ${created.id}`});
    if(govt>0&&govtPaidBy==='agent')await vehicleOperationsApi.create(vehicleId,'agent_payment',{party_name:selectedAgent?.ledger_name,account:'GOVERNMENT FEE CLEARING',issue_date:issueDate,billed_amount:govt,paid_amount:0,reference_number:`FIT-GOVT-${created.id}`,notes:`Fitness government fee paid by agent | record ${created.id}`});
    if(govt>0&&govtPaidBy==='us')await vehicleOperationsApi.create(vehicleId,'payment',{payment_type:'Fitness Government Fee',account:String(fd.get('government_fee_bank_ledger_id')||''),issue_date:issueDate,billed_amount:0,paid_amount:govt,reference_number:`FIT-GOVT-${created.id}`,notes:`Government fee via GOVERNMENT FEE CLEARING | record ${created.id}`});
-   e.currentTarget.reset();setPeriod('');setIssueDate('');setSelectedCenter('');setTotalAmount('');setGovtFee('');setGovtPaidBy('owner');setOutsourced(false);setAgentLedgerId('');setAgentCost('');await load();
- }catch(err){if(createdId){try{await vehicleOperationsApi.remove(vehicleId,'fitness',createdId)}catch{}}setError(err instanceof Error?err.message:'Fitness record could not be saved.')}finally{setSaving(false)}}
+   form.reset();
+   setPeriod('');setIssueDate('');setSelectedCenter('');setTotalAmount('');setGovtFee('');setGovtPaidBy('owner');setOutsourced(false);setAgentLedgerId('');setAgentCost('');
+   await load();
+  }catch(err){if(createdId){try{await vehicleOperationsApi.remove(vehicleId,'fitness',createdId)}catch{}}setError(err instanceof Error?err.message:'Fitness record could not be saved.')}finally{setSaving(false)}
+ }
  return <main className="min-h-screen bg-[#f4f7fc] p-3 text-[#081a3a] sm:p-5 md:p-7"><div className="mx-auto max-w-7xl space-y-4">
   <section className="relative overflow-hidden rounded-[28px] border border-[#173d78] bg-[#071a3c] p-6 text-white shadow-[0_24px_70px_rgba(7,26,60,.20)]"><div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_12%,rgba(48,143,255,.48),transparent_35%),linear-gradient(135deg,#06152f,#0a2555_60%,#0c3478)]"/><div className="relative flex items-center justify-between"><div><a href={`/vehicles/${vehicleId}`} className="text-xs font-bold text-blue-200">← Vehicle Profile</a><p className="mt-5 text-[9px] font-black uppercase tracking-[.24em] text-[#63d4ff]">Commercial compliance</p><h1 className="mt-1 text-3xl font-black">Fitness</h1><p className="mt-2 text-xs text-blue-100/70">Validity, statutory fee and outsourced agent accounting in one entry.</p></div><div className="grid h-20 w-20 place-items-center rounded-[24px] border border-white/10 bg-white/10 text-4xl">✓</div></div></section>
   {error&&<div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">{error}</div>}
