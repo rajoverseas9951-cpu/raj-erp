@@ -104,7 +104,7 @@ export function CustomerForm({ customer }: { customer?: Partial<Customer> }) {
   }
 
   return (
-    <form onSubmit={submit} className="mx-auto max-w-[1500px] space-y-5 pb-28">
+    <form onSubmit={submit} className="mx-auto max-w-[1500px] space-y-5 pb-10">
       <section className="relative overflow-hidden rounded-[30px] border border-[#153d79] bg-[#071a3c] p-6 text-white shadow-[0_24px_70px_rgba(7,26,60,.22)] sm:p-8">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_90%_10%,rgba(49,124,255,.5),transparent_32%),linear-gradient(135deg,#06152f,#0a2555_58%,#0d3b87)]" />
         <div className="relative flex flex-wrap items-end justify-between gap-5">
@@ -113,7 +113,10 @@ export function CustomerForm({ customer }: { customer?: Partial<Customer> }) {
             <h1 className="mt-2 text-4xl font-black tracking-tight">{customer?.id ? "Edit Customer" : "Add Customer"}</h1>
             <p className="mt-2 max-w-xl text-sm text-blue-100/75">Only essential customer details. Fast entry, no unnecessary fields.</p>
           </div>
-          <button type="button" onClick={() => router.push("/customers")} className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-black backdrop-blur">← Customer CRM</button>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => router.push("/dashboard")} className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-black backdrop-blur">Dashboard</button>
+            <button type="button" onClick={() => router.push("/customers")} className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-black backdrop-blur">← Customer CRM</button>
+          </div>
         </div>
       </section>
 
@@ -152,11 +155,6 @@ export function CustomerForm({ customer }: { customer?: Partial<Customer> }) {
           <button disabled={saving} className="min-w-[180px] rounded-2xl bg-gradient-to-r from-[#0b2f6b] to-[#2563eb] px-6 py-3 text-sm font-black text-white shadow-[0_12px_28px_rgba(37,99,235,.28)] disabled:opacity-50">{saving ? "Saving…" : customer?.id ? "✓ Update Customer" : "✓ Save Customer"}</button>
         </div>
       </div>
-
-      <button type="button" onClick={() => router.push("/dashboard")} className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-3 rounded-[22px] border border-[#dbe5f2] bg-white px-5 py-4 text-sm font-black text-[#173b76] shadow-[0_18px_50px_rgba(7,26,60,.18)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_55px_rgba(7,26,60,.22)]">
-        <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-[#0b2f6b] to-[#2563eb] text-white">←</span>
-        Dashboard
-      </button>
     </form>
   );
 }
