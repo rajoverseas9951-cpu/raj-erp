@@ -1,6 +1,7 @@
 import { authenticatedRequest } from '@/lib/api-client';
 import {apiUrl} from '@/lib/api-url';
 import {bearerRequestInit} from '@/lib/bearer-request';
+import {vehicleInsuranceApi} from '@/lib/vehicle-insurance';
 
 export type VehicleModule = 'vehicle_details'|'insurance'|'puc'|'fitness'|'permit'|'tax'|'counter_tax'|'hsrp'|'sld'|'vltd'|'renewal_registration'|'rto_process'|'transfer'|'payment'|'agent_payment'|'other_payment';
 export type OperationDocument={id:string;original_name:string;mime_type:string;size_bytes:number};
@@ -11,8 +12,24 @@ export type OperationalProfile = {
   balances:{billed:number;received:number;outstanding:number};
 };
 export const moduleLabels:Record<VehicleModule,string>={vehicle_details:'Vehicle Details',insurance:'Insurance',puc:'PUC',fitness:'Fitness',permit:'Permit',tax:'Tax',counter_tax:'Counter Tax',hsrp:'HSRP',sld:'SLD',vltd:'VLTD',renewal_registration:'Renewal Registration',rto_process:'RTO Process',transfer:'Transfer Process',payment:'Payment Process',agent_payment:'Agent Payment',other_payment:'Other Payment'};
+
+async function profileWithInsurance(vehicleId:string):Promise<OperationalProfile>{
+ const [profile,policies]=await Promise.all([
+  authenticatedRequest<OperationalProfile>(`/vehicles/${vehicleId}/operational-profile`),
+  vehicleInsuranceApi.list(vehicleId).catch(()=>[]),
+ ]);
+ const live=policies.filter(p=>!p.archived_at&&p.status!=='cancelled'&&p.status!=='expired').sort((a,b)=>String(b.expiry_date).localeCompare(String(a.expiry_date)));
+ if(live.length){
+  const current=live[0];
+  const expiry=new Date(`${current.expiry_date}T23:59:59`);
+  const days=Math.ceil((expiry.getTime()-Date.now())/86400000);
+  profile.modules.insurance={count:live.length,status:days<0?'expired':days<=30?'expiring_soon':'valid',current:current as unknown as OperationalRecord};
+ }else profile.modules.insurance={count:0,status:'not_added'};
+ return profile;
+}
+
 export const vehicleOperationsApi={
- profile:(vehicleId:string)=>authenticatedRequest<OperationalProfile>(`/vehicles/${vehicleId}/operational-profile`),
+ profile:profileWithInsurance,
  list:(vehicleId:string,module:VehicleModule)=>authenticatedRequest<OperationalRecord[]>(`/vehicles/${vehicleId}/operations/${module}`),
  create:(vehicleId:string,module:VehicleModule,body:unknown)=>authenticatedRequest<OperationalRecord>(`/vehicles/${vehicleId}/operations/${module}`,{method:'POST',body:JSON.stringify(body)}),
  update:(vehicleId:string,module:VehicleModule,id:string,body:unknown)=>authenticatedRequest<OperationalRecord>(`/vehicles/${vehicleId}/operations/${module}/${id}`,{method:'PUT',body:JSON.stringify(body)}),
