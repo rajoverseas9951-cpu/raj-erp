@@ -25,8 +25,9 @@ class VehicleModuleApplicabilityService
         if ($rules !== []) {
             foreach ($rules as $module => $mode) {
                 if (! in_array($module, ['insurance','puc','hsrp','fitness','permit','tax','sld','vltd','rto_process','payment'], true)) continue;
-                $enabled[$module] = $mode === 'required';
-                if ($mode === 'optional') $enabled[$module] = false;
+                // "required" and "optional" both mean the module is applicable and must be available in UI/API.
+                // "required" is a business/validation distinction; only "na" means not applicable.
+                $enabled[$module] = in_array($mode, ['required', 'optional'], true);
             }
         } else {
             // Legacy fallback only for older records that have not yet been mapped to a class master.
@@ -97,7 +98,7 @@ class VehicleModuleApplicabilityService
         if ($type === 'taxi' || preg_match('/MOTOR ?CAB|MAXI ?CAB|LPV|TAXI/', $text)) return 'taxi';
         if ($type === 'bus' || preg_match('/BUS|OMNIBUS/', $text)) return 'bus';
         if ($type === 'ambulance' || preg_match('/AMBULANCE/', $text)) return 'ambulance';
-        if (in_array($type,['hgv','goods_vehicle','commercial','transport'],true) || preg_match('/HGV|HGVT|\bGT\b|TRUCK|TIPPER|DUMPER/', $text)) return 'hgv';
+        if (in_array($type,['hgv','goods_vehicle','commercial','transport'],true) || preg_match('/HGV|HGVT|\\bGT\\b|TRUCK|TIPPER|DUMPER/', $text)) return 'hgv';
         return 'private_car';
     }
 
