@@ -40,10 +40,9 @@ class RtoWorkAccountingController
             'government_fee_bank_ledger_id' => ['nullable', 'uuid'],
         ]);
 
-        // IMPORTANT ACCOUNTING SEMANTICS:
-        // amount = total package/customer quote INCLUDING government fee.
+        // amount = total amount quoted/charged to customer INCLUDING government fee.
         // government_fee = statutory/pass-through component only.
-        // service/other charge = amount - government_fee and is the only RTO income.
+        // service/other charge = total - government fee and is the only RTO income.
         $totalAmount = round((float) $data['amount'], 2);
         $governmentFee = round((float) ($data['government_fee'] ?? 0), 2);
         $paidBy = $data['government_fee_paid_by'];
@@ -60,11 +59,13 @@ class RtoWorkAccountingController
                 throw ValidationException::withMessages(['government_fee_bank_ledger_id' => ['Select the bank/cash account used to pay the government fee.']]);
             }
         }
+
         if ($governmentFee > 0 && $paidBy === 'agent' && empty($data['external_agent'])) {
             throw ValidationException::withMessages(['external_agent' => ['Select/enter the RTO agent who paid the government fee.']]);
         }
 
-        // If owner paid statutory fee directly, we never collected/paid that component.
+        // Owner-paid statutory fee never passed through our books; only our service/other charge is receivable.
+        // If office/agent paid it, the customer owes the full quoted amount and government fee passes via CLEARING.
         $customerBill = round($paidBy === 'owner' ? $serviceCharge : $totalAmount, 2);
         $id = (string) Str::uuid();
         $actor = $request->user()?->id;
@@ -81,9 +82,23 @@ class RtoWorkAccountingController
 
             $governmentVoucher = null;
             if ($governmentFee > 0 && $paidBy === 'us') {
-                $governmentVoucher = $this->postGovernmentPaymentToBank($tenant, $data['receipt_date'], $data['reference_number'], $governmentFee, (string) $data['government_fee_bank_ledger_id'], $actor);
+                $governmentVoucher = $this->postGovernmentPaymentToBank(
+                    $tenant,
+                    $data['receipt_date'],
+                    $data['reference_number'],
+                    $governmentFee,
+                    (string) $data['government_fee_bank_ledger_id'],
+                    $actor
+                );
             } elseif ($governmentFee > 0 && $paidBy === 'agent') {
-                $governmentVoucher = $this->postGovernmentPaymentByAgent($tenant, $data['receipt_date'], $data['reference_number'], $governmentFee, (string) $data['external_agent'], $actor);
+                $governmentVoucher = $this->postGovernmentPaymentByAgent(
+                    $tenant,
+                    $data['receipt_date'],
+                    $data['reference_number'],
+                    $governmentFee,
+                    (string) $data['external_agent'],
+                    $actor
+                );
             }
 
             DB::table('vehicle_rto_processes')->insert([
@@ -120,17 +135,24 @@ class RtoWorkAccountingController
             ]);
 
             DB::table('vehicle_timeline_events')->insert([
-                'id' => (string) Str::uuid(), 'tenant_id' => $tenant, 'vehicle_id' => $model->id, 'actor_id' => $actor,
-                'event_type' => 'vehicle.rto_process.created', 'title' => 'RTO Process added', 'description' => $data['reference_number'],
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $tenant,
+                'vehicle_id' => $model->id,
+                'actor_id' => $actor,
+                'event_type' => 'vehicle.rto_process.created',
+                'title' => 'RTO Process added',
+                'description' => $data['reference_number'],
                 'metadata' => json_encode([
                     'record_id' => $id,
                     'total_amount' => $totalAmount,
                     'service_other_charge' => $serviceCharge,
                     'government_fee' => $governmentFee,
                     'government_fee_paid_by' => $paidBy,
+                    'government_fee_ledger' => $governmentFee > 0 && $paidBy !== 'owner' ? 'GOVERNMENT FEE CLEARING' : null,
                     'customer_bill_amount' => $customerBill,
                 ]),
-                'created_at' => now(), 'updated_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         });
 
@@ -140,46 +162,133 @@ class RtoWorkAccountingController
     private function postCustomerInvoice(Vehicle $vehicle, string $date, string $reference, float $serviceCharge, float $recoverableGovernmentFee, ?string $actor): ?string
     {
         $total = round($serviceCharge + $recoverableGovernmentFee, 2);
-        if ($total <= 0) return null;
+        if ($total <= 0) {
+            return null;
+        }
 
         $customer = $vehicle->customer;
-        if (! $customer) throw ValidationException::withMessages(['customer' => ['Vehicle customer is required before RTO billing.']]);
-        $customerName = trim(implode(' ', array_filter([$customer->first_name, $customer->middle_name, $customer->last_name])));
-        $customerLedger = $this->ensureLedger((string) $vehicle->tenant_id, $customerName ?: ('CUSTOMER '.$customer->id), 'Sundry Debtors', 'debit', $actor, $customer->id);
-        $incomeLedger = $this->ensureLedger((string) $vehicle->tenant_id, 'RTO SERVICE INCOME', 'Direct Incomes', 'credit', $actor);
-        $govLedger = $recoverableGovernmentFee > 0 ? $this->ensureLedger((string) $vehicle->tenant_id, 'GOVERNMENT FEES RECOVERABLE', 'Current Assets', 'debit', $actor) : null;
+        if (! $customer) {
+            throw ValidationException::withMessages(['customer' => ['Vehicle customer is required before RTO billing.']]);
+        }
 
-        $entries = [[$customerLedger, 'debit', $total], [$incomeLedger, 'credit', $serviceCharge]];
-        if ($recoverableGovernmentFee > 0 && $govLedger) $entries[] = [$govLedger, 'credit', $recoverableGovernmentFee];
-        return $this->voucher((string) $vehicle->tenant_id, 'journal', $date, $reference, 'RTO customer bill: '.$vehicle->vehicle_number, $entries, $actor);
+        $tenant = (string) $vehicle->tenant_id;
+        $customerName = trim(implode(' ', array_filter([$customer->first_name, $customer->middle_name, $customer->last_name])));
+        $customerLedger = $this->ensureLedger($tenant, $customerName ?: ('CUSTOMER '.$customer->id), 'Sundry Debtors', 'debit', $actor, $customer->id);
+        $incomeLedger = $this->ensureLedger($tenant, 'RTO SERVICE INCOME', 'Direct Incomes', 'credit', $actor);
+
+        $entries = [
+            [$customerLedger, 'debit', $total],
+            [$incomeLedger, 'credit', $serviceCharge],
+        ];
+
+        // Pass-through statutory money is never income. Credit clearing when it becomes customer-billed.
+        if ($recoverableGovernmentFee > 0) {
+            $clearingLedger = $this->ensureGovernmentFeeClearingLedger($tenant, $actor);
+            $entries[] = [$clearingLedger, 'credit', $recoverableGovernmentFee];
+        }
+
+        return $this->voucher($tenant, 'journal', $date, $reference, 'RTO customer bill: '.$vehicle->vehicle_number, $entries, $actor);
     }
 
     private function postGovernmentPaymentToBank(string $tenant, string $date, string $reference, float $amount, string $bankLedgerId, ?string $actor): string
     {
-        $govLedger = $this->ensureLedger($tenant, 'GOVERNMENT FEES RECOVERABLE', 'Current Assets', 'debit', $actor);
-        return $this->voucher($tenant, 'payment', $date, $reference, 'Government fee paid by office', [[$govLedger, 'debit', $amount], [$bankLedgerId, 'credit', $amount]], $actor);
+        $clearingLedger = $this->ensureGovernmentFeeClearingLedger($tenant, $actor);
+
+        // Dr Government Fee Clearing / Cr Bank. Together with invoice credit, clearing becomes NIL.
+        return $this->voucher(
+            $tenant,
+            'payment',
+            $date,
+            $reference,
+            'Government fee paid by office',
+            [[$clearingLedger, 'debit', $amount], [$bankLedgerId, 'credit', $amount]],
+            $actor
+        );
     }
 
     private function postGovernmentPaymentByAgent(string $tenant, string $date, string $reference, float $amount, string $agentName, ?string $actor): string
     {
-        $govLedger = $this->ensureLedger($tenant, 'GOVERNMENT FEES RECOVERABLE', 'Current Assets', 'debit', $actor);
+        $clearingLedger = $this->ensureGovernmentFeeClearingLedger($tenant, $actor);
         $agentLedger = $this->ensureLedger($tenant, $agentName, 'Sundry Creditors', 'credit', $actor);
-        return $this->voucher($tenant, 'journal', $date, $reference, 'Government fee paid by RTO agent', [[$govLedger, 'debit', $amount], [$agentLedger, 'credit', $amount]], $actor);
+
+        // Agent has borne the statutory payment: clear the statutory component and recognise amount payable to agent.
+        return $this->voucher(
+            $tenant,
+            'journal',
+            $date,
+            $reference,
+            'Government fee paid by RTO agent',
+            [[$clearingLedger, 'debit', $amount], [$agentLedger, 'credit', $amount]],
+            $actor
+        );
+    }
+
+    private function ensureGovernmentFeeClearingLedger(string $tenant, ?string $actor): string
+    {
+        // Preserve any existing vouchers: rename the old RECOVERABLE ledger in place instead of creating a second ledger.
+        $existing = DB::table('accounting_ledgers')
+            ->where('tenant_id', $tenant)
+            ->where(function ($query) {
+                $query->whereRaw('LOWER(ledger_name) = ?', ['government fee clearing'])
+                    ->orWhereRaw('LOWER(ledger_name) = ?', ['government fees recoverable'])
+                    ->orWhereRaw('LOWER(ledger_name) = ?', ['government fee recoverable']);
+            })
+            ->first();
+
+        if ($existing) {
+            if (
+                strtoupper((string) $existing->ledger_name) !== 'GOVERNMENT FEE CLEARING' ||
+                (string) $existing->ledger_group !== 'Current Liabilities' ||
+                (string) $existing->balance_type !== 'credit'
+            ) {
+                DB::table('accounting_ledgers')->where('id', $existing->id)->update([
+                    'ledger_name' => 'GOVERNMENT FEE CLEARING',
+                    'ledger_group' => 'Current Liabilities',
+                    'balance_type' => 'credit',
+                    'updated_by' => $actor,
+                    'updated_at' => now(),
+                ]);
+            }
+
+            return (string) $existing->id;
+        }
+
+        return $this->ensureLedger($tenant, 'GOVERNMENT FEE CLEARING', 'Current Liabilities', 'credit', $actor);
     }
 
     private function ensureLedger(string $tenant, string $name, string $group, string $balanceType, ?string $actor, ?string $customerId = null): string
     {
         $query = DB::table('accounting_ledgers')->where('tenant_id', $tenant);
-        if ($customerId) $query->where('customer_id', $customerId); else $query->whereRaw('LOWER(ledger_name) = ?', [strtolower(trim($name))]);
+        if ($customerId) {
+            $query->where('customer_id', $customerId);
+        } else {
+            $query->whereRaw('LOWER(ledger_name) = ?', [strtolower(trim($name))]);
+        }
+
         $existing = $query->first();
-        if ($existing) return (string) $existing->id;
+        if ($existing) {
+            return (string) $existing->id;
+        }
 
         $id = (string) Str::uuid();
         DB::table('accounting_ledgers')->insert([
-            'id' => $id, 'tenant_id' => $tenant, 'customer_id' => $customerId, 'ledger_name' => strtoupper(trim($name)), 'ledger_group' => $group,
-            'opening_balance' => 0, 'balance_type' => $balanceType, 'credit_limit' => 0, 'credit_days' => 0, 'gst_applicable' => false,
-            'status' => 'active', 'created_by' => $actor, 'updated_by' => $actor, 'created_at' => now(), 'updated_at' => now(),
+            'id' => $id,
+            'tenant_id' => $tenant,
+            'customer_id' => $customerId,
+            'ledger_name' => strtoupper(trim($name)),
+            'ledger_group' => $group,
+            'opening_balance' => 0,
+            'balance_type' => $balanceType,
+            'credit_limit' => 0,
+            'credit_days' => 0,
+            'gst_applicable' => false,
+            'status' => 'active',
+            'created_by' => $actor,
+            'updated_by' => $actor,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
+
         return $id;
     }
 
@@ -187,19 +296,42 @@ class RtoWorkAccountingController
     {
         $id = (string) Str::uuid();
         $total = round((float) collect($entries)->where(1, 'debit')->sum(2), 2);
+
         DB::table('accounting_vouchers')->insert([
-            'id' => $id, 'tenant_id' => $tenant, 'voucher_number' => strtoupper(substr($type, 0, 3)).'-RTO-'.now()->format('YmdHis').'-'.random_int(100, 999),
-            'voucher_type' => $type, 'voucher_date' => $date, 'reference_number' => $reference, 'narration' => $narration,
-            'total_debit' => $total, 'total_credit' => $total, 'status' => 'posted', 'created_by' => $actor, 'updated_by' => $actor,
-            'created_at' => now(), 'updated_at' => now(),
+            'id' => $id,
+            'tenant_id' => $tenant,
+            'voucher_number' => strtoupper(substr($type, 0, 3)).'-RTO-'.now()->format('YmdHis').'-'.random_int(100, 999),
+            'voucher_type' => $type,
+            'voucher_date' => $date,
+            'reference_number' => $reference,
+            'narration' => $narration,
+            'total_debit' => $total,
+            'total_credit' => $total,
+            'status' => 'posted',
+            'created_by' => $actor,
+            'updated_by' => $actor,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
+
         foreach ($entries as [$ledgerId, $entryType, $amount]) {
-            if ((float) $amount <= 0) continue;
+            if ((float) $amount <= 0) {
+                continue;
+            }
+
             DB::table('accounting_voucher_entries')->insert([
-                'id' => (string) Str::uuid(), 'tenant_id' => $tenant, 'voucher_id' => $id, 'ledger_id' => $ledgerId,
-                'entry_type' => $entryType, 'amount' => round((float) $amount, 2), 'description' => $narration, 'created_at' => now(), 'updated_at' => now(),
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $tenant,
+                'voucher_id' => $id,
+                'ledger_id' => $ledgerId,
+                'entry_type' => $entryType,
+                'amount' => round((float) $amount, 2),
+                'description' => $narration,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
+
         return $id;
     }
 }
