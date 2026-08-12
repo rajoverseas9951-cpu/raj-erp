@@ -40,6 +40,9 @@ export type VehicleInsurancePolicy = {
   gst_other_charges: number;
   gst_percent: number;
   gst_amount: number;
+  gst_mode?: 'single_rate'|'mixed_goods_carriage';
+  od_addon_gst_percent?: number;
+  tp_gst_percent?: number;
   other_charges: number;
   gross_premium: number;
   commission_percent: number;
@@ -64,6 +67,9 @@ export type InsuranceCalculation = {
   net_premium: number;
   gst_percent: number;
   gst_amount: number;
+  gst_mode?: 'single_rate'|'mixed_goods_carriage';
+  od_addon_gst_percent?: number;
+  tp_gst_percent?: number;
   other_charges: number;
   gross_premium: number;
   customer_discount: number;
