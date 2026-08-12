@@ -28,6 +28,8 @@ async function profileWithInsurance(vehicleId:string):Promise<OperationalProfile
  return profile;
 }
 
+const masterPath=(type:string)=>type==='fitness_center'?'/vehicle-masters/fitness_centers':`/vehicle-operation-masters/${type}`;
+
 export const vehicleOperationsApi={
  profile:profileWithInsurance,
  list:(vehicleId:string,module:VehicleModule)=>authenticatedRequest<OperationalRecord[]>(`/vehicles/${vehicleId}/operations/${module}`),
@@ -35,8 +37,8 @@ export const vehicleOperationsApi={
  update:(vehicleId:string,module:VehicleModule,id:string,body:unknown)=>authenticatedRequest<OperationalRecord>(`/vehicles/${vehicleId}/operations/${module}/${id}`,{method:'PUT',body:JSON.stringify(body)}),
  remove:(vehicleId:string,module:VehicleModule,id:string)=>authenticatedRequest<null>(`/vehicles/${vehicleId}/operations/${module}/${id}`,{method:'DELETE'}),
  upload:(vehicleId:string,module:VehicleModule,id:string,document:File)=>{const body=new FormData();body.set('document',document);return authenticatedRequest(`/vehicles/${vehicleId}/operations/${module}/${id}/documents`,{method:'POST',body})},
- masters:(type:string)=>authenticatedRequest<{id:string;name:string}[]>(`/vehicle-operation-masters/${type}`),
- addMaster:(type:string,name:string)=>authenticatedRequest<{id:string;name:string}>(`/vehicle-operation-masters/${type}`,{method:'POST',body:JSON.stringify({name})}),
+ masters:(type:string)=>authenticatedRequest<{id:string;name:string}[]>(masterPath(type)),
+ addMaster:(type:string,name:string)=>authenticatedRequest<{id:string;name:string}>(masterPath(type),{method:'POST',body:JSON.stringify({name})}),
  downloadDocument:async(vehicleId:string,document:OperationDocument)=>{const token=sessionStorage.getItem('raj_erp_token')??'';const response=await fetch(apiUrl(`/vehicles/${vehicleId}/operation-documents/${document.id}`),bearerRequestInit(token));if(!response.ok)throw new Error('Document could not be downloaded.');const blob=await response.blob();const url=URL.createObjectURL(blob);const link=window.document.createElement('a');link.href=url;link.download=document.original_name;link.click();URL.revokeObjectURL(url)},
 };
 export function operationHref(vehicleId:string,module:VehicleModule){
