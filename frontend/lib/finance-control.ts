@@ -5,7 +5,7 @@ import { apiUrl } from '@/lib/api-url';
 import { invalidateDashboard } from '@/lib/dashboard-refresh';
 
 export type OutstandingRow={id:string;name:string;group:string;receivable:number;payable:number};
-export type OutstandingPayload={rows:OutstandingRow[];summary:{party_receivable:number;party_payable:number;insurance_commission_due:number;service_customer_due:number}};
+export type OutstandingPayload={rows:OutstandingRow[];summary:{customer_receivable:number;ledger_receivable:number;total_receivable:number;party_receivable:number;party_payable:number;insurance_commission_due:number;service_customer_due:number}};
 export type OpeningBalanceRow={id:string;ledger_name:string;ledger_group:string;opening_balance:number|string;balance_type:'debit'|'credit'};
 export type FinancialYearStatus={fy_start:string;fy_end:string;locked:boolean;locked_at?:string|null};
 
@@ -16,7 +16,7 @@ async function downloadOutstanding(type:'receivable'|'payable'){
   const response=await fetch(apiUrl(`/accounting/outstanding/export?type=${type}`),{headers:{Authorization:`Bearer ${token}`,Accept:'application/pdf'}});
   if(!response.ok) throw new Error('PDF report could not be generated.');
   const blob=await response.blob(); const url=URL.createObjectURL(blob); const a=document.createElement('a');
-  a.href=url; a.download=type==='receivable'?'party-receivable.pdf':'party-payable.pdf'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  a.href=url; a.download=type==='receivable'?'customer-party-receivable.pdf':'party-payable.pdf'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
 
 export const financeControlApi={
