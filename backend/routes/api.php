@@ -18,6 +18,7 @@ use App\Features\Ocr\Controllers\OcrController;
 use App\Features\Vehicles\Controllers\FleetController;
 use App\Features\Vehicles\Controllers\PolicyController;
 use App\Features\Vehicles\Controllers\RtoWorkAccountingController;
+use App\Features\Vehicles\Controllers\RtoWorkRecordController;
 use App\Features\Vehicles\Controllers\VehicleController;
 use App\Features\Vehicles\Controllers\VehicleInsuranceController;
 use App\Features\Vehicles\Controllers\VehicleMasterController;
@@ -116,6 +117,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::post('vehicle-operation-masters/{type}', [VehicleOperationsController::class, 'storeMaster']);
     Route::put('vehicles/{vehicle}/module-override', [VehicleOperationsController::class, 'override']);
     Route::post('vehicles/{vehicle}/rto-work-accounting', [RtoWorkAccountingController::class, 'store']);
+    Route::delete('vehicles/{vehicle}/rto-work-records/{record}', [RtoWorkRecordController::class, 'destroy']);
     Route::get('vehicles/{vehicle}/operations/{module}', [VehicleOperationsController::class, 'index']);
     Route::post('vehicles/{vehicle}/operations/{module}', [VehicleOperationsController::class, 'store']);
     Route::put('vehicles/{vehicle}/operations/{module}/{record}', [VehicleOperationsController::class, 'update']);
