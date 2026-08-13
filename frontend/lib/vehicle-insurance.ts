@@ -43,6 +43,10 @@ export type VehicleInsurancePolicy = {
   gst_mode?: 'single_rate'|'mixed_goods_carriage';
   od_addon_gst_percent?: number;
   tp_gst_percent?: number;
+  cgst_amount?: number;
+  sgst_amount?: number;
+  tp_gst_amount?: number;
+  od_addon_gst_amount?: number;
   other_charges: number;
   gross_premium: number;
   commission_percent: number;
@@ -70,6 +74,10 @@ export type InsuranceCalculation = {
   gst_mode?: 'single_rate'|'mixed_goods_carriage';
   od_addon_gst_percent?: number;
   tp_gst_percent?: number;
+  cgst_amount?: number;
+  sgst_amount?: number;
+  tp_gst_amount?: number;
+  od_addon_gst_amount?: number;
   other_charges: number;
   gross_premium: number;
   customer_discount: number;
