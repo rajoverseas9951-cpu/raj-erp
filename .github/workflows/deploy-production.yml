@@ -127,13 +127,19 @@ jobs:
 
             docker compose -f "$APP_DIR/ocr-service/compose.production.yml" ps
             curl --fail --silent --show-error http://127.0.0.1:8081/health
-            curl --fail --silent --show-error https://erp.vimawallah.com/api/health
+
+            # The public Next.js app proxies only /api/v1/* to Laravel. Do not probe
+            # /api/health here: that path belongs to Laravel directly and returns 404
+            # when requested through the frontend host. This CORS preflight verifies
+            # the public frontend -> backend proxy and the unauthenticated auth route.
             CORS_PREFLIGHT="$(curl --fail --silent --show-error --dump-header - --output /dev/null --request OPTIONS \
               https://erp.vimawallah.com/api/v1/auth/login \
               --header 'Origin: https://raj-erp.vercel.app' \
               --header 'Access-Control-Request-Method: POST' \
               --header 'Access-Control-Request-Headers: authorization,content-type')"
             printf '%s\n' "$CORS_PREFLIGHT" | tr -d '\r' | grep -Fxi 'access-control-allow-origin: https://raj-erp.vercel.app'
+            echo "Verified public API proxy and CORS."
+
             LOGIN_HTML="$(curl --fail --silent --show-error https://erp.vimawallah.com/login)"
 
             ASSET_PATH="$(printf '%s' "$LOGIN_HTML" | grep -oE '/_next/static/[^\"[:space:]]+\.(css|js)' | head -n 1 || true)"
