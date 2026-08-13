@@ -12,12 +12,12 @@ concurrency:
 
 jobs:
   repair:
-    name: Repair production code sync
+    name: Repair production and diagnose RTO
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
-      - name: Repair over SSH
+      - name: Repair and diagnose over SSH
         uses: appleboy/ssh-action@v1.2.4
         with:
           host: ${{ secrets.PRODUCTION_SSH_HOST }}
@@ -34,10 +34,10 @@ jobs:
             BACKEND_ENV_BACKUP=/tmp/raj-erp-backend.env.repair
             FRONTEND_ENV_BACKUP=/tmp/raj-erp-frontend.env.local.repair
 
-            echo "Repairing production to commit: $EXPECTED_COMMIT"
+            echo "=== Production repair ==="
+            echo "Target commit: $EXPECTED_COMMIT"
             cd "$APP_DIR"
 
-            # Preserve runtime secrets/configuration before removing tracked local edits.
             if [ -f backend/.env ]; then cp -p backend/.env "$BACKEND_ENV_BACKUP"; fi
             if [ -f frontend/.env.local ]; then cp -p frontend/.env.local "$FRONTEND_ENV_BACKUP"; fi
 
@@ -45,15 +45,20 @@ jobs:
             git checkout main
             git reset --hard "$EXPECTED_COMMIT"
 
-            # Restore runtime environment files after hard sync.
             if [ -f "$BACKEND_ENV_BACKUP" ]; then cp -p "$BACKEND_ENV_BACKUP" backend/.env; rm -f "$BACKEND_ENV_BACKUP"; fi
             if [ -f "$FRONTEND_ENV_BACKUP" ]; then cp -p "$FRONTEND_ENV_BACKUP" frontend/.env.local; rm -f "$FRONTEND_ENV_BACKUP"; fi
 
             ACTUAL_COMMIT="$(git rev-parse HEAD)"
             test "$ACTUAL_COMMIT" = "$EXPECTED_COMMIT"
+            echo "Server commit: $ACTUAL_COMMIT"
 
-            echo "Remaining tracked changes after repair (environment/runtime changes may remain):"
-            git status --short
+            # A tracked controller must never remain locally modified after repair.
+            if ! git diff --quiet -- backend/app/Features/Vehicles/Controllers/VehicleOperationsController.php; then
+              echo "ERROR: VehicleOperationsController still differs from GitHub after hard reset."
+              git diff -- backend/app/Features/Vehicles/Controllers/VehicleOperationsController.php || true
+              exit 1
+            fi
+            echo "VehicleOperationsController matches GitHub."
 
             cd "$APP_DIR/backend"
             composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
@@ -63,9 +68,26 @@ jobs:
             php artisan route:cache
             php artisan view:cache
 
+            echo "=== RTO database/schema diagnostic ==="
+            php artisan tinker --execute="dump(\Illuminate\Support\Facades\Schema::hasTable('vehicle_rto_processes')); dump(\Illuminate\Support\Facades\Schema::getColumnListing('vehicle_rto_processes'));" || true
+
+            echo "=== RTO routes diagnostic ==="
+            php artisan route:list --path=vehicles | grep -Ei 'operations|rto' | tail -n 40 || true
+
+            echo "=== Recent Laravel errors BEFORE reload ==="
+            if [ -f storage/logs/laravel.log ]; then
+              tail -n 250 storage/logs/laravel.log || true
+            else
+              echo "No laravel.log found."
+            fi
+
             pm2 reload "$BACKEND_PM2" --update-env
             pm2 save
             sleep 3
             pm2 describe "$BACKEND_PM2" >/dev/null
 
-            echo "Production backend code repaired to: $ACTUAL_COMMIT"
+            echo "=== Recent backend PM2 errors ==="
+            pm2 logs "$BACKEND_PM2" --err --lines 120 --nostream || true
+
+            echo "=== Repair complete ==="
+            echo "Production backend repaired to: $ACTUAL_COMMIT"
