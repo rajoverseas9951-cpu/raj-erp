@@ -44,6 +44,11 @@ class VehicleModuleApplicabilityService
             foreach ($overrides as $override) $enabled[$override->module] = (bool) $override->enabled;
         }
 
+        // Hard business invariant: RTO work is an operational service for every vehicle class.
+        // Transfer, NOC, hypothecation, duplicate RC, renewal and other RTO work must never be
+        // blocked just because a vehicle-class master has stale/missing module_rules.
+        $enabled['rto_process'] = true;
+
         // Hard business invariant: LGV / pickup / light-goods vehicles always have Fitness.
         // This protects older/bad class-master mappings (e.g. GOODS CARRIER with fitness=na)
         // and prevents the UI from opening Fitness while the API rejects it.
