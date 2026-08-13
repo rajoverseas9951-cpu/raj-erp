@@ -9,9 +9,12 @@ import {
   VehicleModule,
   vehicleOperationsApi,
 } from '@/lib/vehicle-operations';
+import { authenticatedRequest } from '@/lib/api-client';
 
 type FieldSpec = { name: string; label: string; type?: string; required?: boolean };
 type MasterOption = { id: string; name: string };
+type Ledger = { id: string; ledger_name: string; ledger_group: string; opening_balance?: number; balance_type?: string; status: string };
+type PaymentMode = 'cash' | 'bank';
 
 const common: FieldSpec[] = [
   { name: 'reference_number', label: 'Receipt / Reference' },
@@ -67,25 +70,82 @@ export default function VehicleOperationPage() {
   const [pucIssueDate, setPucIssueDate] = useState('');
   const [paymentType, setPaymentType] = useState('Receive');
   const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>('cash');
+  const [paymentLedgerId, setPaymentLedgerId] = useState('');
+  const [paymentLedgers, setPaymentLedgers] = useState<Ledger[]>([]);
 
   const masterType = module === 'permit' ? 'permit_type' : module === 'other_payment' ? 'other_payment_category' : '';
   const load = () => vehicleOperationsApi.list(vehicleId, module).then(setRows).catch((e) => setError(e instanceof Error ? e.message : 'History could not be loaded.'));
+
+  const loadPaymentLedgers = async () => {
+    const ledgers = await authenticatedRequest<Ledger[]>('/ledgers');
+    const usable = ledgers
+      .filter((ledger) => ledger.status === 'active' && ['Bank Accounts', 'Cash-in-Hand'].includes(ledger.ledger_group))
+      .sort((a, b) => a.ledger_name.localeCompare(b.ledger_name));
+    setPaymentLedgers(usable);
+    return usable;
+  };
 
   useEffect(() => { void load(); }, [vehicleId, module]);
   useEffect(() => {
     if (module === 'payment') {
       void vehicleOperationsApi.profile(vehicleId).then(setProfile).catch(() => undefined);
+      void loadPaymentLedgers().catch(() => setPaymentLedgers([]));
     }
   }, [vehicleId, module]);
   useEffect(() => {
     if (masterType) void vehicleOperationsApi.masters(masterType).then(setMasterOptions);
   }, [masterType]);
+  useEffect(() => {
+    if (module !== 'payment') return;
+    const group = paymentMode === 'cash' ? 'Cash-in-Hand' : 'Bank Accounts';
+    const currentStillValid = paymentLedgers.some((ledger) => ledger.id === paymentLedgerId && ledger.ledger_group === group);
+    if (!currentStillValid) {
+      const first = paymentLedgers.find((ledger) => ledger.ledger_group === group);
+      setPaymentLedgerId(first?.id ?? '');
+    }
+  }, [module, paymentMode, paymentLedgerId, paymentLedgers]);
 
   async function addMaster() {
     const name = prompt('Enter the new master value');
     if (!name?.trim()) return;
     const added = await vehicleOperationsApi.addMaster(masterType, name.trim());
     setMasterOptions((current) => current.some((x) => x.id === added.id) ? current : [...current, added].sort((a, b) => a.name.localeCompare(b.name)));
+  }
+
+  async function addPaymentLedger(mode: PaymentMode) {
+    const group = mode === 'cash' ? 'Cash-in-Hand' : 'Bank Accounts';
+    const suggested = mode === 'cash' ? 'CASH' : '';
+    const name = prompt(mode === 'cash' ? 'Cash ledger name (example: CASH / OFFICE CASH)' : 'Bank ledger name (example: HDFC BANK - CURRENT A/C)', suggested);
+    if (!name?.trim()) return;
+    const openingText = prompt('Opening balance (enter 0 if none)', '0');
+    if (openingText === null) return;
+    const opening = Number(openingText || 0);
+    if (!Number.isFinite(opening) || opening < 0) {
+      setError('Opening balance must be zero or a positive amount.');
+      return;
+    }
+    try {
+      setError('');
+      const created = await authenticatedRequest<Ledger>('/ledgers', {
+        method: 'POST',
+        body: JSON.stringify({
+          ledger_name: name.trim(),
+          ledger_group: group,
+          opening_balance: opening,
+          balance_type: 'debit',
+          credit_limit: 0,
+          credit_days: 0,
+          gst_applicable: false,
+          status: 'active',
+        }),
+      });
+      setPaymentMode(mode);
+      const ledgers = await loadPaymentLedgers();
+      setPaymentLedgerId(ledgers.some((ledger) => ledger.id === created.id) ? created.id : '');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Ledger could not be created.');
+    }
   }
 
   async function submitGeneric(event: FormEvent<HTMLFormElement>) {
@@ -134,9 +194,16 @@ export default function VehicleOperationPage() {
     setError('');
     const form = new FormData(event.currentTarget);
     const amount = Number(form.get('amount') || 0);
+    const selectedLedger = paymentLedgers.find((ledger) => ledger.id === paymentLedgerId);
+    if (!selectedLedger) {
+      setSaving(false);
+      setError(`Please select a ${paymentMode === 'cash' ? 'Cash' : 'Bank'} ledger before submitting.`);
+      return;
+    }
     const body: Record<string, unknown> = {
       payment_type: paymentType,
-      account: form.get('account'),
+      ledger_id: selectedLedger.id,
+      account: selectedLedger.ledger_name,
       reference_number: form.get('reference_number'),
       issue_date: form.get('issue_date'),
       notes: form.get('notes'),
@@ -193,7 +260,7 @@ export default function VehicleOperationPage() {
         {module === 'puc' ? (
           <PucWorkspace rows={visible} search={search} setSearch={setSearch} period={pucPeriod} setPeriod={setPucPeriod} issueDate={pucIssueDate} setIssueDate={setPucIssueDate} expiry={pucExpiry} saving={saving} onSubmit={submitPuc} onDelete={(id) => confirm('Delete this PUC record?') && vehicleOperationsApi.remove(vehicleId, 'puc', id).then(load)} />
         ) : module === 'payment' ? (
-          <PaymentWorkspace rows={visible} search={search} setSearch={setSearch} paymentType={paymentType} setPaymentType={setPaymentType} amount={paymentAmount} setAmount={setPaymentAmount} outstanding={outstanding} projected={projectedBalance} saving={saving} onSubmit={submitPayment} onDelete={(id) => confirm('Delete this payment record?') && vehicleOperationsApi.remove(vehicleId, 'payment', id).then(async () => { await load(); setProfile(await vehicleOperationsApi.profile(vehicleId)); })} />
+          <PaymentWorkspace rows={visible} search={search} setSearch={setSearch} paymentType={paymentType} setPaymentType={setPaymentType} amount={paymentAmount} setAmount={setPaymentAmount} outstanding={outstanding} projected={projectedBalance} saving={saving} onSubmit={submitPayment} onDelete={(id) => confirm('Delete this payment record?') && vehicleOperationsApi.remove(vehicleId, 'payment', id).then(async () => { await load(); setProfile(await vehicleOperationsApi.profile(vehicleId)); })} paymentMode={paymentMode} setPaymentMode={setPaymentMode} ledgerId={paymentLedgerId} setLedgerId={setPaymentLedgerId} ledgers={paymentLedgers} onAddLedger={addPaymentLedger} />
         ) : (
           <>
             <form onSubmit={submitGeneric} className="overflow-hidden rounded-[26px] border border-[#d9e5f7] bg-white shadow-[0_14px_40px_rgba(26,64,120,.08)]">
@@ -234,21 +301,24 @@ function PucWorkspace({ rows, search, setSearch, period, setPeriod, issueDate, s
   </>;
 }
 
-function PaymentWorkspace({ rows, search, setSearch, paymentType, setPaymentType, amount, setAmount, outstanding, projected, saving, onSubmit, onDelete }: { rows: OperationalRecord[]; search: string; setSearch: (v: string) => void; paymentType: string; setPaymentType: (v: string) => void; amount: string; setAmount: (v: string) => void; outstanding: number; projected: number; saving: boolean; onSubmit: (e: FormEvent<HTMLFormElement>) => void; onDelete: (id: string) => void }) {
+function PaymentWorkspace({ rows, search, setSearch, paymentType, setPaymentType, amount, setAmount, outstanding, projected, saving, onSubmit, onDelete, paymentMode, setPaymentMode, ledgerId, setLedgerId, ledgers, onAddLedger }: { rows: OperationalRecord[]; search: string; setSearch: (v: string) => void; paymentType: string; setPaymentType: (v: string) => void; amount: string; setAmount: (v: string) => void; outstanding: number; projected: number; saving: boolean; onSubmit: (e: FormEvent<HTMLFormElement>) => void; onDelete: (id: string) => void; paymentMode: PaymentMode; setPaymentMode: (v: PaymentMode) => void; ledgerId: string; setLedgerId: (v: string) => void; ledgers: Ledger[]; onAddLedger: (mode: PaymentMode) => Promise<void> }) {
   const today = new Date().toISOString().slice(0, 10);
+  const group = paymentMode === 'cash' ? 'Cash-in-Hand' : 'Bank Accounts';
+  const available = ledgers.filter((ledger) => ledger.ledger_group === group);
   return <>
     <form onSubmit={onSubmit} className="overflow-hidden rounded-[28px] border border-[#d9e5f7] bg-white shadow-[0_18px_50px_rgba(26,64,120,.09)]">
-      <div className="flex items-center justify-between border-b border-slate-100 bg-gradient-to-r from-white to-blue-50/70 px-5 py-4 sm:px-6"><div><p className="text-[9px] font-black uppercase tracking-[.22em] text-blue-500">Receipt & settlement</p><h2 className="mt-1 text-xl font-black">Payment Process</h2></div><span className="rounded-full bg-blue-50 px-3 py-1.5 text-[9px] font-black uppercase text-blue-700">Secure transaction</span></div>
+      <div className="flex items-center justify-between border-b border-slate-100 bg-gradient-to-r from-white to-blue-50/70 px-5 py-4 sm:px-6"><div><p className="text-[9px] font-black uppercase tracking-[.22em] text-blue-500">Receipt & settlement</p><h2 className="mt-1 text-xl font-black">Payment Process</h2></div><span className="rounded-full bg-blue-50 px-3 py-1.5 text-[9px] font-black uppercase text-blue-700">Ledger controlled</span></div>
       <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3 sm:p-6">
         <label className={labelClass}>Payment Type *<select value={paymentType} onChange={(e) => setPaymentType(e.target.value)} className={inputClass}><option value="Receive">Receive</option><option value="Pay">Pay / Debit</option></select></label>
-        <label className={labelClass}>Bank / Cash *<input name="account" required className={inputClass} placeholder="Select or enter account" /></label>
+        <label className={labelClass}>Payment Mode *<select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value as PaymentMode)} className={inputClass}><option value="cash">Cash</option><option value="bank">Bank / UPI / Online</option></select></label>
+        <label className={labelClass}>{paymentMode === 'cash' ? 'Cash Ledger' : 'Bank Ledger'} *<div className="flex gap-2"><select value={ledgerId} onChange={(e) => setLedgerId(e.target.value)} required className={inputClass}><option value="">{available.length ? `Select ${paymentMode === 'cash' ? 'cash' : 'bank'} account` : `No ${paymentMode === 'cash' ? 'cash' : 'bank'} ledger yet`}</option>{available.map((ledger) => <option key={ledger.id} value={ledger.id}>{ledger.ledger_name}</option>)}</select><button type="button" onClick={() => void onAddLedger(paymentMode)} title={`Add ${paymentMode === 'cash' ? 'cash' : 'bank'} ledger`} className="h-12 min-w-12 rounded-xl border border-blue-200 bg-blue-50 text-lg font-black text-blue-700 transition hover:bg-blue-100">+</button></div><span className="normal-case font-semibold tracking-normal text-slate-400">Only active {paymentMode === 'cash' ? 'Cash-in-Hand' : 'Bank Accounts'} ledgers are shown.</span></label>
         <label className={labelClass}>Vou. No<input name="reference_number" className={inputClass} placeholder="Voucher / reference" /></label>
         <label className={labelClass}>Date *<input name="issue_date" type="date" required defaultValue={today} className={inputClass} /></label>
         <label className={labelClass}>Amount *<div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-slate-400">₹</span><input name="amount" value={amount} onChange={(e) => setAmount(e.target.value)} type="number" min="0.01" step="0.01" required className={`${inputClass} pl-7`} placeholder="0.00" /></div></label>
-        <label className={labelClass}>Narration<textarea name="notes" rows={3} className="min-h-12 w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-3 text-sm font-semibold normal-case tracking-normal text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" placeholder="Enter narration" /></label>
+        <label className={`${labelClass} sm:col-span-2 lg:col-span-3`}>Narration<textarea name="notes" rows={2} className="min-h-12 w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-3 text-sm font-semibold normal-case tracking-normal text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50" placeholder="Enter narration" /></label>
       </div>
       <div className="mx-5 mb-5 grid gap-3 rounded-2xl border border-slate-200 bg-[#f8fbff] p-4 sm:mx-6 sm:grid-cols-3"><BalanceCard label="Current Balance" value={outstanding} /><BalanceCard label={paymentType === 'Receive' ? 'Receiving Now' : 'Adding Debit'} value={Number(amount || 0)} /><BalanceCard label="Closing Balance" value={projected} strong /></div>
-      <div className="flex flex-col gap-3 border-t border-slate-100 bg-[#f8fbff] p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"><p className="text-[10px] font-semibold text-slate-500">Receive reduces outstanding. Pay / Debit increases outstanding.</p><button disabled={saving} className="min-w-[190px] rounded-2xl bg-gradient-to-r from-[#0b2b62] to-[#2563eb] px-6 py-3.5 text-sm font-black text-white shadow-[0_12px_28px_rgba(37,99,235,.28)] transition hover:-translate-y-0.5 disabled:opacity-50">{saving ? 'Saving…' : '+ Submit Payment'}</button></div>
+      <div className="flex flex-col gap-3 border-t border-slate-100 bg-[#f8fbff] p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"><p className="text-[10px] font-semibold text-slate-500">Select the actual Cash/Bank ledger used. This keeps receipts traceable and prevents duplicate account names.</p><button disabled={saving || !ledgerId} className="min-w-[190px] rounded-2xl bg-gradient-to-r from-[#0b2b62] to-[#2563eb] px-6 py-3.5 text-sm font-black text-white shadow-[0_12px_28px_rgba(37,99,235,.28)] transition hover:-translate-y-0.5 disabled:opacity-50">{saving ? 'Saving…' : '+ Submit Payment'}</button></div>
     </form>
     <section className="overflow-hidden rounded-[28px] border border-[#d9e5f7] bg-white shadow-[0_14px_40px_rgba(26,64,120,.07)]"><HistoryHeader title="Payment Process Details" count={rows.length} search={search} setSearch={setSearch} /><div className="overflow-x-auto"><table className="min-w-full text-xs sm:text-sm"><thead className="bg-[#f8fbff]"><tr className="text-left text-[9px] font-black uppercase tracking-wide text-slate-400"><th className="p-4">Date</th><th className="p-4">Vou. No</th><th className="p-4">Account Name</th><th className="p-4 text-right">Credit</th><th className="p-4 text-right">Debit</th><th className="p-4">Action</th></tr></thead><tbody>{rows.map((row) => <tr key={row.id} className="border-t border-slate-100 hover:bg-blue-50/30"><td className="p-4">{formatDate(row.issue_date)}</td><td className="p-4 font-semibold text-blue-700">{String(row.reference_number ?? '—')}</td><td className="p-4"><p className="font-black">{String(row.account ?? '—')}</p><p className="mt-1 text-[10px] text-slate-400">{String(row.notes ?? row.payment_type ?? '')}</p></td><td className="p-4 text-right font-black text-emerald-700">{Number(row.paid_amount ?? 0) ? `₹${Number(row.paid_amount).toFixed(2)}` : '—'}</td><td className="p-4 text-right font-black text-rose-700">{Number(row.billed_amount ?? 0) ? `₹${Number(row.billed_amount).toFixed(2)}` : '—'}</td><td className="p-4"><button type="button" onClick={() => onDelete(row.id)} className="font-black text-rose-600">Delete</button></td></tr>)}</tbody></table>{rows.length === 0 && <Empty />}</div></section>
   </>;
