@@ -29,13 +29,14 @@ final class InsuranceCalculationService
         $requestedGstPercent = $this->percent($input['gst_percent'] ?? 18);
 
         $netPremium = $this->money($odPremium + $tpPremium + $addonPremium);
-        [$gstAmount, $gstMode, $odAddonGstPercent, $tpGstPercent] = $this->gst(
+        $gst = $this->gst(
             $normalizedVehicleType,
             $odPremium,
             $tpPremium,
             $addonPremium,
             $requestedGstPercent
         );
+        $gstAmount = $gst['amount'];
         $grossPremium = $this->money($netPremium + $gstAmount + $otherCharges);
         $customerPay = $this->money($grossPremium - $customerDiscount);
 
@@ -71,9 +72,13 @@ final class InsuranceCalculationService
             'net_premium' => $netPremium,
             'gst_percent' => $requestedGstPercent,
             'gst_amount' => $gstAmount,
-            'gst_mode' => $gstMode,
-            'od_addon_gst_percent' => $odAddonGstPercent,
-            'tp_gst_percent' => $tpGstPercent,
+            'gst_mode' => $gst['mode'],
+            'od_addon_gst_percent' => $gst['od_addon_rate'],
+            'tp_gst_percent' => $gst['tp_rate'],
+            'cgst_amount' => $gst['cgst'],
+            'sgst_amount' => $gst['sgst'],
+            'tp_gst_amount' => $gst['tp_gst'],
+            'od_addon_gst_amount' => $gst['od_addon_gst'],
             'other_charges' => $otherCharges,
             'gross_premium' => $grossPremium,
             'customer_discount' => $customerDiscount,
@@ -85,20 +90,59 @@ final class InsuranceCalculationService
         ];
     }
 
+    /**
+     * LGV / goods-carriage GST rule is based on actual insurer GST invoices supplied to the business:
+     * - Basic TP: 5% total GST = 2.5% CGST + 2.5% SGST.
+     * - Everything other than Basic TP: 18% = 9% CGST + 9% SGST.
+     *
+     * In the existing ERP data model, tp_premium is treated as Basic TP for LGV and addon_premium
+     * is the 18% non-OD bucket (tariff add-ons / PA / legal-liability amounts as applicable).
+     * CGST and SGST are rounded independently before being added, matching insurer invoices.
+     */
     private function gst(string $vehicleType, float $odPremium, float $tpPremium, float $addonPremium, float $requestedPercent): array
     {
-        // GST law currently gives a specific 12% rate only to third-party insurance of goods carriage.
-        // Own-damage / add-on insurance remains 18%. Passenger commercial vehicles and tractors remain at the normal rate.
         $goodsCarriage = in_array($vehicleType, ['lgv', 'lcv', 'hgv', 'goods_carrier', 'goods_carriage'], true);
+
         if ($goodsCarriage) {
+            $tpRate = 5.0;
             $odAddonRate = 18.0;
-            $tpRate = 12.0;
-            $amount = $this->money((($odPremium + $addonPremium) * $odAddonRate / 100) + ($tpPremium * $tpRate / 100));
-            return [$amount, 'mixed_goods_carriage', $odAddonRate, $tpRate];
+
+            $tpCgst = $this->money($tpPremium * 2.5 / 100);
+            $tpSgst = $this->money($tpPremium * 2.5 / 100);
+            $otherTaxablePremium = $this->money($odPremium + $addonPremium);
+            $otherCgst = $this->money($otherTaxablePremium * 9 / 100);
+            $otherSgst = $this->money($otherTaxablePremium * 9 / 100);
+
+            $tpGst = $this->money($tpCgst + $tpSgst);
+            $odAddonGst = $this->money($otherCgst + $otherSgst);
+            $cgst = $this->money($tpCgst + $otherCgst);
+            $sgst = $this->money($tpSgst + $otherSgst);
+
+            return [
+                'amount' => $this->money($cgst + $sgst),
+                'mode' => 'mixed_goods_carriage',
+                'od_addon_rate' => $odAddonRate,
+                'tp_rate' => $tpRate,
+                'cgst' => $cgst,
+                'sgst' => $sgst,
+                'tp_gst' => $tpGst,
+                'od_addon_gst' => $odAddonGst,
+            ];
         }
 
-        $amount = $this->money(($odPremium + $tpPremium + $addonPremium) * $requestedPercent / 100);
-        return [$amount, 'single_rate', $requestedPercent, $requestedPercent];
+        $taxablePremium = $this->money($odPremium + $tpPremium + $addonPremium);
+        $amount = $this->money($taxablePremium * $requestedPercent / 100);
+
+        return [
+            'amount' => $amount,
+            'mode' => 'single_rate',
+            'od_addon_rate' => $requestedPercent,
+            'tp_rate' => $requestedPercent,
+            'cgst' => 0.0,
+            'sgst' => 0.0,
+            'tp_gst' => 0.0,
+            'od_addon_gst' => $amount,
+        ];
     }
 
     private function basis(mixed $requested, string $policyType, string $vehicleType): string
