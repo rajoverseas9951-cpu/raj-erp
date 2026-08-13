@@ -18,6 +18,35 @@ class LedgerController
             ->orderBy('ledger_name')
             ->get();
 
+        // Keep old production ledger rows compatible with the current UI.
+        // Historical rows may contain snake_case group names such as
+        // `sundry_debtors`, while new rows use the canonical display labels.
+        $groupMap = [
+            'sundry_debtors' => 'Sundry Debtors',
+            'sundry_creditors' => 'Sundry Creditors',
+            'bank_accounts' => 'Bank Accounts',
+            'cash_in_hand' => 'Cash-in-Hand',
+            'direct_expenses' => 'Direct Expenses',
+            'indirect_expenses' => 'Indirect Expenses',
+            'direct_incomes' => 'Direct Incomes',
+            'indirect_incomes' => 'Indirect Incomes',
+            'loans_liabilities' => 'Loans & Liabilities',
+            'capital_account' => 'Capital Account',
+            'fixed_assets' => 'Fixed Assets',
+            'current_assets' => 'Current Assets',
+            'other' => 'Other',
+        ];
+
+        $ledgers->each(function (Ledger $ledger) use ($groupMap) {
+            $key = strtolower(trim((string) $ledger->ledger_group));
+            $key = preg_replace('/[^a-z0-9]+/', '_', $key) ?: $key;
+            $key = trim($key, '_');
+
+            if (isset($groupMap[$key])) {
+                $ledger->ledger_group = $groupMap[$key];
+            }
+        });
+
         return response()->json(['success' => true, 'data' => $ledgers]);
     }
 
