@@ -152,6 +152,10 @@ class VehicleOperationsController
     private function guardFinancial(Request $request, string $module, bool $edit = false): void { if (in_array($module, self::FINANCIAL, true)) abort_unless($request->user()?->is_admin || $request->user()?->can($edit ? 'vehicle.financial.edit' : 'vehicle.financial.view'), 403); }
     private function guardApplicable(Vehicle $vehicle, string $module): void
     {
+        // RTO work (transfer, NOC, hypothecation, duplicate RC, renewal, etc.) can apply to every vehicle.
+        // Never block this operational workspace because of class-master applicability rules.
+        if ($module === 'rto_process') return;
+
         // Fitness is a hard operational requirement for light/heavy commercial goods vehicles.
         // Do not let stale class-master or per-vehicle overrides block an LGV/LCV/Pickup/Goods Carrier.
         if ($module === 'fitness' && $this->fitnessCommercialVehicle($vehicle)) return;
