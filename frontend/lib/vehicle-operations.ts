@@ -14,8 +14,9 @@ export type OperationalProfile = {
 export const moduleLabels:Record<VehicleModule,string>={vehicle_details:'Vehicle Details',insurance:'Insurance',puc:'PUC',fitness:'Fitness',permit:'Permit',tax:'Tax',counter_tax:'Counter Tax',hsrp:'HSRP',sld:'SLD',vltd:'VLTD',renewal_registration:'Renewal Registration',rto_process:'RTO Process',transfer:'Transfer Process',payment:'Payment Process',agent_payment:'Agent Payment',other_payment:'Other Payment'};
 
 async function profileWithInsurance(vehicleId:string):Promise<OperationalProfile>{
+ const fresh=Date.now();
  const [profile,policies]=await Promise.all([
-  authenticatedRequest<OperationalProfile>(`/vehicles/${vehicleId}/operational-profile`),
+  authenticatedRequest<OperationalProfile>(`/vehicles/${vehicleId}/operational-profile?_fresh=${fresh}`),
   vehicleInsuranceApi.list(vehicleId).catch(()=>[]),
  ]);
  const live=policies.filter(p=>!p.archived_at&&p.status!=='cancelled'&&p.status!=='expired').sort((a,b)=>String(b.expiry_date).localeCompare(String(a.expiry_date)));
