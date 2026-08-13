@@ -11,7 +11,17 @@ export default function CashBankPage(){
  useEffect(()=>{ledgerApi.list().then(setLedgers).catch(e=>setError(e instanceof Error?e.message:'Accounts could not load.'))},[]);
  const cashBank=useMemo(()=>ledgers.filter(l=>['Cash-in-Hand','Bank Accounts'].includes(l.ledger_group)),[ledgers]);
  const others=useMemo(()=>ledgers.filter(l=>!['Cash-in-Hand','Bank Accounts'].includes(l.ledger_group)),[ledgers]);
- async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();setSaving(true);setError('');setMsg('');const f=new FormData(e.currentTarget);try{const r=await financeControlApi.simpleEntry({entry_type:type,date:String(f.get('date')),amount:Number(f.get('amount')),cash_bank_ledger_id:String(f.get('cash_bank_ledger_id')),other_ledger_id:String(f.get('other_ledger_id')),reference_number:String(f.get('reference_number')||''),notes:String(f.get('notes')||'')});setMsg(`Saved successfully · ${r.voucher_number}`);e.currentTarget.reset()}catch(err){setError(err instanceof Error?err.message:'Entry could not be saved.')}finally{setSaving(false)}}
+ async function submit(e:FormEvent<HTMLFormElement>){
+  e.preventDefault();
+  const form=e.currentTarget;
+  const f=new FormData(form);
+  setSaving(true);setError('');setMsg('');
+  try{
+   const r=await financeControlApi.simpleEntry({entry_type:type,date:String(f.get('date')),amount:Number(f.get('amount')),cash_bank_ledger_id:String(f.get('cash_bank_ledger_id')),other_ledger_id:String(f.get('other_ledger_id')),reference_number:String(f.get('reference_number')||''),notes:String(f.get('notes')||'')});
+   setMsg(`Saved successfully · ${r.voucher_number}`);
+   form.reset();
+  }catch(err){setError(err instanceof Error?err.message:'Entry could not be saved.')}finally{setSaving(false)}
+ }
  return <main className="min-h-screen bg-[#f3f7fc] p-4 sm:p-6 lg:p-8"><div className="mx-auto max-w-[1200px] space-y-5">
   <section className="rounded-[30px] bg-gradient-to-br from-[#07172f] via-[#0d3474] to-[#2167df] p-7 text-white shadow-xl"><p className="text-[10px] font-black uppercase tracking-[.22em] text-cyan-200">Daily Accounts</p><h1 className="mt-2 text-4xl font-black">Cash & Bank Entry</h1><p className="mt-2 max-w-2xl text-sm text-blue-100/80">No debit-credit jargon. Just tell the system whether money came in, went out, or was an expense.</p></section>
   {(msg||error)&&<div className={`rounded-2xl border p-4 font-bold ${error?'border-red-200 bg-red-50 text-red-700':'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>{error||msg}</div>}
