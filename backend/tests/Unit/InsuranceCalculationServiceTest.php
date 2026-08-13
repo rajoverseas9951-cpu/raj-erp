@@ -48,6 +48,52 @@ class InsuranceCalculationServiceTest extends TestCase
         $this->assertSame(17100.0, $result['customer_pay']);
     }
 
+    public function test_lgv_comprehensive_matches_real_sbi_general_invoice(): void
+    {
+        // SBI General policy POCMVGC0100969951:
+        // Basic TP 16,049 @ 5%; all other premium 3,392.32 @ 18%.
+        // Existing ERP stores OD separately and the remaining 18% bucket in addon_premium.
+        $result = (new InsuranceCalculationService)->calculate([
+            'insurance_type' => 'comprehensive',
+            'od_premium' => 2917.32,
+            'tp_premium' => 16049,
+            'addon_premium' => 475,
+            'other_charges' => 0,
+        ], 'lgv');
+
+        $this->assertSame('mixed_goods_carriage', $result['gst_mode']);
+        $this->assertSame(5.0, $result['tp_gst_percent']);
+        $this->assertSame(18.0, $result['od_addon_gst_percent']);
+        $this->assertSame(19441.32, $result['net_premium']);
+        $this->assertSame(802.46, $result['tp_gst_amount']);
+        $this->assertSame(610.6, $result['od_addon_gst_amount']);
+        $this->assertSame(706.53, $result['cgst_amount']);
+        $this->assertSame(706.53, $result['sgst_amount']);
+        $this->assertSame(1413.06, $result['gst_amount']);
+        $this->assertSame(20854.38, $result['gross_premium']);
+    }
+
+    public function test_lgv_third_party_matches_real_sbi_general_invoice(): void
+    {
+        // SBI General policy POCMVGC0100967410:
+        // Basic TP 16,049 @ 5%; PA/LL total 425 @ 18%.
+        $result = (new InsuranceCalculationService)->calculate([
+            'insurance_type' => 'third_party',
+            'od_premium' => 0,
+            'tp_premium' => 16049,
+            'addon_premium' => 425,
+            'other_charges' => 0,
+        ], 'lgv');
+
+        $this->assertSame(16474.0, $result['net_premium']);
+        $this->assertSame(802.46, $result['tp_gst_amount']);
+        $this->assertSame(76.5, $result['od_addon_gst_amount']);
+        $this->assertSame(439.48, $result['cgst_amount']);
+        $this->assertSame(439.48, $result['sgst_amount']);
+        $this->assertSame(878.96, $result['gst_amount']);
+        $this->assertSame(17352.96, $result['gross_premium']);
+    }
+
     public static function commissionCases(): array
     {
         return [
