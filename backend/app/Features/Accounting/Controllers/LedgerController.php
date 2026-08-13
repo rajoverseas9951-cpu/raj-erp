@@ -5,6 +5,7 @@ namespace App\Features\Accounting\Controllers;
 use App\Features\Accounting\Models\Ledger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class LedgerController
 {
@@ -35,13 +36,25 @@ class LedgerController
             'status' => ['required', 'in:active,inactive'],
         ]);
 
+        $ledgerName = strtoupper(trim($data['ledger_name']));
+        $duplicate = Ledger::query()
+            ->where('tenant_id', $tenantId)
+            ->whereRaw('LOWER(ledger_name) = ?', [strtolower($ledgerName)])
+            ->first();
+
+        if ($duplicate) {
+            throw ValidationException::withMessages([
+                'ledger_name' => ['A ledger with this name already exists. Use the existing ledger instead of creating a duplicate.'],
+            ]);
+        }
+
         $actorId = $request->user()?->id;
 
         $ledger = Ledger::create([
             'id' => (string) Str::uuid(),
             'tenant_id' => $tenantId,
             'customer_id' => null,
-            'ledger_name' => strtoupper(trim($data['ledger_name'])),
+            'ledger_name' => $ledgerName,
             'ledger_group' => $data['ledger_group'],
             'opening_balance' => $data['opening_balance'] ?? 0,
             'balance_type' => $data['balance_type'],
