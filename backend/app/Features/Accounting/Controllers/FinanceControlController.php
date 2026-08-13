@@ -47,8 +47,9 @@ class FinanceControlController
             $ledgerReceivable=(float)$rows->sum('receivable');
         }
 
-        // Operational customer receivable is driven by actual billed-vs-received vehicle work.
-        // This includes unpaid insurance premium billed to the customer. Insurance commission is NOT included here.
+        // Operational customer receivable must be netted at vehicle level.
+        // Bills and receipts are separate rows in vehicle_payments, so calculating
+        // max(billed-paid,0) row-by-row incorrectly ignores receipt rows.
         $customerReceivable=0.0;
         if(Schema::hasTable('vehicle_payments')&&Schema::hasColumn('vehicle_payments','billed_amount')&&Schema::hasColumn('vehicle_payments','paid_amount')){
             $q=DB::table('vehicle_payments as p')->join('vehicles as v',function($join){$join->on('v.id','=','p.vehicle_id')->on('v.tenant_id','=','p.tenant_id');})->where('p.tenant_id',$tenant);
@@ -63,20 +64,43 @@ class FinanceControlController
             if(Schema::hasTable('customers')){
                 foreach(['first_name','middle_name','last_name','company_name'] as $column)if(Schema::hasColumn('customers',$column))$select[]='c.'.$column;
             }
-            $payments=$q->get($select); $pending=[];
+
+            $payments=$q->get($select);
+            $vehicleBalances=[];
             foreach($payments as $payment){
-                $due=max(0,round((float)($payment->billed_amount??0)-(float)($payment->paid_amount??0),2)); if($due<=0)continue;
-                $party=trim((string)($payment->party_name??''));
-                if($party===''){
-                    $customerParts=[]; foreach(['first_name','middle_name','last_name'] as $field){$value=trim((string)($payment->{$field}??'')); if($value!=='')$customerParts[]=$value;}
-                    $party=trim(implode(' ',$customerParts)); if($party==='')$party=trim((string)($payment->company_name??''));
+                $key=(string)$payment->vehicle_id;
+                if(!isset($vehicleBalances[$key])){
+                    $party=trim((string)($payment->party_name??''));
+                    if($party===''){
+                        $customerParts=[];
+                        foreach(['first_name','middle_name','last_name'] as $field){$value=trim((string)($payment->{$field}??''));if($value!=='')$customerParts[]=$value;}
+                        $party=trim(implode(' ',$customerParts));
+                        if($party==='')$party=trim((string)($payment->company_name??''));
+                    }
+                    $registration=trim((string)($payment->registration_number??$payment->registration_no??''));
+                    if($party==='')$party=$registration!==''?'Vehicle '.$registration:'Customer';
+                    $vehicleBalances[$key]=[
+                        'id'=>'customer-receivable-'.$key,
+                        'name'=>$party,
+                        'group'=>'Customer Receivable',
+                        'receivable'=>0.0,
+                        'payable'=>0.0,
+                        'billed'=>0.0,
+                        'received'=>0.0,
+                    ];
                 }
-                $registration=trim((string)($payment->registration_number??$payment->registration_no??''));
-                if($party==='')$party=$registration!==''?'Vehicle '.$registration:'Customer';
-                $key=strtolower($party); if(!isset($pending[$key]))$pending[$key]=['id'=>'customer-receivable-'.md5($key),'name'=>$party,'group'=>'Customer Receivable','receivable'=>0,'payable'=>0];
-                $pending[$key]['receivable']=round($pending[$key]['receivable']+$due,2); $customerReceivable=round($customerReceivable+$due,2);
+                $vehicleBalances[$key]['billed']=round($vehicleBalances[$key]['billed']+(float)($payment->billed_amount??0),2);
+                $vehicleBalances[$key]['received']=round($vehicleBalances[$key]['received']+(float)($payment->paid_amount??0),2);
             }
-            foreach($pending as $row)$rows->push($row);
+
+            foreach($vehicleBalances as $balance){
+                $due=max(0,round($balance['billed']-$balance['received'],2));
+                if($due<=0)continue;
+                unset($balance['billed'],$balance['received']);
+                $balance['receivable']=$due;
+                $customerReceivable=round($customerReceivable+$due,2);
+                $rows->push($balance);
+            }
         }
 
         // A saved policy creates an operational liability to the insurer/purchase source until company funding is recorded.
