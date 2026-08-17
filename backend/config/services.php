@@ -10,4 +10,8 @@ return [
         'url' => env('PADDLEOCR_URL', 'http://127.0.0.1:8081'),
         'timeout' => (int) env('PADDLEOCR_TIMEOUT', 100),
     ],
+    'openai' => [
+        'key' => env('OPENAI_API_KEY'),
+        'bug_agent_model' => env('BUG_AGENT_MODEL', 'gpt-5.6-terra'),
+    ],
 ];
