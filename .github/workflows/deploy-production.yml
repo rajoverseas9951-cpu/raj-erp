@@ -123,8 +123,7 @@ jobs:
             if pm2 describe "$SCHEDULER_PM2" >/dev/null 2>&1; then
               pm2 restart "$SCHEDULER_PM2" --update-env
             else
-              cd "$APP_DIR/backend"
-              pm2 start "php artisan schedule:work" --name "$SCHEDULER_PM2" --cwd "$APP_DIR/backend"
+              pm2 start php --name "$SCHEDULER_PM2" --cwd "$APP_DIR/backend" -- artisan schedule:work
             fi
             pm2 save
             sleep 5
