@@ -8,6 +8,7 @@ use App\Features\Accounting\Controllers\InsurancePolicySettlementController;
 use App\Features\Accounting\Controllers\LedgerController;
 use App\Features\Accounting\Controllers\OtherInsuranceController;
 use App\Features\Accounting\Controllers\ServiceWorkController;
+use App\Features\BugAgent\Controllers\BugAgentController;
 use App\Features\Customers\Controllers\CustomerController;
 use App\Features\Identity\Controllers\AuthController;
 use App\Features\Identity\Controllers\OrganizationController;
@@ -41,6 +42,15 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('profile', [ProfileController::class, 'show']);
     Route::post('profile', [ProfileController::class, 'update']);
     Route::get('dashboard/summary', [DashboardController::class, 'summary']);
+
+    Route::get('bug-agent', [BugAgentController::class, 'index']);
+    Route::post('bug-agent/reports', [BugAgentController::class, 'store'])->middleware('throttle:20,1');
+    Route::post('bug-agent/reports/{report}/analyze', [BugAgentController::class, 'analyze'])->middleware('throttle:20,1');
+    Route::post('bug-agent/reports/{report}/safe-fix', [BugAgentController::class, 'safeFix']);
+    Route::post('bug-agent/reports/{report}/resolve', [BugAgentController::class, 'resolve']);
+    Route::get('bug-agent/reports/{report}/screenshot', [BugAgentController::class, 'screenshot']);
+    Route::post('bug-agent/scan', [BugAgentController::class, 'scanNow'])->middleware('throttle:10,1');
+
     Route::get('policies', [PolicyController::class, 'index']);
     Route::get('policies/{policy}', [PolicyController::class, 'show']);
     Route::get('reports/policies/summary', [PolicyController::class, 'summary']);
