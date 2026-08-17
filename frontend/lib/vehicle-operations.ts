@@ -31,11 +31,19 @@ async function profileWithInsurance(vehicleId:string):Promise<OperationalProfile
 
 const masterPath=(type:string)=>type==='fitness_center'?'/vehicle-masters/fitness_centers':`/vehicle-operation-masters/${type}`;
 
+function normalizedOperationBody(module:VehicleModule,body:unknown):unknown{
+ if(module!=='payment'||!body||typeof body!=='object'||Array.isArray(body))return body;
+ const paymentBody=body as Record<string,unknown>;
+ // PUC customer charge is a customer debit. The accounting endpoint only accepts Receive or Debit.
+ if(paymentBody.payment_type==='PUC Bill')return{...paymentBody,payment_type:'Debit'};
+ return body;
+}
+
 export const vehicleOperationsApi={
  profile:profileWithInsurance,
  list:(vehicleId:string,module:VehicleModule)=>authenticatedRequest<OperationalRecord[]>(`/vehicles/${vehicleId}/operations/${module}`),
- create:(vehicleId:string,module:VehicleModule,body:unknown)=>authenticatedRequest<OperationalRecord>(`/vehicles/${vehicleId}/operations/${module}`,{method:'POST',body:JSON.stringify(body)}),
- update:(vehicleId:string,module:VehicleModule,id:string,body:unknown)=>authenticatedRequest<OperationalRecord>(`/vehicles/${vehicleId}/operations/${module}/${id}`,{method:'PUT',body:JSON.stringify(body)}),
+ create:(vehicleId:string,module:VehicleModule,body:unknown)=>authenticatedRequest<OperationalRecord>(`/vehicles/${vehicleId}/operations/${module}`,{method:'POST',body:JSON.stringify(normalizedOperationBody(module,body))}),
+ update:(vehicleId:string,module:VehicleModule,id:string,body:unknown)=>authenticatedRequest<OperationalRecord>(`/vehicles/${vehicleId}/operations/${module}/${id}`,{method:'PUT',body:JSON.stringify(normalizedOperationBody(module,body))}),
  remove:(vehicleId:string,module:VehicleModule,id:string)=>authenticatedRequest<null>(`/vehicles/${vehicleId}/operations/${module}/${id}`,{method:'DELETE'}),
  upload:(vehicleId:string,module:VehicleModule,id:string,document:File)=>{const body=new FormData();body.set('document',document);return authenticatedRequest(`/vehicles/${vehicleId}/operations/${module}/${id}/documents`,{method:'POST',body})},
  masters:(type:string)=>authenticatedRequest<{id:string;name:string}[]>(masterPath(type)),
