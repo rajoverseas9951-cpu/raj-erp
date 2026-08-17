@@ -31,6 +31,7 @@ jobs:
             APP_DIR=/var/www/raj-erp
             FRONTEND_PM2=raj-erp-frontend
             BACKEND_PM2=raj-erp-backend
+            SCHEDULER_PM2=raj-erp-scheduler
             EXPECTED_COMMIT='${{ github.sha }}'
 
             echo "Deploying commit: $EXPECTED_COMMIT"
@@ -119,11 +120,18 @@ jobs:
 
             pm2 reload "$BACKEND_PM2" --update-env
             pm2 reload "$FRONTEND_PM2" --update-env
+            if pm2 describe "$SCHEDULER_PM2" >/dev/null 2>&1; then
+              pm2 restart "$SCHEDULER_PM2" --update-env
+            else
+              cd "$APP_DIR/backend"
+              pm2 start "php artisan schedule:work" --name "$SCHEDULER_PM2" --cwd "$APP_DIR/backend"
+            fi
             pm2 save
             sleep 5
 
             pm2 describe "$BACKEND_PM2" >/dev/null
             pm2 describe "$FRONTEND_PM2" >/dev/null
+            pm2 describe "$SCHEDULER_PM2" >/dev/null
 
             docker compose -f "$APP_DIR/ocr-service/compose.production.yml" ps
             curl --fail --silent --show-error http://127.0.0.1:8081/health
