@@ -100,7 +100,7 @@ export default function PucPage() {
     ]);
 
     if (charge > 0) {
-      const body = { payment_type: 'PUC Bill', account: 'PUC SERVICE', issue_date: issueDate, billed_amount: charge, reference_number: `PUC-${issueDate}`, notes: `PUC customer charge | PUC record ${pucId}` };
+      const body = { payment_type: 'Debit', account: 'PUC SERVICE', issue_date: issueDate, billed_amount: charge, reference_number: `PUC-${issueDate}`, notes: `PUC customer charge | PUC record ${pucId}` };
       if (customerRows[0]) await vehicleOperationsApi.update(vehicleId, 'payment', customerRows[0].id, body);
       else await vehicleOperationsApi.create(vehicleId, 'payment', body);
       for (const extra of customerRows.slice(1)) await vehicleOperationsApi.remove(vehicleId, 'payment', extra.id);
@@ -203,5 +203,5 @@ export default function PucPage() {
 
 function MoneyCard({label,value,tone}:{label:string;value:number;tone:'blue'|'amber'|'green'|'red'}){const styles={blue:'text-blue-700',amber:'text-amber-700',green:'text-emerald-700',red:'text-rose-700'};return <div className="rounded-xl bg-white p-3 ring-1 ring-slate-200"><p className="text-[9px] font-black uppercase tracking-wide text-slate-400">{label}</p><p className={`mt-1 text-xl font-black ${styles[tone]}`}>{money(value)}</p></div>}
 function StatusBadge({value}:{value:string}){const normalized=value.toLowerCase();const active=!normalized.includes('expired')&&!normalized.includes('not_added');return <span className={`inline-flex rounded-full px-2.5 py-1 text-[9px] font-black uppercase ${active?'bg-emerald-50 text-emerald-700':'bg-slate-100 text-slate-500'}`}>{value.replaceAll('_',' ')}</span>}
-function addMonths(date:string,months:number){if(!date||!months)return '';const [y,m,d]=date.split('-').map(Number);const target=new Date(Date.UTC(y,m-1+months,d));if(target.getUTCDate()!==d)target.setUTCDate(0);return target.toISOString().slice(0,10)}
+function addMonths(date:string,months:number){if(!date||!months)return '';const [y,m,d]=date.split('-').map(Number);const target=new Date(Date.UTC(y,m-1+months,d));if(target.getUTCDate()!==d)target.setUTCDate(0);target.setUTCDate(target.getUTCDate()-1);return target.toISOString().slice(0,10)}
 function formatDate(value:unknown){if(!value)return '—';const date=new Date(String(value));return Number.isNaN(date.getTime())?String(value):date.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}
