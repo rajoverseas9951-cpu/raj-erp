@@ -14,8 +14,6 @@ function dispatchValue(element: HTMLSelectElement | HTMLInputElement, value: str
 
 export function ComplianceExpiryEnhancer() {
   useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10);
-
     const enhance = () => {
       const step = document.querySelector<HTMLElement>("#vehicle-step-4");
       if (!step) return;
@@ -30,25 +28,18 @@ export function ComplianceExpiryEnhancer() {
           card.dataset.expiryEnhanced = "1";
           select.style.display = "none";
           select.setAttribute("aria-hidden", "true");
-          date.min = today;
+          // Past dates are valid business data. They must be saved so the ERP can show EXPIRED.
+          date.removeAttribute("min");
           date.required = false;
 
           date.addEventListener("change", () => {
-            if (date.value && date.value < today) {
-              dispatchValue(date, "");
-              dispatchValue(select, "not_added");
-              date.setCustomValidity("Only a current or future expiry date can be entered.");
-              date.reportValidity();
-              date.setCustomValidity("");
-              return;
-            }
             dispatchValue(select, date.value ? "active" : "not_added");
           });
         }
 
         select.style.display = "none";
         date.style.display = "block";
-        date.min = today;
+        date.removeAttribute("min");
         card.dataset.hasExpiry = date.value ? "1" : "0";
       });
     };
