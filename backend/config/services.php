@@ -9,6 +9,7 @@ return [
     'paddleocr' => [
         'url' => env('PADDLEOCR_URL', 'http://127.0.0.1:8081'),
         'timeout' => (int) env('PADDLEOCR_TIMEOUT', 100),
+        'public_token' => env('PADDLEOCR_PUBLIC_TOKEN'),
     ],
     'openai' => [
         'key' => env('OPENAI_API_KEY'),
