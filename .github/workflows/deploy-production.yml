@@ -2,6 +2,13 @@ name: Deploy Production
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/deploy-production.yml'
+      - 'backend/app/Features/Ocr/**'
+      - 'backend/routes/web.php'
 
 permissions:
   contents: read
