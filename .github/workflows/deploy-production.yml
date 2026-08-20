@@ -121,6 +121,10 @@ jobs:
             php artisan route:cache
             php artisan view:cache
 
+            echo "Verifying public OCR Laravel route is registered..."
+            php artisan route:list --path=api/v1/public-policy-ocr | tee /tmp/vimawallah-ocr-route.txt
+            grep -Fq 'api/v1/public-policy-ocr' /tmp/vimawallah-ocr-route.txt
+
             cd "$APP_DIR/frontend"
             npm ci
             rm -rf .next
@@ -142,6 +146,14 @@ jobs:
 
             docker compose -f "$APP_DIR/ocr-service/compose.production.yml" ps
             curl --fail --silent --show-error http://127.0.0.1:8081/health
+
+            # A no-file POST should reach Laravel and return validation, not a routing 404.
+            OCR_ROUTE_STATUS="$(curl --silent --output /tmp/vimawallah-ocr-public-check.txt --write-out '%{http_code}' \
+              --request POST http://50.6.45.3/api/v1/public-policy-ocr \
+              --header 'Host: erp.vimawallah.com' \
+              --header 'Accept: application/json' || true)"
+            echo "Public OCR route probe HTTP status: $OCR_ROUTE_STATUS"
+            test "$OCR_ROUTE_STATUS" != "404"
 
             # External proxy/CORS checks are useful diagnostics, but they must not mark
             # a completed deployment as failed after code, migrations, build and PM2
