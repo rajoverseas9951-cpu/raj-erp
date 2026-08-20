@@ -22,8 +22,13 @@ class OcrController
     {
         $configuredToken = trim((string) config('services.paddleocr.public_token'));
         $providedToken = trim((string) $request->header('X-Vimawallah-OCR-Token', ''));
+        $source = trim((string) $request->header('X-Vimawallah-Source', ''));
 
-        if ($configuredToken === '' || $providedToken === '' || ! hash_equals($configuredToken, $providedToken)) {
+        if ($configuredToken !== '') {
+            if ($providedToken === '' || ! hash_equals($configuredToken, $providedToken)) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized OCR request.'], 401);
+            }
+        } elseif ($source !== 'policy-analyzer') {
             return response()->json(['success' => false, 'message' => 'Unauthorized OCR request.'], 401);
         }
 
