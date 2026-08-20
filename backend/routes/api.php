@@ -29,7 +29,7 @@ use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('health', fn () => response()->json(['status' => 'ok']));
-Route::post('public-policy-ocr', [OcrController::class, 'publicPolicyScan'])->middleware('throttle:12,1');
+Route::post('v1/public-policy-ocr', [OcrController::class, 'publicPolicyScan'])->middleware('throttle:12,1');
 
 Route::prefix('v1/auth')->group(function () {
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');
