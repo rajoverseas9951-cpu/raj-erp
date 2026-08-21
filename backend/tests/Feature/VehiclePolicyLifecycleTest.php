@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Features\Customers\Models\Customer;
 use App\Features\Vehicles\Models\Vehicle;
 use App\Features\Vehicles\Models\VehicleInsurance;
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -73,6 +74,7 @@ class VehiclePolicyLifecycleTest extends TestCase
     {
         [$owner, $vehicle] = $this->vehicle(); $policy = $this->policy($vehicle, 'draft');
         $other = User::factory()->create(['tenant_id' => (string) Str::uuid(), 'is_admin' => true]);
+        $this->activateTenant($other);
         $this->actingAs($other)->deleteJson("/api/v1/vehicles/{$vehicle->id}/insurances/{$policy->id}")->assertNotFound();
         $this->assertDatabaseHas('vehicle_insurances', ['id' => $policy->id, 'tenant_id' => $owner->tenant_id]);
     }
@@ -91,8 +93,9 @@ class VehiclePolicyLifecycleTest extends TestCase
         $vehicle->delete();
 
         Artisan::call('data:repair-integrity', ['--dry-run' => true]);
-        $this->assertStringContainsString($policy->id, Artisan::output());
-        $this->assertStringContainsString($commission, Artisan::output());
+        $dryRunOutput = Artisan::output();
+        $this->assertStringContainsString($policy->id, $dryRunOutput);
+        $this->assertStringContainsString($commission, $dryRunOutput);
         $this->assertDatabaseHas('vehicle_insurances', ['id' => $policy->id, 'status' => 'running']);
         $this->assertDatabaseMissing('insurance_commission_reversals', ['policy_id' => $policy->id]);
 
@@ -114,9 +117,17 @@ class VehiclePolicyLifecycleTest extends TestCase
     private function vehicle(?User $user = null): array
     {
         $user ??= User::factory()->create(['is_admin' => true]);
+        $this->activateTenant($user);
         $customer = Customer::create(['tenant_id' => $user->tenant_id, 'customer_code' => 'CUS-'.Str::random(8), 'first_name' => 'Lifecycle', 'last_name' => 'Owner', 'mobile' => '9'.random_int(100000000, 999999999)]);
         $vehicle = Vehicle::create(['tenant_id' => $user->tenant_id, 'customer_id' => $customer->id, 'vehicle_number' => 'GJ'.Str::upper(Str::random(8)), 'chassis_number' => Str::random(20), 'engine_number' => Str::random(20), 'vehicle_type' => 'private_car', 'insurance_status' => 'not_added', 'fitness_status' => 'not_added', 'permit_status' => 'not_added', 'tax_status' => 'not_added', 'puc_status' => 'not_added']);
         return [$user, $vehicle];
+    }
+
+    private function activateTenant(User $user): void
+    {
+        $tenant = Tenant::query()->find($user->tenant_id) ?? new Tenant();
+        $tenant->id = $user->tenant_id;
+        $tenant->fill(['name' => 'Vehicle Policy Lifecycle Test', 'erp_status' => 'ACTIVE'])->save();
     }
 
     private function policy(Vehicle $vehicle, string $status): VehicleInsurance

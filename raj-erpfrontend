@@ -1,0 +1,7 @@
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/.env.example', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/Models/Tenant.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/Models/User.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/bootstrap/app.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/config/app.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/routes/api.php', LF will be replaced by CRLF the next time Git touches it

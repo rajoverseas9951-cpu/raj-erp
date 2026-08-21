@@ -17,17 +17,30 @@ class RepairDataIntegrity extends Command
     {
         $issues = $inspector->inspect();
         $apply = (bool) $this->option('apply');
-        foreach ($issues as $name => $ids) foreach ($ids as $id) {
-            $this->line(($apply ? 'APPLY' : 'PROPOSE').' '.str_replace('_', ' ', $name)." {$id}");
+        $action = $apply ? 'APPLY' : 'PROPOSE';
+        $report = [];
+        foreach ($issues as $name => $ids) {
+            sort($ids);
+            foreach ($ids as $id) {
+                $report[] = $action.' '.str_replace('_', ' ', $name)." {$id}";
+            }
         }
 
         $policies = array_unique(array_merge(
             $issues['policies_with_missing_vehicles'],
             $issues['policies_linked_to_deleted_vehicles'],
         ));
-        foreach ($policies as $policyId) $this->describePolicyRepair($policyId, $apply ? 'APPLY' : 'PROPOSE');
+        sort($policies);
+        foreach ($policies as $policyId) {
+            array_push($report, ...$this->describePolicyRepair($policyId, $action));
+        }
 
-        if (! $apply) { $this->info('Dry run complete. Re-run with --apply to make the listed non-destructive status/archive repairs.'); return self::SUCCESS; }
+        if (! $apply) {
+            $report[] = 'Dry run complete. Re-run with --apply to make the listed non-destructive status/archive repairs.';
+            $this->output->writeln($report);
+
+            return self::SUCCESS;
+        }
 
         DB::transaction(function () use ($issues, $policies) {
             foreach ($policies as $policyId) $this->repairPolicy($policyId);
@@ -35,14 +48,17 @@ class RepairDataIntegrity extends Command
                 'status' => 'cancelled', 'remarks' => 'Integrity repair: linked policy is missing.', 'updated_at' => now(),
             ]);
         });
-        $this->info('Non-destructive repairs applied. No records were deleted.');
+        $report[] = 'Non-destructive repairs applied. No records were deleted.';
+        $this->output->writeln($report);
+
         return self::SUCCESS;
     }
 
-    private function describePolicyRepair(string $policyId, string $action): void
+    /** @return list<string> */
+    private function describePolicyRepair(string $policyId, string $action): array
     {
         $policy = DB::table('vehicle_insurances')->where('id', $policyId)->first();
-        if (! $policy) return;
+        if (! $policy) return [];
         $commissions = Schema::hasTable('insurance_commissions')
             ? DB::table('insurance_commissions')->where('tenant_id', $policy->tenant_id)->where('policy_id', $policyId)->whereNull('deleted_at')->get()
             : collect();
@@ -51,11 +67,15 @@ class RepairDataIntegrity extends Command
                 ->where('status', 'posted')->whereNull('reversal_of_id')->whereNull('deleted_at')->get()
             : collect();
 
-        $this->line("{$action} cancel/archive policy {$policyId} tenant {$policy->tenant_id} vehicle {$policy->vehicle_id}");
+        $report = ["{$action} cancel/archive policy {$policyId} tenant {$policy->tenant_id} vehicle {$policy->vehicle_id}"];
         foreach ($commissions as $commission) {
-            $this->line("{$action} cancel commission {$commission->id} and record reversal gross {$commission->gross_commission} tds {$commission->tds_amount} net {$commission->net_receivable} received {$commission->received_amount}");
+            $report[] = "{$action} cancel commission {$commission->id} and record reversal gross {$commission->gross_commission} tds {$commission->tds_amount} net {$commission->net_receivable} received {$commission->received_amount}";
         }
-        foreach ($vouchers as $voucher) $this->line("{$action} reverse posted accounting voucher {$voucher->id}");
+        foreach ($vouchers as $voucher) {
+            $report[] = "{$action} reverse posted accounting voucher {$voucher->id}";
+        }
+
+        return $report;
     }
 
     private function repairPolicy(string $policyId): void
