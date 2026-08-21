@@ -7,13 +7,15 @@ import {exportRowsCsv,printReport,tableHtml} from '@/lib/report-export';
 type Type='driving_licence'|'passport';
 type Row={id:string;work_type?:string;application_number?:string;work_date?:string;customer_name?:string;mobile?:string;amount:number;cost:number;received_amount:number;due_amount:number;profit:number;status?:string;notes?:string};
 type Payload={rows:Row[];summary:{work_count:number;billing:number;cost:number;received:number;due:number;profit:number}};
+type Customer={id:string;first_name?:string;middle_name?:string;last_name?:string;mobile?:string};
+type CustomerResponse=Customer[]|{data:Customer[]};
 const money=(n:unknown)=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(Number(n||0));
 const defaults={work_type:'',application_number:'',work_date:new Date().toISOString().slice(0,10),customer_id:'',amount:'',cost:'',received_amount:'',status:'active',notes:''};
 
 export default function ServiceWorkPage({type,title}:{type:Type;title:string}){
- const [data,setData]=useState<Payload>({rows:[],summary:{work_count:0,billing:0,cost:0,received:0,due:0,profit:0}});const [customers,setCustomers]=useState<any[]>([]);const [form,setForm]=useState<any>(defaults);const [show,setShow]=useState(false);const [error,setError]=useState('');
+ const [data,setData]=useState<Payload>({rows:[],summary:{work_count:0,billing:0,cost:0,received:0,due:0,profit:0}});const [customers,setCustomers]=useState<Customer[]>([]);const [form,setForm]=useState(defaults);const [show,setShow]=useState(false);const [error,setError]=useState('');
  const load=()=>authenticatedRequest<Payload>(`/service-works/${type}`).then(setData).catch(e=>setError(e instanceof Error?e.message:'Data load nahi hua'));
- useEffect(()=>{load();authenticatedRequest<any>('/customers?per_page=200').then(r=>setCustomers(Array.isArray(r)?r:(r?.data||[]))).catch(()=>undefined)},[]);
+ useEffect(()=>{load();authenticatedRequest<CustomerResponse>('/customers?per_page=200').then(r=>setCustomers(Array.isArray(r)?r:r.data)).catch(()=>undefined)},[]);
  const save=async()=>{setError('');try{await authenticatedRequest(`/service-works/${type}`,{method:'POST',body:JSON.stringify({...form,amount:Number(form.amount||0),cost:Number(form.cost||0),received_amount:Number(form.received_amount||0),customer_id:form.customer_id||null})});setForm(defaults);setShow(false);load()}catch(e){setError(e instanceof Error?e.message:'Save failed')}};
  const del=async(id:string)=>{if(!confirm('Delete this work?'))return;await authenticatedRequest(`/service-works/${type}/${id}`,{method:'DELETE'});load()};
  const rows=data.rows as unknown as Array<Record<string,unknown>>;

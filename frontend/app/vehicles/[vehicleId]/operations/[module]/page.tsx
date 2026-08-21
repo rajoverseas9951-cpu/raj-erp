@@ -59,7 +59,7 @@ const labelClass = 'grid gap-1.5 text-[11px] font-black uppercase tracking-[.04e
 
 export default function VehicleOperationPage() {
   const { vehicleId, module: raw } = useParams<{ vehicleId: string; module: string }>();
-  const module = raw as VehicleModule;
+  const operationModule = raw as VehicleModule;
   const [rows, setRows] = useState<OperationalRecord[]>([]);
   const [masterOptions, setMasterOptions] = useState<MasterOption[]>([]);
   const [profile, setProfile] = useState<OperationalProfile | null>(null);
@@ -74,8 +74,8 @@ export default function VehicleOperationPage() {
   const [paymentLedgerId, setPaymentLedgerId] = useState('');
   const [paymentLedgers, setPaymentLedgers] = useState<Ledger[]>([]);
 
-  const masterType = module === 'permit' ? 'permit_type' : module === 'other_payment' ? 'other_payment_category' : '';
-  const load = () => vehicleOperationsApi.list(vehicleId, module).then(setRows).catch((e) => setError(e instanceof Error ? e.message : 'History could not be loaded.'));
+  const masterType = operationModule === 'permit' ? 'permit_type' : operationModule === 'other_payment' ? 'other_payment_category' : '';
+  const load = () => vehicleOperationsApi.list(vehicleId, operationModule).then(setRows).catch((e) => setError(e instanceof Error ? e.message : 'History could not be loaded.'));
 
   const loadPaymentLedgers = async () => {
     const ledgers = await authenticatedRequest<Ledger[]>('/ledgers');
@@ -86,25 +86,25 @@ export default function VehicleOperationPage() {
     return usable;
   };
 
-  useEffect(() => { void load(); }, [vehicleId, module]);
+  useEffect(() => { void load(); }, [vehicleId, operationModule]);
   useEffect(() => {
-    if (module === 'payment') {
+    if (operationModule === 'payment') {
       void vehicleOperationsApi.profile(vehicleId).then(setProfile).catch(() => undefined);
       void loadPaymentLedgers().catch(() => setPaymentLedgers([]));
     }
-  }, [vehicleId, module]);
+  }, [vehicleId, operationModule]);
   useEffect(() => {
     if (masterType) void vehicleOperationsApi.masters(masterType).then(setMasterOptions);
   }, [masterType]);
   useEffect(() => {
-    if (module !== 'payment') return;
+    if (operationModule !== 'payment') return;
     const group = paymentMode === 'cash' ? 'Cash-in-Hand' : 'Bank Accounts';
     const currentStillValid = paymentLedgers.some((ledger) => ledger.id === paymentLedgerId && ledger.ledger_group === group);
     if (!currentStillValid) {
       const first = paymentLedgers.find((ledger) => ledger.ledger_group === group);
       setPaymentLedgerId(first?.id ?? '');
     }
-  }, [module, paymentMode, paymentLedgerId, paymentLedgers]);
+  }, [operationModule, paymentMode, paymentLedgerId, paymentLedgers]);
 
   async function addMaster() {
     const name = prompt('Enter the new master value');
@@ -158,8 +158,8 @@ export default function VehicleOperationPage() {
     form.delete('document');
     const body = Object.fromEntries([...form.entries()].filter(([, value]) => value !== ''));
     try {
-      const created = await vehicleOperationsApi.create(vehicleId, module, body);
-      if (document instanceof File && document.size) await vehicleOperationsApi.upload(vehicleId, module, created.id, document);
+      const created = await vehicleOperationsApi.create(vehicleId, operationModule, body);
+      if (document instanceof File && document.size) await vehicleOperationsApi.upload(vehicleId, operationModule, created.id, document);
       element.reset();
       await load();
     } catch (e) {
@@ -227,13 +227,13 @@ export default function VehicleOperationPage() {
     const value = prompt('Update reference/status value', current);
     if (value === null) return;
     const key = row.reference_number !== undefined ? 'reference_number' : 'status';
-    await vehicleOperationsApi.update(vehicleId, module, row.id, { [key]: value });
+    await vehicleOperationsApi.update(vehicleId, operationModule, row.id, { [key]: value });
     await load();
   }
 
   const visible = rows.filter((row) => JSON.stringify(row).toLowerCase().includes(search.toLowerCase()));
-  const m = meta[module] ?? ['◆', 'Vehicle service'];
-  const isPaymentFamily = ['payment', 'agent_payment', 'other_payment'].includes(module);
+  const m = meta[operationModule] ?? ['◆', 'Vehicle service'];
+  const isPaymentFamily = ['payment', 'agent_payment', 'other_payment'].includes(operationModule);
   const pucExpiry = useMemo(() => addMonths(pucIssueDate, Number(pucPeriod || 0)), [pucIssueDate, pucPeriod]);
   const outstanding = Number(profile?.balances.outstanding ?? 0);
   const entered = Number(paymentAmount || 0);
@@ -248,7 +248,7 @@ export default function VehicleOperationPage() {
             <div>
               <a href={`/vehicles/${vehicleId}`} className="text-xs font-bold text-blue-200">← Vehicle Profile</a>
               <p className="mt-5 text-[9px] font-black uppercase tracking-[.24em] text-[#63d4ff]">{m[1]}</p>
-              <h1 className="mt-1 text-3xl font-black tracking-tight sm:text-4xl">{moduleLabels[module] ?? 'Vehicle Operation'}</h1>
+              <h1 className="mt-1 text-3xl font-black tracking-tight sm:text-4xl">{moduleLabels[operationModule] ?? 'Vehicle Operation'}</h1>
               <p className="mt-2 text-xs text-blue-100/70">Add, track and manage every record from one workspace.</p>
             </div>
             <div className="grid h-20 w-20 shrink-0 place-items-center rounded-[24px] border border-white/10 bg-white/10 text-4xl shadow-inner backdrop-blur sm:h-24 sm:w-24">{m[0]}</div>
@@ -257,19 +257,19 @@ export default function VehicleOperationPage() {
 
         {error && <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">{error}</div>}
 
-        {module === 'puc' ? (
+        {operationModule === 'puc' ? (
           <PucWorkspace rows={visible} search={search} setSearch={setSearch} period={pucPeriod} setPeriod={setPucPeriod} issueDate={pucIssueDate} setIssueDate={setPucIssueDate} expiry={pucExpiry} saving={saving} onSubmit={submitPuc} onDelete={(id) => confirm('Delete this PUC record?') && vehicleOperationsApi.remove(vehicleId, 'puc', id).then(load)} />
-        ) : module === 'payment' ? (
+        ) : operationModule === 'payment' ? (
           <PaymentWorkspace rows={visible} search={search} setSearch={setSearch} paymentType={paymentType} setPaymentType={setPaymentType} amount={paymentAmount} setAmount={setPaymentAmount} outstanding={outstanding} projected={projectedBalance} saving={saving} onSubmit={submitPayment} onDelete={(id) => confirm('Delete this payment record?') && vehicleOperationsApi.remove(vehicleId, 'payment', id).then(async () => { await load(); setProfile(await vehicleOperationsApi.profile(vehicleId)); })} paymentMode={paymentMode} setPaymentMode={setPaymentMode} ledgerId={paymentLedgerId} setLedgerId={setPaymentLedgerId} ledgers={paymentLedgers} onAddLedger={addPaymentLedger} />
         ) : (
           <>
             <form onSubmit={submitGeneric} className="overflow-hidden rounded-[26px] border border-[#d9e5f7] bg-white shadow-[0_14px_40px_rgba(26,64,120,.08)]">
               <div className="flex items-center justify-between border-b border-slate-100 bg-gradient-to-r from-white to-blue-50/60 px-4 py-4 sm:px-6">
-                <div><p className="text-[9px] font-black uppercase tracking-[.22em] text-blue-500">{isPaymentFamily ? 'Transaction desk' : 'New record'}</p><h2 className="mt-1 text-xl font-black">{isPaymentFamily ? 'Complete Payment' : `Add ${moduleLabels[module] ?? 'Record'}`}</h2></div>
+                <div><p className="text-[9px] font-black uppercase tracking-[.22em] text-blue-500">{isPaymentFamily ? 'Transaction desk' : 'New record'}</p><h2 className="mt-1 text-xl font-black">{isPaymentFamily ? 'Complete Payment' : `Add ${moduleLabels[operationModule] ?? 'Record'}`}</h2></div>
                 <span className="rounded-full bg-blue-50 px-3 py-1.5 text-[9px] font-black uppercase text-blue-700">Secure entry</span>
               </div>
               <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-6 lg:grid-cols-4">
-                {(fields[module] ?? common).map((field) => masterType && ['permit_type', 'purpose'].includes(field.name) ? (
+                {(fields[operationModule] ?? common).map((field) => masterType && ['permit_type', 'purpose'].includes(field.name) ? (
                   <label key={field.name} className={labelClass}><span>{field.label}</span><div className="flex gap-2"><input name={field.name} required={field.required} list={`${masterType}-options`} className={inputClass} /><button type="button" onClick={() => void addMaster()} className="rounded-xl border border-blue-100 bg-blue-50 px-3 font-black text-blue-700">+</button></div><datalist id={`${masterType}-options`}>{masterOptions.map((item) => <option key={item.id} value={item.name} />)}</datalist></label>
                 ) : <Field key={field.name} {...field} />)}
                 <Field name="document" label="Supporting Document" type="file" />
@@ -277,7 +277,7 @@ export default function VehicleOperationPage() {
               <div className="flex flex-col gap-3 border-t border-slate-100 bg-[#f8fbff] p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"><p className="text-[10px] font-semibold text-slate-500">Review details before submitting. The record will be added to vehicle history.</p><button disabled={saving} className="min-w-[190px] rounded-2xl bg-gradient-to-r from-[#0b2b62] to-[#2563eb] px-6 py-3.5 text-sm font-black text-white shadow-[0_12px_28px_rgba(37,99,235,.28)] transition hover:-translate-y-0.5 disabled:opacity-50">{saving ? 'Saving…' : isPaymentFamily ? '✓ Submit Payment' : '✓ Save Record'}</button></div>
             </form>
             {rows[0] && <section className="grid grid-cols-3 gap-2"><Summary label="Current Status" value={String(rows[0].derived_status ?? rows[0].status ?? 'ACTIVE').replaceAll('_', ' ')} /><Summary label="Reference" value={String(rows[0].reference_number ?? rows[0].work_type ?? '—')} /><Summary label="Expiry" value={String(rows[0].expiry_date ?? 'Not applicable')} /></section>}
-            <GenericHistory rows={visible} search={search} setSearch={setSearch} vehicleId={vehicleId} module={module} edit={edit} load={load} />
+            <GenericHistory rows={visible} search={search} setSearch={setSearch} vehicleId={vehicleId} module={operationModule} edit={edit} load={load} />
           </>
         )}
       </div>

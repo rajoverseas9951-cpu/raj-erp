@@ -26,9 +26,11 @@ use App\Features\Vehicles\Controllers\VehicleMasterController;
 use App\Features\Vehicles\Controllers\VehicleOperationsController;
 use App\Features\Vehicles\Controllers\VehiclePaymentAccountingController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Internal\ErpControlHealthController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('health', fn () => response()->json(['status' => 'ok']));
+Route::get('v1/internal/erp-control/health', ErpControlHealthController::class)->middleware(['auth:sanctum', 'active']);
 Route::post('v1/public-policy-ocr', [OcrController::class, 'publicPolicyScan'])->middleware('throttle:12,1');
 
 Route::prefix('v1/auth')->group(function () {
@@ -37,7 +39,7 @@ Route::prefix('v1/auth')->group(function () {
     Route::post('reset-password', [AuthController::class, 'reset'])->middleware('throttle:passwords');
 });
 
-Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
+Route::prefix('v1')->middleware(['auth:sanctum', 'active', 'erp.active', 'erp.entitlements'])->group(function () {
     Route::get('organization', [OrganizationController::class, 'show']);
     Route::post('organization', [OrganizationController::class, 'update']);
     Route::get('profile', [ProfileController::class, 'show']);
@@ -52,9 +54,9 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('bug-agent/reports/{report}/screenshot', [BugAgentController::class, 'screenshot']);
     Route::post('bug-agent/scan', [BugAgentController::class, 'scanNow'])->middleware('throttle:10,1');
 
-    Route::get('policies', [PolicyController::class, 'index']);
-    Route::get('policies/{policy}', [PolicyController::class, 'show']);
-    Route::get('reports/policies/summary', [PolicyController::class, 'summary']);
+    Route::get('policies', [PolicyController::class, 'index'])->middleware('erp.module:POLICIES');
+    Route::get('policies/{policy}', [PolicyController::class, 'show'])->middleware('erp.module:POLICIES');
+    Route::get('reports/policies/summary', [PolicyController::class, 'summary'])->middleware('erp.module:REPORTS');
     Route::get('reports/business/overview', [BusinessReportsController::class, 'overview']);
     Route::get('reports/expiry', [BusinessReportsController::class, 'expiry']);
     Route::get('reports/agents', [BusinessReportsController::class, 'agents']);
@@ -68,7 +70,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('reports/vehicles', [BusinessReportsController::class, 'vehicles']);
     Route::get('reports/agent-work', [BusinessReportsController::class, 'agentWork']);
 
-    Route::apiResource('fleets', FleetController::class)->except(['create','edit']);
+    Route::apiResource('fleets', FleetController::class)->except(['create','edit'])->middleware('erp.module:FLEET');
     Route::get('other-insurance/{line}', [OtherInsuranceController::class, 'index']);
     Route::post('other-insurance/{line}', [OtherInsuranceController::class, 'store']);
     Route::put('other-insurance/{line}/{id}', [OtherInsuranceController::class, 'update']);
@@ -77,7 +79,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::post('service-works/{type}', [ServiceWorkController::class, 'store']);
     Route::put('service-works/{type}/{id}', [ServiceWorkController::class, 'update']);
     Route::delete('service-works/{type}/{id}', [ServiceWorkController::class, 'destroy']);
-    Route::post('ocr', [OcrController::class, 'scan'])->middleware('throttle:30,1');
+    Route::post('ocr', [OcrController::class, 'scan'])->middleware(['throttle:30,1', 'erp.module:RC_API']);
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::post('auth/refresh', [AuthController::class, 'refresh'])->middleware('throttle:60,1');
     Route::put('auth/password', [AuthController::class, 'change'])->middleware('throttle:passwords');
@@ -149,11 +151,11 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('vehicles/{vehicle}/insurances/{insurance}/document', [VehicleInsuranceController::class, 'document']);
     Route::get('vehicles/{vehicle}/insurances/{insurance}/settlement', [InsurancePolicySettlementController::class, 'show']);
     Route::post('vehicles/{vehicle}/insurances/{insurance}/settlement', [InsurancePolicySettlementController::class, 'store']);
-    Route::apiResource('vehicles', VehicleController::class);
+    Route::apiResource('vehicles', VehicleController::class)->middleware('erp.module:VEHICLES');
 
     Route::get('customers/export', [CustomerController::class, 'export']);
     Route::post('customers/bulk-delete', [CustomerController::class, 'bulkDelete']);
     Route::post('customers/bulk-assign', [CustomerController::class, 'bulkAssign']);
     Route::get('customers/{customer}/timeline', [CustomerController::class, 'timeline']);
-    Route::apiResource('customers', CustomerController::class);
+    Route::apiResource('customers', CustomerController::class)->middleware('erp.module:CUSTOMERS');
 });

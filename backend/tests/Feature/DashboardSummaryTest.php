@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,7 @@ class DashboardSummaryTest extends TestCase
     public function test_dashboard_summary_returns_real_tenant_scoped_metrics(): void
     {
         $user = User::factory()->create(['is_admin' => true]);
+        $this->activateTenant($user);
 
         $this->actingAs($user)->getJson('/api/v1/dashboard/summary')
             ->assertOk()
@@ -31,6 +33,7 @@ class DashboardSummaryTest extends TestCase
         $tenantA = (string) Str::uuid();
         $tenantB = (string) Str::uuid();
         $user = User::factory()->create(['tenant_id' => $tenantA, 'is_admin' => true]);
+        $this->activateTenant($user);
         $customerA = (string) Str::uuid();
         $customerB = (string) Str::uuid();
         $now = now();
@@ -94,5 +97,12 @@ class DashboardSummaryTest extends TestCase
             ->assertJsonPath('data.kpis.revenue.value', 4626.78)->assertJsonPath('data.kpis.gross_commission.value', 1200);
         $this->actingAs($user)->getJson('/api/v1/dashboard/summary?period=custom&date_from='.$now->toDateString().'&date_to='.$now->toDateString())
             ->assertOk()->assertJsonPath('data.period.key', 'custom')->assertJsonPath('data.kpis.revenue.value', 4626.78)->assertJsonPath('data.kpis.gross_commission.value', 1200);
+    }
+
+    private function activateTenant(User $user): void
+    {
+        $tenant = Tenant::query()->find($user->tenant_id) ?? new Tenant();
+        $tenant->id = $user->tenant_id;
+        $tenant->fill(['name' => 'Dashboard Summary Test', 'erp_status' => 'ACTIVE'])->save();
     }
 }

@@ -147,7 +147,7 @@ export default function VehicleBrokerAgentBridge({ vehicle }: { vehicle?: Partia
             <div className="grid gap-4 lg:grid-cols-[1fr_360px] lg:items-center">
               <div>
                 <p className="text-[9px] font-black uppercase tracking-[.18em] text-indigo-600">Settlement responsibility</p>
-                <h3 className="mt-1 text-sm font-black text-[#0a1d3e]">Who should this vehicle's future work normally be billed to?</h3>
+                <h3 className="mt-1 text-sm font-black text-[#0a1d3e]">Who should this vehicle&apos;s future work normally be billed to?</h3>
                 <p className="mt-1 text-[11px] font-medium leading-5 text-slate-500">Choose Broker only when the broker actually settles your account. Then future service transactions inherit that broker as the payment party and its receivable is grouped under that broker name.</p>
               </div>
               <select value={settlement} onChange={e=>setSettlement(e.target.value as Settlement)} className="min-h-12 w-full rounded-2xl border border-indigo-200 bg-white px-4 text-sm font-bold text-slate-900 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100">

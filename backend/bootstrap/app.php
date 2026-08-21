@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
     $middleware->alias([
         'active' => \App\Http\Middleware\EnsureUserIsActive::class,
+        'erp.active' => \App\Http\Middleware\EnsureErpTenantIsActive::class,
+        'erp.module' => \App\Http\Middleware\RequireErpModule::class,
+        'erp.entitlements' => \App\Http\Middleware\EnsureRouteModuleEntitled::class,
     ]);
 })
     ->withExceptions(function (Exceptions $exceptions): void {

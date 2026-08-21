@@ -2,6 +2,8 @@
 
 Raj ERP contains the existing Customer CRM and Vehicle Master features, a Laravel 12 API backend, frontend source, and architecture documentation.
 
+The first-stage Super Admin control-plane integration foundation is documented in [docs/ERP_CONTROL_PLANE.md](docs/ERP_CONTROL_PLANE.md). It adds local control configuration and enforcement primitives only; no Super Admin HTTP connector is active.
+
 ## Backend requirements
 
 - PHP 8.2 or newer with the PostgreSQL PDO extension (`pdo_pgsql`)

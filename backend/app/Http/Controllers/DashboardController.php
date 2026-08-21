@@ -90,6 +90,7 @@ class DashboardController extends Controller
             'kpis' => [
                 'customers' => ['value' => (clone $customers)->count(), 'growth' => null],
                 'vehicles' => ['value' => (clone $vehicles)->count(), 'growth' => null],
+                'policies' => ['value' => $newPolicies, 'growth' => $comparison($newPolicies, $previousPolicies)],
                 'active_policies' => ['value' => $activePolicies, 'growth' => $comparison($newPolicies, $previousPolicies)],
                 'expiring_policies' => ['value' => $expiring, 'growth' => null],
                 'payments_received' => ['value' => $received, 'growth' => $comparison($received, $previousReceived)],
