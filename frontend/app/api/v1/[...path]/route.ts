@@ -3,6 +3,7 @@ import http from 'node:http';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+export const maxDuration = 120;
 
 const BACKEND_IP = process.env.BACKEND_IP?.trim() || '50.6.45.3';
 const BACKEND_HOST = process.env.BACKEND_HOST?.trim() || 'erp.vimawallah.com';
@@ -17,6 +18,7 @@ type ProxyResult = {
 
 async function proxy(request: NextRequest, context: Context) {
   const { path } = await context.params;
+  const isPolicyOcr = path.join('/') === 'public-policy-ocr';
   const pathname = `/api/v1/${path.join('/')}${request.nextUrl.search}`;
   const method = request.method;
   const body = method === 'GET' || method === 'HEAD' ? undefined : Buffer.from(await request.arrayBuffer());
@@ -34,9 +36,14 @@ async function proxy(request: NextRequest, context: Context) {
     const authorization = request.headers.get('authorization');
     const contentType = request.headers.get('content-type');
     const cookie = request.headers.get('cookie');
+    const ocrSource = request.headers.get('x-vimawallah-source');
+    const ocrToken = request.headers.get('x-vimawallah-ocr-token');
+
     if (authorization) headers.authorization = authorization;
     if (contentType) headers['content-type'] = contentType;
     if (cookie) headers.cookie = cookie;
+    if (ocrSource) headers['x-vimawallah-source'] = ocrSource;
+    if (ocrToken) headers['x-vimawallah-ocr-token'] = ocrToken;
     if (body) headers['content-length'] = body.length;
 
     const upstream = http.request(
@@ -60,12 +67,13 @@ async function proxy(request: NextRequest, context: Context) {
       },
     );
 
-    upstream.setTimeout(15000, () => upstream.destroy(new Error('Backend request timed out')));
+    const timeoutMs = isPolicyOcr ? 115000 : 15000;
+    upstream.setTimeout(timeoutMs, () => upstream.destroy(new Error(`Backend request timed out after ${timeoutMs}ms`)));
     upstream.on('error', reject);
     if (body) upstream.write(body);
     upstream.end();
   }).catch((error: unknown) => {
-    console.error('Backend proxy failed', error);
+    console.error('Backend proxy failed', { pathname, error });
     return null;
   });
 
