@@ -27,10 +27,12 @@ use App\Features\Vehicles\Controllers\VehicleOperationsController;
 use App\Features\Vehicles\Controllers\VehiclePaymentAccountingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Internal\ErpControlHealthController;
+use App\Http\Controllers\Internal\ErpControlProvisionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('health', fn () => response()->json(['status' => 'ok']));
 Route::get('v1/internal/erp-control/health', ErpControlHealthController::class)->middleware(['auth:sanctum', 'active']);
+Route::post('v1/internal/erp-control/provision', ErpControlProvisionController::class)->middleware(['auth:sanctum', 'active']);
 Route::post('v1/public-policy-ocr', [OcrController::class, 'publicPolicyScan'])->middleware('throttle:12,1');
 
 Route::prefix('v1/auth')->group(function () {
@@ -127,7 +129,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active', 'erp.active', 'erp.en
     Route::post('vehicles/{vehicle}/archive', [VehicleController::class, 'archive']);
     Route::get('vehicles/{vehicle}/timeline', [VehicleController::class, 'timeline']);
     Route::get('vehicles/{vehicle}/operational-profile', [VehicleOperationsController::class, 'profile']);
-    Route::get('vehicle-operation-masters/{type}', [VehicleOperationsController::class, 'masters']);
+    Route::get('vehicle-operation-masters/{type}', [VehicleOperationsController::class, 'index']);
     Route::post('vehicle-operation-masters/{type}', [VehicleOperationsController::class, 'storeMaster']);
     Route::put('vehicles/{vehicle}/module-override', [VehicleOperationsController::class, 'override']);
     Route::post('vehicles/{vehicle}/rto-work-accounting', [RtoWorkAccountingController::class, 'store']);
