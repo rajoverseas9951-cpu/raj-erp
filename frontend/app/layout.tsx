@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./premium-utilities.css";
 import { BRAND } from "@/config/brand";
 import { BugAgentShortcut } from "@/components/bug-agent/BugAgentShortcut";
 
