@@ -1,9 +1,97 @@
 <?php
 namespace App\Features\Identity\Services;
-use App\Features\Identity\Repositories\UserRepository; use App\Models\User; use App\Notifications\ResetPasswordNotification; use Illuminate\Http\Request; use Illuminate\Support\Facades\DB; use Illuminate\Support\Facades\Hash; use Illuminate\Support\Str; use Illuminate\Validation\ValidationException;
-class AuthService { public function __construct(private UserRepository $users,private AuditService $audit){}
- public function login(array $data,Request $request):array{$user=$this->users->findForLogin($data['email'],$data['tenant_id']);if(!$user||!$user->is_active||!Hash::check($data['password'],$user->password)){throw ValidationException::withMessages(['email'=>['The provided credentials are incorrect.']]);}$user->tokens()->where('name',$data['device_name']??'web')->delete();$token=$user->createToken($data['device_name']??'web',['*'],now()->addMinutes((int)config('sanctum.expiration',120)))->plainTextToken;$this->audit->record('auth.login',$user,$user,$request);return compact('user','token');}
- public function refresh(User $user,Request $request):string{$name=$user->currentAccessToken()?->name??'web';$user->currentAccessToken()?->delete();$token=$user->createToken($name,['*'],now()->addMinutes((int)config('sanctum.expiration',120)))->plainTextToken;$this->audit->record('auth.refreshed',$user,$user,$request);return $token;}
- public function forgot(array $data):void{$user=$this->users->findForLogin($data['email'],$data['tenant_id']);if(!$user||!$user->is_active)return;$token=Str::random(64);DB::table('password_reset_tokens')->updateOrInsert(['tenant_id'=>$user->tenant_id,'email'=>$user->email],['token'=>Hash::make($token),'created_at'=>now()]);$user->notify(new ResetPasswordNotification($token,$user->tenant_id));}
- public function reset(array $data,Request $request):void{$record=DB::table('password_reset_tokens')->where('tenant_id',$data['tenant_id'])->where('email',strtolower($data['email']))->first();$expired=!$record||now()->subMinutes((int)config('auth.passwords.users.expire'))->gt($record->created_at);if($expired||!Hash::check($data['token'],$record->token))throw ValidationException::withMessages(['token'=>['This password reset token is invalid or expired.']]);$user=$this->users->findForLogin($data['email'],$data['tenant_id']);if(!$user)throw ValidationException::withMessages(['token'=>['This password reset token is invalid or expired.']]);$user->update(['password'=>$data['password']]);$user->tokens()->delete();DB::table('password_reset_tokens')->where('tenant_id',$data['tenant_id'])->where('email',$user->email)->delete();$this->audit->record('auth.password_reset',$user,$user,$request);}
+
+use App\Features\Identity\Repositories\UserRepository;
+use App\Models\User;
+use App\Notifications\ResetPasswordNotification;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+
+class AuthService
+{
+    public function __construct(private UserRepository $users, private AuditService $audit) {}
+
+    public function login(array $data, Request $request): array
+    {
+        $user = $this->users->findForLogin($data['email'], $data['tenant_id']);
+        if (!$user || !$user->is_active || !Hash::check($data['password'], $user->password)) {
+            throw ValidationException::withMessages(['email' => ['The provided credentials are incorrect.']]);
+        }
+
+        $user->tokens()->where('name', $data['device_name'] ?? 'web')->delete();
+        $token = $user->createToken(
+            $data['device_name'] ?? 'web',
+            ['*'],
+            now()->addMinutes((int) config('sanctum.expiration', 120))
+        )->plainTextToken;
+
+        $this->audit->record('auth.login', $user, $user, $request);
+        return compact('user', 'token');
+    }
+
+    public function refresh(User $user, Request $request): string
+    {
+        $name = $user->currentAccessToken()?->name ?? 'web';
+        $user->currentAccessToken()?->delete();
+        $token = $user->createToken(
+            $name,
+            ['*'],
+            now()->addMinutes((int) config('sanctum.expiration', 120))
+        )->plainTextToken;
+        $this->audit->record('auth.refreshed', $user, $user, $request);
+        return $token;
+    }
+
+    public function forgot(array $data): void
+    {
+        $email = strtolower(trim($data['email']));
+
+        // Email is the public recovery identifier. If the same email belongs to more than
+        // one tenant, send an independent tenant-scoped link for each active account.
+        // The API response remains generic so account existence is never disclosed.
+        $accounts = User::query()
+            ->where('email', $email)
+            ->where('is_active', true)
+            ->whereNull('deleted_at')
+            ->get();
+
+        foreach ($accounts as $user) {
+            $token = Str::random(64);
+            DB::table('password_reset_tokens')->updateOrInsert(
+                ['tenant_id' => $user->tenant_id, 'email' => $user->email],
+                ['token' => Hash::make($token), 'created_at' => now()]
+            );
+            $user->notify(new ResetPasswordNotification($token, (string) $user->tenant_id));
+        }
+    }
+
+    public function reset(array $data, Request $request): void
+    {
+        $record = DB::table('password_reset_tokens')
+            ->where('tenant_id', $data['tenant_id'])
+            ->where('email', strtolower($data['email']))
+            ->first();
+
+        $expired = !$record || now()->subMinutes((int) config('auth.passwords.users.expire'))->gt($record->created_at);
+        if ($expired || !Hash::check($data['token'], $record->token)) {
+            throw ValidationException::withMessages(['token' => ['This password reset token is invalid or expired.']]);
+        }
+
+        $user = $this->users->findForLogin($data['email'], $data['tenant_id']);
+        if (!$user) {
+            throw ValidationException::withMessages(['token' => ['This password reset token is invalid or expired.']]);
+        }
+
+        $user->update(['password' => $data['password']]);
+        $user->tokens()->delete();
+        DB::table('password_reset_tokens')
+            ->where('tenant_id', $data['tenant_id'])
+            ->where('email', $user->email)
+            ->delete();
+
+        $this->audit->record('auth.password_reset', $user, $user, $request);
+    }
 }
