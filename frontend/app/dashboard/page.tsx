@@ -24,13 +24,13 @@ const quickActions: readonly Action[] = [
   ["Receive / Pay", "Cash & bank", "/accounts/cash-bank", "credit", "from-emerald-500 to-teal-600"],
 ];
 
-const tools: readonly Action[] = [
-  ["Outstanding", "Receivable / payable", "/accounts/outstanding", "wallet", ""],
-  ["Accounts", "Daily accounts", "/accounts", "book", ""],
-  ["Non-motor", "Property & business", "/insurance/non_motor", "shield", ""],
-  ["Health", "Health insurance", "/insurance/health", "shield", ""],
-  ["RTO work", "Vehicle services", "/vehicles", "building", ""],
-  ["Reports", "Business reports", "/reports", "reports", ""],
+const dockTools: readonly Action[] = [
+  ["Outstanding", "Receivable / payable", "/accounts/outstanding", "wallet", "from-cyan-500 to-blue-600"],
+  ["Accounts", "Daily accounts", "/accounts", "book", "from-emerald-500 to-teal-600"],
+  ["Non-motor", "Property & business", "/insurance/non_motor", "shield", "from-violet-500 to-fuchsia-600"],
+  ["Health", "Health insurance", "/insurance/health", "shield", "from-rose-500 to-pink-600"],
+  ["RTO work", "Vehicle services", "/vehicles", "building", "from-amber-500 to-orange-600"],
+  ["Reports", "Business reports", "/reports", "reports", "from-blue-600 to-indigo-700"],
 ];
 
 function indiaNowParts(date: Date) {
@@ -139,43 +139,66 @@ export default function DashboardPage() {
   const serviceDue = Number(balances?.summary.service_customer_due ?? 0);
 
   return (
-    <main className="min-h-screen bg-[#f5f7fb] pb-8 text-[#15233d] antialiased dark:bg-[#080c14] dark:text-slate-100">
-      <div className="mx-auto max-w-[1560px] px-4 pb-8 pt-3 sm:px-6 lg:px-8 lg:pt-4">
+    <main className="relative min-h-screen overflow-hidden bg-[#f4f7fc] pb-28 text-[#15233d] antialiased dark:bg-[#070b13] dark:text-slate-100">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -left-44 -top-56 h-[520px] w-[520px] rounded-full bg-blue-200/30 blur-[120px] dark:bg-blue-500/10" />
+        <div className="absolute -right-48 top-10 h-[520px] w-[520px] rounded-full bg-violet-200/30 blur-[120px] dark:bg-violet-500/10" />
+      </div>
+
+      <div className="relative mx-auto max-w-[1580px] px-4 pb-10 pt-3 sm:px-6 lg:px-8 lg:pt-4">
         <header className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#10264b] text-white shadow-sm"><Icon name="dashboard" className="h-4 w-4" /></div>
+            <div className="relative grid h-11 w-11 shrink-0 place-items-center rounded-[15px] bg-gradient-to-br from-[#155dff] via-[#4e72ff] to-[#7c56ff] text-white shadow-[0_12px_28px_rgba(64,89,240,.28)]">
+              <span className="absolute inset-0 rounded-[15px] bg-white/10" />
+              <Icon name="dashboard" className="relative h-4.5 w-4.5" />
+            </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <h1 className="text-[24px] font-semibold leading-none tracking-[-.035em] text-[#112441] sm:text-[28px] dark:text-white">{clock.greeting}</h1>
+                <h1 className="text-[24px] font-semibold leading-none tracking-[-.04em] text-[#102442] sm:text-[29px] dark:text-white">{clock.greeting}</h1>
                 <span className="hidden h-4 w-px bg-[#d9e0ea] sm:block dark:bg-white/10" />
-                <p className="text-[11px] font-medium text-[#8e9bb0]">{clock.date} · {clock.time} IST</p>
+                <p className="text-[10px] font-medium text-[#8e9bb0]">{clock.date} · {clock.time} IST</p>
               </div>
-              <p className="mt-1 text-[9px] font-bold uppercase tracking-[.16em] text-[#7b8aa2]">Vimawallah dashboard</p>
+              <div className="mt-1 flex items-center gap-2 text-[8px] font-bold uppercase tracking-[.18em] text-[#8290a7]"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,.8)]" />Live business command center</div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 rounded-2xl border border-[#e6eaf1] bg-white p-1.5 shadow-[0_8px_24px_rgba(40,59,97,.05)] dark:border-white/10 dark:bg-white/[.05]">
+          <div className="flex flex-wrap items-center gap-1.5 rounded-2xl border border-white bg-white/80 p-1.5 shadow-[0_10px_26px_rgba(42,61,101,.06)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[.05]">
             <select value={period} onChange={(e) => setPeriod(e.target.value as DashboardPeriod)} className="h-9 min-w-36 rounded-xl border-0 bg-transparent px-3 text-[10px] font-semibold text-[#55647d] outline-none dark:text-slate-200">{DASHBOARD_PERIODS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select>
             <button onClick={() => void refresh(true)} disabled={refreshing} className="h-9 rounded-xl px-3 text-[10px] font-semibold text-[#66758c] transition hover:bg-[#f4f7fb] disabled:opacity-50 dark:hover:bg-white/10">{refreshing ? "Refreshing…" : "Refresh"}</button>
-            <Link href="/reports" className="flex h-9 items-center gap-1.5 rounded-xl bg-[#10264b] px-4 text-[10px] font-semibold text-white">Reports <Icon name="arrow" className="h-3 w-3" /></Link>
+            <Link href="/reports" className="flex h-9 items-center gap-1.5 rounded-xl bg-[#10264b] px-4 text-[10px] font-semibold text-white shadow-[0_8px_20px_rgba(16,38,75,.18)]">Reports <Icon name="arrow" className="h-3 w-3" /></Link>
           </div>
         </header>
 
-        {period === "custom" && <div className="mb-3 grid gap-2 rounded-2xl border border-[#e6eaf1] bg-white p-2.5 sm:grid-cols-[1fr_1fr_auto] dark:border-white/10 dark:bg-white/[.05]"><input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-9 rounded-xl border border-[#dde3ec] bg-white px-3 text-xs outline-none dark:border-white/10 dark:bg-white/[.05]" /><input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-9 rounded-xl border border-[#dde3ec] bg-white px-3 text-xs outline-none dark:border-white/10 dark:bg-white/[.05]" /><button onClick={() => void refresh(true)} className="h-9 rounded-xl bg-[#1768ff] px-5 text-xs font-semibold text-white">Apply</button></div>}
+        {period === "custom" && <div className="mb-3 grid gap-2 rounded-2xl border border-white bg-white/80 p-2.5 backdrop-blur-xl sm:grid-cols-[1fr_1fr_auto] dark:border-white/10 dark:bg-white/[.05]"><input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-9 rounded-xl border border-[#dde3ec] bg-white px-3 text-xs outline-none dark:border-white/10 dark:bg-white/[.05]" /><input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-9 rounded-xl border border-[#dde3ec] bg-white px-3 text-xs outline-none dark:border-white/10 dark:bg-white/[.05]" /><button onClick={() => void refresh(true)} className="h-9 rounded-xl bg-[#1768ff] px-5 text-xs font-semibold text-white">Apply</button></div>}
         {error && <div className="mb-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">{error}</div>}
 
-        <section className="grid gap-4 xl:grid-cols-[1.55fr_.45fr]">
-          <article className="relative overflow-hidden rounded-[28px] bg-[#07172f] text-white shadow-[0_24px_60px_-34px_rgba(17,47,111,.55)]">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_10%,rgba(33,105,255,.52),transparent_31%),radial-gradient(circle_at_92%_8%,rgba(101,74,255,.34),transparent_30%)]" />
-            <div className="relative p-6 sm:p-7 lg:p-8">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-2"><span className="rounded-full border border-white/10 bg-white/[.07] px-3 py-1.5 text-[8px] font-bold uppercase tracking-[.15em] text-cyan-100">Collection position</span><span className="rounded-full bg-white/[.06] px-3 py-1.5 text-[8px] font-semibold text-white/55">{dashboardPeriodLabel(period)}</span></div>
-                <Link href="/accounts/outstanding" className="text-[9px] font-semibold text-cyan-200 hover:text-white">Open outstanding →</Link>
-              </div>
-              <p className="mt-5 text-[50px] font-semibold leading-none tracking-[-.06em] sm:text-[64px] xl:text-[72px]">{money(totalReceivable)}</p>
-              <p className="mt-2 text-[10px] text-white/45">Live receivable position across customer and ledger balances.</p>
+        <section className="grid gap-4 xl:grid-cols-[1.58fr_.42fr]">
+          <article className="relative overflow-hidden rounded-[30px] bg-[#07162f] text-white shadow-[0_30px_74px_-36px_rgba(15,45,110,.7)]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_7%_9%,rgba(28,104,255,.60),transparent_29%),radial-gradient(circle_at_95%_8%,rgba(120,74,255,.45),transparent_31%),radial-gradient(circle_at_72%_105%,rgba(5,197,255,.22),transparent_34%)]" />
+            <div className="absolute right-[-70px] top-[-90px] h-[320px] w-[320px] rounded-full border border-white/10" />
+            <div className="absolute right-[-10px] top-[-30px] h-[220px] w-[220px] rounded-full border border-white/[.06]" />
 
-              <div className="mt-6 grid gap-px overflow-hidden rounded-[20px] border border-white/10 bg-white/10 sm:grid-cols-4">
+            <div className="relative p-6 sm:p-8 lg:p-9">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.08] px-3 py-1.5 text-[8px] font-bold uppercase tracking-[.16em] text-cyan-100"><span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,.9)]" />Collection position</span>
+                  <span className="rounded-full bg-white/[.06] px-3 py-1.5 text-[8px] font-semibold text-white/55">{dashboardPeriodLabel(period)}</span>
+                </div>
+                <Link href="/accounts/outstanding" className="rounded-full border border-white/10 bg-white/[.06] px-3 py-1.5 text-[8px] font-semibold text-cyan-100 transition hover:bg-white/[.1]">Open outstanding →</Link>
+              </div>
+
+              <div className="mt-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <p className="text-[50px] font-semibold leading-none tracking-[-.065em] sm:text-[66px] xl:text-[76px]">{money(totalReceivable)}</p>
+                  <p className="mt-2 text-[10px] text-white/45">Customer + ledger receivable live position</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2">
+                  <MiniPulse label="Payable" value={money(payable)} tone={payable > 0 ? "rose" : "emerald"} />
+                  <MiniPulse label="Commission" value={money(commissionDue)} tone="violet" />
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-px overflow-hidden rounded-[22px] border border-white/10 bg-white/10 sm:grid-cols-4">
                 <HeroMetric label="Active policies" value={num(policies)} note="In force" accent="blue" />
                 <HeroMetric label="Vehicles" value={num(vehicles)} note="Managed" accent="cyan" />
                 <HeroMetric label="Renewals due" value={num(due)} note="Follow-up" accent="amber" />
@@ -184,10 +207,12 @@ export default function DashboardPage() {
             </div>
           </article>
 
-          <aside className="overflow-hidden rounded-[28px] border border-[#e4e9f1] bg-white shadow-[0_14px_38px_rgba(38,58,96,.06)] dark:border-white/10 dark:bg-white/[.05]">
+          <aside className="overflow-hidden rounded-[30px] border border-white bg-white/88 shadow-[0_18px_48px_rgba(35,57,100,.08)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[.05]">
             <div className="border-b border-[#edf0f5] px-4 py-4 dark:border-white/10">
-              <p className="text-[8px] font-bold uppercase tracking-[.16em] text-blue-500">Quick actions</p>
-              <h2 className="mt-1 text-[20px] font-semibold tracking-[-.03em] text-[#192d4c] dark:text-white">Start work</h2>
+              <div className="flex items-center justify-between gap-3">
+                <div><p className="text-[8px] font-bold uppercase tracking-[.16em] text-blue-500">Quick actions</p><h2 className="mt-1 text-[20px] font-semibold tracking-[-.03em] text-[#192d4c] dark:text-white">Start work</h2></div>
+                <span className="grid h-9 w-9 place-items-center rounded-[13px] bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300"><Icon name="arrow" className="h-4 w-4" /></span>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-px bg-[#edf0f5] dark:bg-white/10">
               {quickActions.map(([label, desc, href, icon, gradient]) => <QuickAction key={label} label={label} desc={desc} href={href} icon={icon} gradient={gradient} />)}
@@ -195,52 +220,58 @@ export default function DashboardPage() {
           </aside>
         </section>
 
-        <section className="mt-4 grid gap-4 xl:grid-cols-[1.35fr_.65fr]">
-          <article id="pending-work" className="overflow-hidden rounded-[28px] border border-[#e4e9f1] bg-white shadow-[0_14px_38px_rgba(38,58,96,.06)] dark:border-white/10 dark:bg-white/[.05]">
+        <section className="mt-4 grid gap-4 xl:grid-cols-[1.38fr_.62fr]">
+          <article id="pending-work" className="overflow-hidden rounded-[30px] border border-white bg-white/88 shadow-[0_18px_50px_rgba(34,56,98,.07)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[.05]">
             <div className="flex flex-col gap-3 border-b border-[#edf0f5] px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-white/10">
-              <div><p className="text-[8px] font-bold uppercase tracking-[.16em] text-violet-500">Priority work</p><h2 className="mt-1 text-[22px] font-semibold tracking-[-.03em] text-[#192d4c] dark:text-white">What needs attention now</h2></div>
-              <div className="rounded-xl bg-violet-50 px-3 py-2 text-right dark:bg-violet-500/10"><p className="text-[20px] font-bold leading-none text-violet-700 dark:text-violet-300">{num(totalWork)}</p><p className="mt-1 text-[7px] font-bold uppercase tracking-[.12em] text-violet-400">open items</p></div>
+              <div>
+                <div className="flex items-center gap-2 text-[8px] font-bold uppercase tracking-[.16em] text-violet-500"><span className="h-1.5 w-1.5 rounded-full bg-violet-500 shadow-[0_0_8px_rgba(139,92,246,.6)]" />Priority work</div>
+                <h2 className="mt-1 text-[23px] font-semibold tracking-[-.035em] text-[#192d4c] dark:text-white">What needs attention now</h2>
+              </div>
+              <div className="flex items-center gap-3 rounded-2xl bg-violet-50 px-3 py-2 dark:bg-violet-500/10">
+                <span className="grid h-8 w-8 place-items-center rounded-xl bg-white text-violet-600 shadow-sm dark:bg-white/10 dark:text-violet-300"><Icon name="clock" className="h-3.5 w-3.5" /></span>
+                <div><p className="text-[20px] font-bold leading-none text-violet-700 dark:text-violet-300">{num(totalWork)}</p><p className="mt-1 text-[7px] font-bold uppercase tracking-[.12em] text-violet-400">open items</p></div>
+              </div>
             </div>
+
             <div className="px-4 py-2 sm:px-5">
-              {work.length ? work.slice(0, 6).map(([label, value], index) => (
-                <Link key={label} href="/vehicles" className="group flex min-h-[64px] items-center gap-3 border-b border-[#eef2f7] px-1 py-3 last:border-b-0 dark:border-white/10">
-                  <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${index % 4 === 0 ? "bg-amber-50 text-amber-600" : index % 4 === 1 ? "bg-blue-50 text-blue-600" : index % 4 === 2 ? "bg-emerald-50 text-emerald-600" : "bg-violet-50 text-violet-600"}`}><Icon name={index % 2 === 0 ? "clock" : "building"} className="h-4 w-4" /></span>
-                  <span className="min-w-0 flex-1"><span className="block truncate text-[12px] font-semibold capitalize text-[#243a5e] dark:text-white">{label.replaceAll("_", " ")}</span><span className="mt-0.5 block text-[8px] text-[#98a4b6]">Needs follow-up</span></span>
-                  <span className="grid h-8 min-w-8 place-items-center rounded-xl bg-[#f4f6fa] px-2 text-[10px] font-bold text-[#445775] dark:bg-white/10 dark:text-white">{value}</span>
-                  <Icon name="chevron" className="h-3.5 w-3.5 text-[#a5afbe] transition group-hover:translate-x-0.5" />
-                </Link>
-              )) : <div className="grid min-h-[180px] place-items-center text-center"><div><span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-emerald-600"><Icon name="shield" className="h-5 w-5" /></span><p className="mt-3 text-sm font-semibold text-[#243a5e] dark:text-white">No pending work</p><p className="mt-1 text-[9px] text-[#98a4b6]">Everything is under control.</p></div></div>}
+              {work.length ? work.slice(0, 6).map(([label, value], index) => {
+                const tone = index % 4 === 0 ? "amber" : index % 4 === 1 ? "blue" : index % 4 === 2 ? "emerald" : "violet";
+                const toneClass = tone === "amber" ? "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300" : tone === "blue" ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300" : tone === "emerald" ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-300";
+                return (
+                  <Link key={label} href="/vehicles" className="group flex min-h-[64px] items-center gap-3 border-b border-[#eef2f7] px-1 py-3 last:border-b-0 dark:border-white/10">
+                    <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-[14px] ${toneClass}`}><Icon name={index % 2 === 0 ? "clock" : "building"} className="h-4 w-4" /></span>
+                    <span className="min-w-0 flex-1"><span className="block truncate text-[12px] font-semibold capitalize text-[#243a5e] dark:text-white">{label.replaceAll("_", " ")}</span><span className="mt-0.5 flex items-center gap-1.5 text-[8px] text-[#98a4b6]"><span className="h-1.5 w-1.5 rounded-full bg-amber-400" />Needs follow-up</span></span>
+                    <span className="grid h-8 min-w-8 place-items-center rounded-xl bg-[#f4f6fa] px-2 text-[10px] font-bold text-[#445775] dark:bg-white/10 dark:text-white">{value}</span>
+                    <Icon name="chevron" className="h-3.5 w-3.5 text-[#a5afbe] transition group-hover:translate-x-0.5 group-hover:text-blue-500" />
+                  </Link>
+                );
+              }) : <div className="grid min-h-[190px] place-items-center text-center"><div><span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"><Icon name="shield" className="h-5 w-5" /></span><p className="mt-3 text-sm font-semibold text-[#243a5e] dark:text-white">No pending work</p><p className="mt-1 text-[9px] text-[#98a4b6]">Everything is under control.</p></div></div>}
             </div>
           </article>
 
-          <aside className="self-start overflow-hidden rounded-[28px] bg-[#10294f] text-white shadow-[0_16px_40px_rgba(16,41,79,.16)]">
-            <div className="px-5 py-5">
-              <div className="flex items-start justify-between gap-3"><div><p className="text-[8px] font-bold uppercase tracking-[.16em] text-cyan-300">Financial overview</p><h2 className="mt-1 text-[21px] font-semibold tracking-[-.03em]">Money position</h2></div><Icon name="wallet" className="h-5 w-5 text-cyan-300" /></div>
-              <div className="mt-4 space-y-0">
+          <aside className="self-start overflow-hidden rounded-[30px] bg-[#10294f] text-white shadow-[0_20px_48px_rgba(16,41,79,.22)]">
+            <div className="relative px-5 py-5">
+              <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-cyan-400/15 blur-3xl" />
+              <div className="relative flex items-start justify-between gap-3"><div><p className="text-[8px] font-bold uppercase tracking-[.16em] text-cyan-300">Financial overview</p><h2 className="mt-1 text-[21px] font-semibold tracking-[-.03em]">Money position</h2></div><span className="grid h-10 w-10 place-items-center rounded-[14px] bg-white/[.07] text-cyan-300"><Icon name="wallet" className="h-4.5 w-4.5" /></span></div>
+              <div className="relative mt-4 space-y-0">
                 <FinanceRow label="Total receivable" value={money(totalReceivable)} tone="cyan" />
                 <FinanceRow label="Customer due" value={money(customerReceivable)} tone="cyan" />
                 <FinanceRow label="Payable" value={money(payable)} tone={payable > 0 ? "rose" : "emerald"} />
                 <FinanceRow label="Commission due" value={money(commissionDue)} tone="violet" />
                 <FinanceRow label="Company payments" value={money(companyPending.amount)} note={`${companyPending.count} pending`} tone={companyPending.count > 0 ? "amber" : "emerald"} />
               </div>
-              {serviceDue > 0 && <Link href="/accounts/outstanding" className="mt-3 flex items-center justify-between rounded-xl bg-amber-400/10 px-3 py-2 text-[9px] font-semibold text-amber-200"><span>Service due</span><strong>{money(serviceDue)}</strong></Link>}
-              <div className="mt-4 grid grid-cols-2 gap-2"><Link href="/accounts/outstanding" className="rounded-xl bg-white px-3 py-2.5 text-center text-[9px] font-semibold text-[#10294f]">Open outstanding</Link><Link href="/accounts/cash-bank" className="rounded-xl border border-white/10 bg-white/[.06] px-3 py-2.5 text-center text-[9px] font-semibold text-white">Receive / Pay</Link></div>
-              {otherReceivable > 0 && <p className="mt-3 text-[7px] leading-4 text-white/35">Includes {money(otherReceivable)} in other ledger receivables.</p>}
+              {serviceDue > 0 && <Link href="/accounts/outstanding" className="relative mt-3 flex items-center justify-between rounded-xl bg-amber-400/10 px-3 py-2 text-[9px] font-semibold text-amber-200"><span>Service due</span><strong>{money(serviceDue)}</strong></Link>}
+              <div className="relative mt-4 grid grid-cols-2 gap-2"><Link href="/accounts/outstanding" className="rounded-xl bg-white px-3 py-2.5 text-center text-[9px] font-semibold text-[#10294f] transition hover:bg-cyan-50">Open outstanding</Link><Link href="/accounts/cash-bank" className="rounded-xl border border-white/10 bg-white/[.06] px-3 py-2.5 text-center text-[9px] font-semibold text-white transition hover:bg-white/[.1]">Receive / Pay</Link></div>
+              {otherReceivable > 0 && <p className="relative mt-3 text-[7px] leading-4 text-white/35">Includes {money(otherReceivable)} in other ledger receivables.</p>}
             </div>
           </aside>
         </section>
+      </div>
 
-        <section className="mt-4 overflow-hidden rounded-[24px] border border-[#e4e9f1] bg-white shadow-[0_10px_30px_rgba(38,58,96,.04)] dark:border-white/10 dark:bg-white/[.05]">
-          <div className="grid grid-cols-2 divide-x divide-y divide-[#edf0f5] sm:grid-cols-4 sm:divide-y-0 dark:divide-white/10">
-            <BottomStat label="Active policies" value={num(policies)} />
-            <BottomStat label="Vehicles" value={num(vehicles)} />
-            <BottomStat label="Renewals due" value={num(due)} />
-            <BottomStat label="Company pending" value={num(companyPending.count)} tone="amber" />
-          </div>
-          <div className="flex flex-wrap gap-2 border-t border-[#edf0f5] p-3 dark:border-white/10">
-            {tools.map(([label, desc, href, icon]) => <ToolChip key={label} label={label} desc={desc} href={href} icon={icon} />)}
-          </div>
-        </section>
+      <div className="fixed inset-x-0 bottom-4 z-30 flex justify-center px-4 pointer-events-none lg:pl-[288px]">
+        <div className="pointer-events-auto flex max-w-[980px] items-center gap-1 overflow-x-auto rounded-[22px] border border-white/80 bg-white/88 p-2 shadow-[0_20px_55px_rgba(30,55,105,.16)] backdrop-blur-2xl dark:border-white/10 dark:bg-[#101726]/90 [scrollbar-width:none]">
+          {dockTools.map(([label, desc, href, icon, gradient]) => <DockItem key={label} label={label} desc={desc} href={href} icon={icon} gradient={gradient} />)}
+        </div>
       </div>
     </main>
   );
@@ -251,8 +282,13 @@ function HeroMetric({ label, value, note, accent }: { label: string; value: stri
   return <div className="bg-white/[.055] px-4 py-4 sm:px-5"><p className="text-[7px] font-bold uppercase tracking-[.14em] text-white/42">{label}</p><p className={`mt-2 text-[20px] font-bold tracking-[-.03em] ${color}`}>{value}</p><p className="mt-1 text-[7px] text-white/35">{note}</p></div>;
 }
 
+function MiniPulse({ label, value, tone }: { label: string; value: string; tone: "rose" | "emerald" | "violet" }) {
+  const color = tone === "rose" ? "text-rose-300" : tone === "emerald" ? "text-emerald-300" : "text-violet-300";
+  return <div className="min-w-[120px] rounded-[16px] border border-white/10 bg-white/[.06] px-3 py-2.5 backdrop-blur-xl"><p className="text-[7px] font-bold uppercase tracking-[.13em] text-white/35">{label}</p><p className={`mt-1 text-[12px] font-bold ${color}`}>{value}</p></div>;
+}
+
 function QuickAction({ label, desc, href, icon, gradient }: { label: string; desc: string; href: string; icon: string; gradient: string }) {
-  return <Link href={href} className="group min-h-[122px] bg-white p-4 transition hover:bg-[#fafcff] dark:bg-[#0f1520] dark:hover:bg-white/[.07]"><span className={`grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br ${gradient} text-white shadow-[0_10px_22px_rgba(38,80,190,.16)] transition group-hover:-translate-y-0.5`}><Icon name={icon} className="h-5 w-5" /></span><span className="mt-3 block text-[11px] font-semibold text-[#203653] dark:text-white">{label}</span><span className="mt-1 block text-[8px] text-[#98a4b6]">{desc}</span></Link>;
+  return <Link href={href} className="group min-h-[118px] bg-white p-4 transition duration-200 hover:-translate-y-0.5 hover:bg-[#fafcff] dark:bg-[#0f1520] dark:hover:bg-white/[.07]"><span className={`grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br ${gradient} text-white shadow-[0_10px_22px_rgba(38,80,190,.18)] transition group-hover:scale-105`}><Icon name={icon} className="h-5 w-5" /></span><span className="mt-3 block text-[11px] font-semibold text-[#203653] dark:text-white">{label}</span><span className="mt-1 block text-[8px] text-[#98a4b6]">{desc}</span></Link>;
 }
 
 function FinanceRow({ label, value, note, tone }: { label: string; value: string; note?: string; tone: "cyan" | "rose" | "emerald" | "violet" | "amber" }) {
@@ -260,10 +296,6 @@ function FinanceRow({ label, value, note, tone }: { label: string; value: string
   return <div className="flex items-center justify-between gap-3 border-b border-white/10 py-3 last:border-b-0"><span><span className="block text-[8px] font-medium text-white/55">{label}</span>{note && <span className="mt-0.5 block text-[7px] text-white/30">{note}</span>}</span><strong className={`text-[11px] font-bold ${color}`}>{value}</strong></div>;
 }
 
-function BottomStat({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "amber" }) {
-  return <div className="px-5 py-4"><p className="text-[7px] font-bold uppercase tracking-[.14em] text-[#8b98ad]">{label}</p><p className={`mt-2 text-[24px] font-semibold leading-none tracking-[-.04em] ${tone === "amber" ? "text-amber-600" : "text-[#183255] dark:text-white"}`}>{value}</p></div>;
-}
-
-function ToolChip({ label, desc, href, icon }: { label: string; desc: string; href: string; icon: string }) {
-  return <Link href={href} className="flex min-w-[140px] items-center gap-2 rounded-xl border border-[#e7ebf2] bg-[#fbfcfe] px-3 py-2 transition hover:border-blue-200 hover:bg-blue-50/50 dark:border-white/10 dark:bg-white/[.03] dark:hover:bg-white/[.07]"><span className="grid h-8 w-8 place-items-center rounded-lg bg-white text-[#55708f] shadow-sm dark:bg-white/10 dark:text-slate-300"><Icon name={icon} className="h-3.5 w-3.5" /></span><span className="min-w-0"><span className="block text-[9px] font-semibold text-[#334b69] dark:text-white">{label}</span><span className="block truncate text-[7px] text-[#9aa6b7]">{desc}</span></span></Link>;
+function DockItem({ label, desc, href, icon, gradient }: { label: string; desc: string; href: string; icon: string; gradient: string }) {
+  return <Link href={href} className="group flex min-w-[132px] items-center gap-2.5 rounded-[15px] px-3 py-2 transition hover:bg-[#f5f8fe] dark:hover:bg-white/[.06]"><span className={`grid h-9 w-9 shrink-0 place-items-center rounded-[12px] bg-gradient-to-br ${gradient} text-white shadow-[0_8px_16px_rgba(50,80,160,.16)] transition group-hover:-translate-y-0.5 group-hover:scale-105`}><Icon name={icon} className="h-4 w-4" /></span><span className="min-w-0"><span className="block text-[9px] font-semibold text-[#334b69] dark:text-white">{label}</span><span className="block truncate text-[7px] text-[#9aa6b7]">{desc}</span></span></Link>;
 }
