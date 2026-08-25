@@ -138,11 +138,11 @@ jobs:
             php artisan route:cache
             php artisan view:cache
 
-            MAIL_CHECK="$(php artisan tinker --execute=\"echo config('mail.default').'|'.config('mail.from.address').'|'.config('mail.mailers.smtp.host');\" 2>/dev/null | tail -n 1)"
-            case "$MAIL_CHECK" in
-              *smtp*no-reply@vimawallah.com*smtp.resend.com*) echo "Verified production mail configuration." ;;
-              *) echo "ERROR: Production mail configuration verification failed."; exit 1 ;;
-            esac
+            grep -Fxq 'MAIL_MAILER=smtp' .env
+            grep -Fxq 'MAIL_HOST=smtp.resend.com' .env
+            grep -Fxq 'MAIL_USERNAME=resend' .env
+            grep -Fxq 'MAIL_FROM_ADDRESS=no-reply@vimawallah.com' .env
+            echo "Verified production mail configuration."
 
             echo "Verifying public OCR Laravel route is registered..."
             php artisan route:list --path=api/v1/public-policy-ocr | tee /tmp/vimawallah-ocr-route.txt
