@@ -1,3 +1,56 @@
 'use client';
-import {FormEvent,useState} from 'react'; import {AuthShell,BackToLogin} from '@/components/auth/AuthShell'; import {authRequest} from '@/lib/auth';
-export default function Forgot(){const[loading,setLoading]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState('');async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();setLoading(true);setError('');const f=new FormData(e.currentTarget);try{await authRequest('forgot-password',{tenant_id:String(f.get('tenant_id')),email:String(f.get('email'))});setMessage('If an active account matches, we sent a secure reset link.');}catch(x){setError(x instanceof Error?x.message:'Request failed.')}finally{setLoading(false)}}return <AuthShell title="Reset your password" subtitle="Enter your account details and we’ll email you a time-limited reset link."><form onSubmit={submit}>{message&&<div className="notice success">{message}</div>}{error&&<div className="notice error">{error}</div>}<label className="field">Organization ID<input name="tenant_id" required placeholder="Your organization UUID"/></label><label className="field">Email address<input name="email" type="email" required placeholder="name@company.com"/></label><button className="primary" disabled={loading}>{loading?'Sending…':'Send reset link'}</button></form><BackToLogin/></AuthShell>}
+
+import { FormEvent, useState } from 'react';
+import { AuthShell, BackToLogin } from '@/components/auth/AuthShell';
+import { authRequest } from '@/lib/auth';
+
+export default function Forgot() {
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setMessage('');
+    const form = new FormData(e.currentTarget);
+
+    try {
+      await authRequest('forgot-password', {
+        email: String(form.get('email')).trim(),
+      });
+      setMessage('If this email is registered with an active ERP account, a secure reset link has been sent. Please check Inbox and Spam.');
+    } catch (x) {
+      setError(x instanceof Error ? x.message : 'Reset request could not be sent.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <AuthShell
+      title="Reset your password"
+      subtitle="Enter your registered email address. We’ll send you a secure, time-limited password reset link."
+    >
+      <form onSubmit={submit}>
+        {message && <div className="notice success">{message}</div>}
+        {error && <div className="notice error">{error}</div>}
+        <label className="field">
+          Registered email address
+          <input
+            name="email"
+            type="email"
+            required
+            autoComplete="email"
+            placeholder="name@company.com"
+          />
+        </label>
+        <button className="primary" disabled={loading}>
+          {loading ? 'Sending…' : 'Email me a reset link'}
+        </button>
+      </form>
+      <BackToLogin />
+    </AuthShell>
+  );
+}
