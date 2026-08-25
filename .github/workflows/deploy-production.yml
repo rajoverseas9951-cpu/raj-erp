@@ -19,12 +19,15 @@ jobs:
     steps:
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.2.4
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         with:
           host: ${{ secrets.PRODUCTION_SSH_HOST }}
           username: ${{ secrets.PRODUCTION_SSH_USER }}
           password: ${{ secrets.PRODUCTION_SSH_PASSWORD }}
           port: ${{ secrets.PRODUCTION_SSH_PORT || '22' }}
           command_timeout: 55m
+          envs: RESEND_API_KEY
           script: |
             set -Eeuo pipefail
 
@@ -86,6 +89,35 @@ jobs:
             curl --fail --silent --show-error http://127.0.0.1:8081/health
 
             cd "$APP_DIR/backend"
+
+            set_env_value() {
+              key="$1"
+              value="$2"
+              if grep -q "^${key}=" .env; then
+                KEY="$key" VALUE="$value" python3 - <<'PY'
+import os
+from pathlib import Path
+key = os.environ['KEY']
+value = os.environ['VALUE']
+path = Path('.env')
+lines = path.read_text().splitlines()
+out = []
+replaced = False
+for line in lines:
+    if line.startswith(key + '='):
+        out.append(f'{key}={value}')
+        replaced = True
+    else:
+        out.append(line)
+if not replaced:
+    out.append(f'{key}={value}')
+path.write_text('\n'.join(out) + '\n')
+PY
+              else
+                printf '%s=%s\n' "$key" "$value" >> .env
+              fi
+            }
+
             if grep -q '^PADDLEOCR_URL=' .env; then
               sed -i 's#^PADDLEOCR_URL=.*#PADDLEOCR_URL=http://127.0.0.1:8081#' .env
             else
@@ -106,12 +138,30 @@ jobs:
             else
               printf 'FRONTEND_URL=https://erp.vimawallah.com\n' >> .env
             fi
+
+            test -n "${RESEND_API_KEY:-}" || { echo "ERROR: RESEND_API_KEY GitHub secret is missing."; exit 1; }
+            set_env_value MAIL_MAILER smtp
+            set_env_value MAIL_SCHEME null
+            set_env_value MAIL_HOST smtp.resend.com
+            set_env_value MAIL_PORT 587
+            set_env_value MAIL_USERNAME resend
+            set_env_value MAIL_PASSWORD "$RESEND_API_KEY"
+            set_env_value MAIL_FROM_ADDRESS no-reply@vimawallah.com
+            set_env_value MAIL_FROM_NAME 'Vimawallah ERP'
+            echo "Configured Resend SMTP for no-reply@vimawallah.com."
+
             composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
             php artisan migrate --force
             php artisan optimize:clear
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
+
+            MAIL_CHECK="$(php artisan tinker --execute=\"echo config('mail.default').'|'.config('mail.from.address').'|'.config('mail.mailers.smtp.host');\" 2>/dev/null | tail -n 1)"
+            case "$MAIL_CHECK" in
+              *smtp*no-reply@vimawallah.com*smtp.resend.com*) echo "Verified production mail configuration." ;;
+              *) echo "ERROR: Production mail configuration verification failed."; exit 1 ;;
+            esac
 
             echo "Verifying public OCR Laravel route is registered..."
             php artisan route:list --path=api/v1/public-policy-ocr | tee /tmp/vimawallah-ocr-route.txt
