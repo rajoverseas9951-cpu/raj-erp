@@ -93,29 +93,10 @@ jobs:
             set_env_value() {
               key="$1"
               value="$2"
-              if grep -q "^${key}=" .env; then
-                KEY="$key" VALUE="$value" python3 - <<'PY'
-import os
-from pathlib import Path
-key = os.environ['KEY']
-value = os.environ['VALUE']
-path = Path('.env')
-lines = path.read_text().splitlines()
-out = []
-replaced = False
-for line in lines:
-    if line.startswith(key + '='):
-        out.append(f'{key}={value}')
-        replaced = True
-    else:
-        out.append(line)
-if not replaced:
-    out.append(f'{key}={value}')
-path.write_text('\n'.join(out) + '\n')
-PY
-              else
-                printf '%s=%s\n' "$key" "$value" >> .env
-              fi
+              tmp="$(mktemp)"
+              grep -v "^${key}=" .env > "$tmp" || true
+              printf '%s=%s\n' "$key" "$value" >> "$tmp"
+              mv "$tmp" .env
             }
 
             if grep -q '^PADDLEOCR_URL=' .env; then
@@ -147,7 +128,7 @@ PY
             set_env_value MAIL_USERNAME resend
             set_env_value MAIL_PASSWORD "$RESEND_API_KEY"
             set_env_value MAIL_FROM_ADDRESS no-reply@vimawallah.com
-            set_env_value MAIL_FROM_NAME 'Vimawallah ERP'
+            set_env_value MAIL_FROM_NAME '"Vimawallah ERP"'
             echo "Configured Resend SMTP for no-reply@vimawallah.com."
 
             composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
