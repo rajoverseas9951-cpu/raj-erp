@@ -125,6 +125,10 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active', 'erp.active', 'erp.en
     Route::get('claims/{id}', [InsuranceClaimController::class, 'show']);
     Route::put('claims/{id}', [InsuranceClaimController::class, 'update']);
     Route::post('claims/{id}/updates', [InsuranceClaimController::class, 'addNote']);
+    Route::post('claims/{id}/documents', [InsuranceClaimController::class, 'saveDocument']);
+    Route::post('claims/{id}/documents/{document}/verify', [InsuranceClaimController::class, 'verifyDocument']);
+    Route::get('claims/{id}/documents/{document}/download', [InsuranceClaimController::class, 'downloadDocument']);
+    Route::delete('claims/{id}/documents/{document}', [InsuranceClaimController::class, 'destroyDocument']);
     Route::delete('claims/{id}', [InsuranceClaimController::class, 'destroy']);
 
     Route::get('vehicles/export', [VehicleController::class, 'export']);
