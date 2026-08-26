@@ -55,13 +55,17 @@ jobs:
             cd "$APP_DIR/backend"
             composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
             php artisan migrate --force
+            php artisan db:seed --class='Database\\Seeders\\OperationalRolesSeeder' --force
             php artisan optimize:clear
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
 
+            echo "=== Verify operational roles ==="
+            php artisan tinker --execute="$tenant=env('ADMIN_TENANT_ID','00000000-0000-4000-8000-000000000001'); $count=\\App\\Models\\Role::where('tenant_id',$tenant)->whereIn('slug',['administrator','branch-manager','insurance-executive','claims-executive','accounts-executive','rto-executive','read-only'])->count(); if ($count < 7) { throw new RuntimeException('Operational roles missing: '.$count.'/7'); } echo 'Operational roles OK: '.$count.PHP_EOL;"
+
             echo "=== Verify claims migration ==="
-            php artisan tinker --execute="if (!\Illuminate\Support\Facades\Schema::hasTable('insurance_claims')) { throw new RuntimeException('insurance_claims table missing'); } echo 'insurance_claims table OK'.PHP_EOL;"
+            php artisan tinker --execute="if (!\\Illuminate\\Support\\Facades\\Schema::hasTable('insurance_claims')) { throw new RuntimeException('insurance_claims table missing'); } echo 'insurance_claims table OK'.PHP_EOL;"
 
             echo "=== Verify Claims API routes ==="
             php artisan route:list --path=api/v1/claims | tee /tmp/vimawallah-claims-routes.txt
@@ -92,4 +96,4 @@ jobs:
             pm2 logs "$BACKEND_PM2" --err --lines 80 --nostream || true
 
             echo "=== Repair complete ==="
-            echo "Claims backend is registered on production commit: $ACTUAL_COMMIT"
+            echo "Claims backend and operational roles are registered on production commit: $ACTUAL_COMMIT"
