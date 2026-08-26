@@ -3,13 +3,13 @@
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-export default function LegacyCompanyClaimFormRedirect() {
+export default function CompanyClaimFormRedirect() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const id = String(params?.id || "");
 
   useEffect(() => {
-    if (id) router.replace(`/claims/company-form?id=${encodeURIComponent(id)}`);
+    if (id) router.replace(`/claims/universal-form?id=${encodeURIComponent(id)}`);
   }, [id, router]);
 
   return (
