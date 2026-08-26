@@ -28,16 +28,16 @@ export const ERP_MODULES: ErpModuleDefinition[] = [
   { key: "RC_API", name: "RC / OCR API", description: "RC lookup, OCR and verification services.", category: "Integrations", paths: ["/rc-api"] },
 ];
 
-export const ERP_ROUTE_DEPENDENCIES: Array<[string, ErpModuleKey]> = [
-  ["/reports/profit-loss", "ACCOUNTING"],
-  ["/reports/balance-sheet", "ACCOUNTING"],
-  ["/reports/insurance-due", "ACCOUNTING"],
-  ["/reports/expiry", "POLICIES"],
-  ["/reports/insurance", "POLICIES"],
-  ["/reports/insurance-commission", "POLICIES"],
-  ["/reports/rto-work", "RTO"],
-  ["/reports/rto-profit", "RTO"],
-  ["/reports/hsrp", "RTO"],
+export const ERP_ROUTE_DEPENDENCIES: Array<[string, ErpModuleKey[]]> = [
+  ["/reports/profit-loss", ["ACCOUNTING"]],
+  ["/reports/balance-sheet", ["ACCOUNTING"]],
+  ["/reports/insurance-due", ["POLICIES", "ACCOUNTING"]],
+  ["/reports/insurance-commission", ["POLICIES", "ACCOUNTING"]],
+  ["/reports/expiry", ["POLICIES"]],
+  ["/reports/insurance", ["POLICIES"]],
+  ["/reports/rto-work", ["RTO"]],
+  ["/reports/rto-profit", ["RTO", "ACCOUNTING"]],
+  ["/reports/hsrp", ["RTO"]],
 ];
 
 const routeModules: Array<[string, ErpModuleKey]> = ERP_MODULES.flatMap((module) => module.paths.map((path) => [path, module.key] as [string, ErpModuleKey]));
@@ -50,12 +50,12 @@ export function moduleForPath(path: string): ErpModuleKey | undefined {
   return routeModules.find(([prefix]) => path === prefix || path.startsWith(`${prefix}/`))?.[1];
 }
 
-export function dependencyForPath(path: string): ErpModuleKey | undefined {
-  return ERP_ROUTE_DEPENDENCIES.find(([prefix]) => path === prefix || path.startsWith(`${prefix}/`))?.[1];
+export function dependenciesForPath(path: string): ErpModuleKey[] {
+  return ERP_ROUTE_DEPENDENCIES.find(([prefix]) => path === prefix || path.startsWith(`${prefix}/`))?.[1] || [];
 }
 
 export function requiredModulesForPath(path: string): ErpModuleKey[] {
-  const required = [moduleForPath(path), dependencyForPath(path)].filter((key): key is ErpModuleKey => Boolean(key));
+  const required = [moduleForPath(path), ...dependenciesForPath(path)].filter((key): key is ErpModuleKey => Boolean(key));
   return Array.from(new Set(required));
 }
 
