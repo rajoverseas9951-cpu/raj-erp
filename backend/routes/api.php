@@ -2,6 +2,7 @@
 
 use App\Features\Accounting\Controllers\AccountingController;
 use App\Features\Accounting\Controllers\BusinessReportsController;
+use App\Features\Accounting\Controllers\ClaimPolicyLookupController;
 use App\Features\Accounting\Controllers\FinanceControlController;
 use App\Features\Accounting\Controllers\InsuranceAccountingController;
 use App\Features\Accounting\Controllers\InsuranceClaimController;
@@ -122,14 +123,16 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active', 'erp.active', 'erp.en
 
     Route::get('claims', [InsuranceClaimController::class, 'index']);
     Route::post('claims', [InsuranceClaimController::class, 'store']);
-    Route::get('claims/{id}', [InsuranceClaimController::class, 'show']);
-    Route::put('claims/{id}', [InsuranceClaimController::class, 'update']);
-    Route::post('claims/{id}/updates', [InsuranceClaimController::class, 'addNote']);
-    Route::post('claims/{id}/documents', [InsuranceClaimController::class, 'saveDocument']);
-    Route::post('claims/{id}/documents/{document}/verify', [InsuranceClaimController::class, 'verifyDocument']);
-    Route::get('claims/{id}/documents/{document}/download', [InsuranceClaimController::class, 'downloadDocument']);
-    Route::delete('claims/{id}/documents/{document}', [InsuranceClaimController::class, 'destroyDocument']);
-    Route::delete('claims/{id}', [InsuranceClaimController::class, 'destroy']);
+    Route::get('claims/policies', [ClaimPolicyLookupController::class, 'index']);
+    Route::get('claim-policies', [ClaimPolicyLookupController::class, 'index']);
+    Route::get('claims/{id}', [InsuranceClaimController::class, 'show'])->whereUuid('id');
+    Route::put('claims/{id}', [InsuranceClaimController::class, 'update'])->whereUuid('id');
+    Route::post('claims/{id}/updates', [InsuranceClaimController::class, 'addNote'])->whereUuid('id');
+    Route::post('claims/{id}/documents', [InsuranceClaimController::class, 'saveDocument'])->whereUuid('id');
+    Route::post('claims/{id}/documents/{document}/verify', [InsuranceClaimController::class, 'verifyDocument'])->whereUuid('id');
+    Route::get('claims/{id}/documents/{document}/download', [InsuranceClaimController::class, 'downloadDocument'])->whereUuid('id');
+    Route::delete('claims/{id}/documents/{document}', [InsuranceClaimController::class, 'destroyDocument'])->whereUuid('id');
+    Route::delete('claims/{id}', [InsuranceClaimController::class, 'destroy'])->whereUuid('id');
 
     Route::get('vehicles/export', [VehicleController::class, 'export']);
     Route::get('vehicle-masters/{type}', [VehicleMasterController::class, 'index']);
