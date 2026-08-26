@@ -12,12 +12,12 @@ concurrency:
 
 jobs:
   repair:
-    name: Repair production and diagnose RTO
+    name: Repair production backend and verify claims
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
-      - name: Repair and diagnose over SSH
+      - name: Repair backend over SSH
         uses: appleboy/ssh-action@v1.2.4
         with:
           host: ${{ secrets.PRODUCTION_SSH_HOST }}
@@ -34,7 +34,7 @@ jobs:
             BACKEND_ENV_BACKUP=/tmp/raj-erp-backend.env.repair
             FRONTEND_ENV_BACKUP=/tmp/raj-erp-frontend.env.local.repair
 
-            echo "=== Production repair ==="
+            echo "=== Vimawallah production backend repair ==="
             echo "Target commit: $EXPECTED_COMMIT"
             cd "$APP_DIR"
 
@@ -52,14 +52,6 @@ jobs:
             test "$ACTUAL_COMMIT" = "$EXPECTED_COMMIT"
             echo "Server commit: $ACTUAL_COMMIT"
 
-            # A tracked controller must never remain locally modified after repair.
-            if ! git diff --quiet -- backend/app/Features/Vehicles/Controllers/VehicleOperationsController.php; then
-              echo "ERROR: VehicleOperationsController still differs from GitHub after hard reset."
-              git diff -- backend/app/Features/Vehicles/Controllers/VehicleOperationsController.php || true
-              exit 1
-            fi
-            echo "VehicleOperationsController matches GitHub."
-
             cd "$APP_DIR/backend"
             composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
             php artisan migrate --force
@@ -68,26 +60,36 @@ jobs:
             php artisan route:cache
             php artisan view:cache
 
-            echo "=== RTO database/schema diagnostic ==="
-            php artisan tinker --execute="dump(\Illuminate\Support\Facades\Schema::hasTable('vehicle_rto_processes')); dump(\Illuminate\Support\Facades\Schema::getColumnListing('vehicle_rto_processes'));" || true
+            echo "=== Verify claims migration ==="
+            php artisan tinker --execute="if (!\Illuminate\Support\Facades\Schema::hasTable('insurance_claims')) { throw new RuntimeException('insurance_claims table missing'); } echo 'insurance_claims table OK'.PHP_EOL;"
 
-            echo "=== RTO routes diagnostic ==="
-            php artisan route:list --path=vehicles | grep -Ei 'operations|rto' | tail -n 40 || true
+            echo "=== Verify Claims API routes ==="
+            php artisan route:list --path=api/v1/claims | tee /tmp/vimawallah-claims-routes.txt
+            grep -Fq 'api/v1/claims' /tmp/vimawallah-claims-routes.txt
 
-            echo "=== Recent Laravel errors BEFORE reload ==="
-            if [ -f storage/logs/laravel.log ]; then
-              tail -n 250 storage/logs/laravel.log || true
-            else
-              echo "No laravel.log found."
-            fi
+            echo "=== Verify other insurance payment routes ==="
+            php artisan route:list --path=api/v1/other-insurance-payments | tee /tmp/vimawallah-other-insurance-payment-routes.txt || true
 
             pm2 reload "$BACKEND_PM2" --update-env
             pm2 save
             sleep 3
             pm2 describe "$BACKEND_PM2" >/dev/null
 
-            echo "=== Recent backend PM2 errors ==="
-            pm2 logs "$BACKEND_PM2" --err --lines 120 --nostream || true
+            echo "=== Public Claims API probe ==="
+            CLAIM_STATUS="$(curl --silent --show-error --output /tmp/vimawallah-claims-probe.txt --write-out '%{http_code}' \
+              https://erp.vimawallah.com/api/v1/claims \
+              --header 'Accept: application/json' || true)"
+            echo "Claims API HTTP status: $CLAIM_STATUS"
+            cat /tmp/vimawallah-claims-probe.txt || true
+            case "$CLAIM_STATUS" in
+              000|404|5??)
+                echo "ERROR: Claims API is not healthy."
+                exit 1
+                ;;
+            esac
+
+            echo "=== Recent backend errors ==="
+            pm2 logs "$BACKEND_PM2" --err --lines 80 --nostream || true
 
             echo "=== Repair complete ==="
-            echo "Production backend repaired to: $ACTUAL_COMMIT"
+            echo "Claims backend is registered on production commit: $ACTUAL_COMMIT"
