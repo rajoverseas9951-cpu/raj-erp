@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import { vehicleOperationsApi } from '@/lib/vehicle-operations';
 import { vehicleApi, type Vehicle } from '@/lib/vehicles';
+import { vehicleInsuranceApi, type VehicleInsurancePolicy } from '@/lib/vehicle-insurance';
 import VehicleBrokerAgentBridge from '@/components/vehicles/VehicleBrokerAgentBridge';
 
 type Props = { children: ReactNode };
@@ -13,15 +14,33 @@ export default function VehicleLayout({ children }: Props) {
   const pathname = usePathname();
   const [eligible, setEligible] = useState(false);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [activePolicy, setActivePolicy] = useState<VehicleInsurancePolicy | null>(null);
 
   const profilePath = `/vehicles/${vehicleId}`;
+  const insurancePath = `${profilePath}/insurance`;
   const isProfile = pathname === profilePath || pathname === `${profilePath}/`;
   const isEdit = pathname === `${profilePath}/edit` || pathname === `${profilePath}/edit/`;
+  const isInsurance = pathname === insurancePath || pathname === `${insurancePath}/`;
 
   useEffect(() => {
     if (!isProfile && !isEdit) return;
     vehicleApi.get(vehicleId).then(setVehicle).catch(() => setVehicle(null));
   }, [isProfile, isEdit, vehicleId]);
+
+  useEffect(() => {
+    if (!isInsurance) {
+      setActivePolicy(null);
+      return;
+    }
+    vehicleInsuranceApi.list(vehicleId)
+      .then((rows) => {
+        const current = rows
+          .filter((p) => !p.archived_at && p.status !== 'cancelled')
+          .sort((a, b) => String(b.expiry_date || '').localeCompare(String(a.expiry_date || '')))[0] ?? null;
+        setActivePolicy(current);
+      })
+      .catch(() => setActivePolicy(null));
+  }, [isInsurance, vehicleId]);
 
   useEffect(() => {
     if (!isProfile) {
@@ -39,6 +58,19 @@ export default function VehicleLayout({ children }: Props) {
   return (
     <>
       {children}
+
+      {isInsurance && activePolicy && (
+        <div className="fixed bottom-5 right-5 z-40">
+          <a
+            href={`/claims?policy_id=${encodeURIComponent(activePolicy.id)}`}
+            className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-gradient-to-r from-[#0a2b61] to-[#2563eb] px-5 text-sm font-black text-white shadow-[0_18px_45px_rgba(37,99,235,.32)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_55px_rgba(37,99,235,.42)]"
+          >
+            <span className="grid h-7 w-7 place-items-center rounded-lg bg-white/15 text-base">+</span>
+            Intimate Claim
+          </a>
+        </div>
+      )}
+
       {isEdit && vehicle && <VehicleBrokerAgentBridge vehicle={vehicle} />}
 
       {isProfile && vehicle?.broker_agent_enabled && (
