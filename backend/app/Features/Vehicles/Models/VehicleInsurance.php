@@ -12,7 +12,7 @@ class VehicleInsurance extends Model
     use HasUuids, SoftDeletes;
 
     protected $fillable = [
-        'tenant_id', 'vehicle_id', 'insurance_company_id', 'company_name', 'company_code',
+        'tenant_id', 'vehicle_id', 'business_channel', 'insurance_company_id', 'company_name', 'company_code',
         'purchase_from', 'policy_number', 'policy_date', 'issue_date', 'expiry_date',
         'status', 'insurance_type', 'remark', 'od_premium', 'tp_premium', 'addon_premium',
         'gst_other_charges', 'gst_percent', 'gst_amount', 'other_charges',
