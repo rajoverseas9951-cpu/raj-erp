@@ -46,11 +46,16 @@ class EnsureRouteModuleEntitled
             $required[] = $module;
         }
 
-        foreach (array_unique($required, SORT_REGULAR) as $module) {
+        $unique = [];
+        foreach ($required as $module) {
+            $unique[$module->value] = $module;
+        }
+
+        foreach ($unique as $module) {
             $access->authorize($request->user(), $module, $branch);
         }
 
-        if ($required !== []) {
+        if ($unique !== []) {
             $request->attributes->set('erp_branch', $branch);
         }
 
