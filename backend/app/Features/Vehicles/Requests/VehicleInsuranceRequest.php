@@ -12,6 +12,9 @@ class VehicleInsuranceRequest extends FormRequest
         if (is_string($this->input('payment_details'))) {
             $this->merge(['payment_details' => json_decode($this->input('payment_details'), true) ?: []]);
         }
+        if (! $this->filled('business_channel')) {
+            $this->merge(['business_channel' => 'retail']);
+        }
     }
 
     public function authorize(): bool
@@ -22,6 +25,7 @@ class VehicleInsuranceRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'business_channel' => ['required', Rule::in(['retail', 'wholesale'])],
             'insurance_company_id' => ['nullable', 'uuid'],
             'company_name' => ['required', 'string', 'max:200'],
             'company_code' => ['nullable', 'string', 'max:30'],
