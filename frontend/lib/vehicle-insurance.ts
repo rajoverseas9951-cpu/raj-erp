@@ -4,6 +4,7 @@ import { invalidateDashboard } from '@/lib/dashboard-refresh';
 export type VehicleInsurancePolicy = {
   id: string;
   vehicle_id: string;
+  business_channel?: 'retail'|'wholesale';
   insurance_company_id?: string;
   company_name: string;
   company_code?: string;
@@ -88,6 +89,11 @@ export type InsuranceCalculation = {
   gross_commission: number;
 };
 
+const MOTOR_CHANNEL_KEY='vimawallah_motor_business_channel';
+function activeMotorChannel(){
+  if(typeof window==='undefined') return 'retail';
+  return sessionStorage.getItem(MOTOR_CHANNEL_KEY)==='wholesale'?'wholesale':'retail';
+}
 function notifyPolicySaved(vehicleId:string, policyId:string){
   if(typeof window!=='undefined') window.dispatchEvent(new CustomEvent('raj:policy-saved',{detail:{vehicleId,policyId}}));
 }
@@ -104,6 +110,11 @@ async function request<T>(path: string, init?: RequestInit, invalidate = false):
   return result;
 }
 
+function withChannel(body:unknown){
+  if(body && typeof body==='object' && !Array.isArray(body)) return {...body as Record<string,unknown>,business_channel:(body as Record<string,unknown>).business_channel??activeMotorChannel()};
+  return body;
+}
+
 export const vehicleInsuranceApi = {
   list: (vehicleId: string) => request<VehicleInsurancePolicy[]>(`/vehicles/${vehicleId}/insurances`),
   calculate: (vehicleId: string, body: unknown) => request<InsuranceCalculation>(`/vehicles/${vehicleId}/insurance-calculation`, {
@@ -111,16 +122,17 @@ export const vehicleInsuranceApi = {
     body: JSON.stringify(body),
   }),
   create: async (vehicleId: string, body: unknown) => {
-    const result=await request<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances`, {method:'POST',body:JSON.stringify(body)}, true);
+    const result=await request<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances`, {method:'POST',body:JSON.stringify(withChannel(body))}, true);
     notifyPolicySaved(vehicleId,result.id);return result;
   },
   saveForm: async (vehicleId: string, body: FormData, policyId?: string) => {
+    if(!body.has('business_channel')) body.append('business_channel',activeMotorChannel());
     if (policyId) body.append('_method', 'PUT');
     const result=await multipart<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances${policyId ? `/${policyId}` : ''}`, body);
     notifyPolicySaved(vehicleId,result.id);return result;
   },
   update: async (vehicleId: string, policyId: string, body: unknown) => {
-    const result=await request<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances/${policyId}`, {method:'PUT',body:JSON.stringify(body)}, true);
+    const result=await request<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances/${policyId}`, {method:'PUT',body:JSON.stringify(withChannel(body))}, true);
     notifyPolicySaved(vehicleId,result.id);return result;
   },
   remove: (vehicleId: string, policyId: string) => request<null>(`/vehicles/${vehicleId}/insurances/${policyId}`, {
