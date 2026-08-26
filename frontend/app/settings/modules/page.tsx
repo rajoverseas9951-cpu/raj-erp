@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ERP_MODULES, moduleDefinition } from "@/lib/erp-modules";
 import { organizationApi, type Organization, type OrganizationModule } from "@/lib/organization";
@@ -130,7 +130,7 @@ export default function ModuleSettingsPage() {
   </main>;
 }
 
-function Badge({ children, tone }: { children: React.ReactNode; tone: "slate" | "amber" | "emerald" | "rose" }) {
+function Badge({ children, tone }: { children: ReactNode; tone: "slate" | "amber" | "emerald" | "rose" }) {
   const classes = tone === "amber" ? "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
     : tone === "emerald" ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
       : tone === "rose" ? "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
