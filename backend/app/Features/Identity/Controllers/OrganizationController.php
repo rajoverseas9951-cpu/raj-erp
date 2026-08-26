@@ -6,7 +6,9 @@ use App\Models\ErpModuleEntitlement;
 use App\Models\ErpModulePreference;
 use App\Models\Tenant;
 use App\Support\ErpControl\ErpModule;
+use App\Support\ErpControl\ErpSubmodule;
 use App\Support\ErpControl\ModuleAccess;
+use App\Support\ErpControl\SubmoduleAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -26,14 +28,17 @@ class OrganizationController
 
         if ($request->has('module_key')) {
             abort_unless((bool) $request->user()->is_admin, 403, 'Only ERP administrators can change module settings.');
-            $validKeys = array_map(fn (ErpModule $module) => $module->value, ErpModule::cases());
+            $moduleKeys = array_map(fn (ErpModule $module) => $module->value, ErpModule::cases());
+            $submoduleKeys = array_map(fn (ErpSubmodule $module) => $module->value, ErpSubmodule::cases());
+            $validKeys = array_merge($moduleKeys, $submoduleKeys);
             $moduleData = $request->validate([
                 'module_key' => ['required', 'string', Rule::in($validKeys)],
                 'is_enabled' => ['required', 'boolean'],
             ]);
 
+            $parentModule = ErpModule::tryFrom($moduleData['module_key']);
             $hasEntitlements = ErpModuleEntitlement::query()->where('tenant_id', $tenant->id)->whereNull('branch_id')->exists();
-            if ($hasEntitlements && $moduleData['is_enabled']) {
+            if ($parentModule && $hasEntitlements && $moduleData['is_enabled']) {
                 $allowed = (bool) ErpModuleEntitlement::query()
                     ->where('tenant_id', $tenant->id)
                     ->whereNull('branch_id')
@@ -80,6 +85,7 @@ class OrganizationController
         $preferences = ErpModulePreference::query()->where('tenant_id', $tenant->id)->get()->keyBy('module_key');
         $hasEntitlements = $entitlements->isNotEmpty();
         $access = app(ModuleAccess::class);
+        $submoduleAccess = app(SubmoduleAccess::class);
 
         $modules = collect(ErpModule::cases())->map(function (ErpModule $module) use ($tenant, $entitlements, $preferences, $hasEntitlements, $access) {
             $allowed = ! $hasEntitlements || (bool) optional($entitlements->get($module->value))->is_enabled;
@@ -97,6 +103,20 @@ class OrganizationController
             ];
         })->values()->all();
 
+        $submodules = collect(ErpSubmodule::cases())->map(function (ErpSubmodule $submodule) use ($tenant, $entitlements, $hasEntitlements, $submoduleAccess) {
+            $parent = $submodule->parent();
+            $allowed = ! $hasEntitlements || (bool) optional($entitlements->get($parent->value))->is_enabled;
+
+            return [
+                'key' => $submodule->value,
+                'parent_key' => $parent->value,
+                'allowed' => $allowed,
+                'configured_enabled' => $submoduleAccess->configured((string) $tenant->id, $submodule),
+                'enabled' => $submoduleAccess->enabled((string) $tenant->id, $submodule),
+                'blocked_by' => $submoduleAccess->blockedBy((string) $tenant->id, $submodule),
+            ];
+        })->values()->all();
+
         return [
             'id' => $tenant->id, 'name' => $tenant->name, 'brand_name' => $tenant->brand_name,
             'tagline' => $tenant->tagline, 'address' => $tenant->address, 'city' => $tenant->city,
@@ -104,6 +124,7 @@ class OrganizationController
             'email' => $tenant->email, 'gst_number' => $tenant->gst_number,
             'logo_url' => $tenant->logo_path ? Storage::disk('public')->url($tenant->logo_path) : null,
             'modules' => $modules,
+            'submodules' => $submodules,
         ];
     }
 }
