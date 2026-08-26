@@ -2,20 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { moduleForPath } from "@/lib/erp-modules";
+import { requiredModulesForPath } from "@/lib/erp-modules";
 import { organizationApi, type OrganizationModule } from "@/lib/organization";
-
-const reportDependencies: Array<[string, string]> = [
-  ["/reports/profit-loss", "ACCOUNTING"],
-  ["/reports/balance-sheet", "ACCOUNTING"],
-  ["/reports/insurance-due", "ACCOUNTING"],
-  ["/reports/expiry", "POLICIES"],
-  ["/reports/insurance", "POLICIES"],
-  ["/reports/insurance-commission", "POLICIES"],
-  ["/reports/rto-work", "RTO"],
-  ["/reports/rto-profit", "RTO"],
-  ["/reports/hsrp", "RTO"],
-];
 
 function hide(el: Element | null | undefined, key: string) {
   if (!(el instanceof HTMLElement)) return;
@@ -46,11 +34,8 @@ export function ModuleRuntimeGuard() {
 
   useEffect(() => {
     if (!ready || pathname.startsWith("/settings/modules") || pathname === "/dashboard") return;
-    const moduleKey = moduleForPath(pathname);
-    const dependentKey = reportDependencies.find(([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`))?.[1];
-    if ((moduleKey && disabled.has(moduleKey)) || (dependentKey && disabled.has(dependentKey))) {
-      router.replace("/dashboard?module=disabled");
-    }
+    const blocked = requiredModulesForPath(pathname).find((moduleKey) => disabled.has(moduleKey));
+    if (blocked) router.replace(`/dashboard?module=disabled&key=${encodeURIComponent(blocked)}`);
   }, [disabled, pathname, ready, router]);
 
   useEffect(() => {
@@ -64,16 +49,21 @@ export function ModuleRuntimeGuard() {
       document.querySelectorAll<HTMLAnchorElement>("nav a[href], aside a[href]").forEach((anchor) => {
         const href = anchor.getAttribute("href") || "";
         if (href === "/dashboard") return;
-        const moduleKey = moduleForPath(href);
-        const dependentKey = reportDependencies.find(([prefix]) => href === prefix || href.startsWith(`${prefix}/`))?.[1];
-        const blockedKey = dependentKey && disabled.has(dependentKey) ? dependentKey : moduleKey && disabled.has(moduleKey) ? moduleKey : null;
-        if (blockedKey) hide(anchor.closest("li") || anchor, blockedKey);
+        const blocked = requiredModulesForPath(href).find((moduleKey) => disabled.has(moduleKey));
+        if (blocked) hide(anchor.closest("li") || anchor, blocked);
       });
 
       const labelByKey: Record<string, string[]> = {
-        POLICIES: ["Insurance"], CLAIMS: ["Claims"], ACCOUNTING: ["Accounts"], REPORTS: ["Reports"],
-        CUSTOMERS: ["Customers"], VEHICLES: ["Vehicles"], RTO: ["Driving Licence"], FLEET: ["Fleet"],
+        POLICIES: ["Insurance"],
+        CLAIMS: ["Claims"],
+        ACCOUNTING: ["Accounts"],
+        REPORTS: ["Reports"],
+        CUSTOMERS: ["Customers"],
+        VEHICLES: ["Vehicles"],
+        RTO: ["Driving Licence"],
+        FLEET: ["Fleet"],
       };
+
       Object.entries(labelByKey).forEach(([key, labels]) => {
         if (!disabled.has(key)) return;
         document.querySelectorAll<HTMLButtonElement>("nav button").forEach((button) => {
