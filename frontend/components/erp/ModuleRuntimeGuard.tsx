@@ -28,8 +28,8 @@ export function ModuleRuntimeGuard() {
 
   useEffect(() => {
     if (!ready || pathname.startsWith("/settings/modules")) return;
-    const module = moduleForPath(pathname);
-    if (module && disabled.has(module)) router.replace("/dashboard?module=disabled");
+    const moduleKey = moduleForPath(pathname);
+    if (moduleKey && disabled.has(moduleKey)) router.replace("/dashboard?module=disabled");
   }, [disabled, pathname, ready, router]);
 
   useEffect(() => {
@@ -41,11 +41,11 @@ export function ModuleRuntimeGuard() {
       });
       document.querySelectorAll<HTMLAnchorElement>("a[href]").forEach((anchor) => {
         const href = anchor.getAttribute("href") || "";
-        const module = moduleForPath(href);
-        if (!module || !disabled.has(module)) return;
+        const moduleKey = moduleForPath(href);
+        if (!moduleKey || !disabled.has(moduleKey)) return;
         const target = anchor.closest("li") || anchor;
         (target as HTMLElement).style.display = "none";
-        (target as HTMLElement).setAttribute("data-erp-module-hidden", module);
+        (target as HTMLElement).setAttribute("data-erp-module-hidden", moduleKey);
       });
       const labelByKey: Record<string, string[]> = {
         POLICIES: ["Insurance"], CLAIMS: ["Claims"], ACCOUNTING: ["Accounts"], REPORTS: ["Reports"],
