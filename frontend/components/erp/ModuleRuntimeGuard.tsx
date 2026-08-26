@@ -86,13 +86,39 @@ export function ModuleRuntimeGuard() {
           if (labels.some((label) => button.textContent?.trim().startsWith(label))) hide(button.parentElement || button, key);
         });
       });
+
+      if (pathname === "/dashboard") {
+        document.querySelectorAll<HTMLAnchorElement>("main a[href]").forEach((anchor) => {
+          const href = anchor.getAttribute("href") || "";
+          const blockedModule = requiredModulesForPath(href).find((moduleKey) => disabled.has(moduleKey));
+          const blockedSubmodule = requiredSubmodulesForPath(href).find((moduleKey) => disabledSubmodules.has(moduleKey));
+          const blocked = blockedModule || blockedSubmodule;
+          if (blocked) hide(anchor, blocked);
+        });
+
+        const exactDashboardLabels: Record<string, string[]> = {
+          INSURANCE_MOTOR: ["Active policies", "Renewals due", "Motor policy"],
+          RTO_PUC: ["PUC"],
+          RTO_FITNESS: ["Fitness"],
+          RTO_PERMIT: ["Permit"],
+          RTO_TAX: ["Tax due", "Tax"],
+          RTO_HSRP: ["HSRP"],
+        };
+        document.querySelectorAll<HTMLElement>("main p, main span, main h3, main h4").forEach((node) => {
+          const text = node.textContent?.trim() || "";
+          Object.entries(exactDashboardLabels).forEach(([key, labels]) => {
+            if (!disabledSubmodules.has(key) || !labels.includes(text)) return;
+            hide(node.closest("article") || node.closest("a") || node.closest("li") || node.parentElement, key);
+          });
+        });
+      }
     };
 
     apply();
     const observer = new MutationObserver(apply);
     observer.observe(document.body, { childList: true, subtree: true });
     return () => observer.disconnect();
-  }, [disabled, disabledSubmodules, ready]);
+  }, [disabled, disabledSubmodules, pathname, ready]);
 
   return null;
 }
