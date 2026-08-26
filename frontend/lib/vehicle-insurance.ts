@@ -110,7 +110,7 @@ async function request<T>(path: string, init?: RequestInit, invalidate = false):
   return result;
 }
 
-function withChannel(body:unknown){
+function withCreateChannel(body:unknown){
   if(body && typeof body==='object' && !Array.isArray(body)) return {...body as Record<string,unknown>,business_channel:(body as Record<string,unknown>).business_channel??activeMotorChannel()};
   return body;
 }
@@ -122,17 +122,17 @@ export const vehicleInsuranceApi = {
     body: JSON.stringify(body),
   }),
   create: async (vehicleId: string, body: unknown) => {
-    const result=await request<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances`, {method:'POST',body:JSON.stringify(withChannel(body))}, true);
+    const result=await request<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances`, {method:'POST',body:JSON.stringify(withCreateChannel(body))}, true);
     notifyPolicySaved(vehicleId,result.id);return result;
   },
   saveForm: async (vehicleId: string, body: FormData, policyId?: string) => {
-    if(!body.has('business_channel')) body.append('business_channel',activeMotorChannel());
+    if(!policyId && !body.has('business_channel')) body.append('business_channel',activeMotorChannel());
     if (policyId) body.append('_method', 'PUT');
     const result=await multipart<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances${policyId ? `/${policyId}` : ''}`, body);
     notifyPolicySaved(vehicleId,result.id);return result;
   },
   update: async (vehicleId: string, policyId: string, body: unknown) => {
-    const result=await request<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances/${policyId}`, {method:'PUT',body:JSON.stringify(withChannel(body))}, true);
+    const result=await request<VehicleInsurancePolicy>(`/vehicles/${vehicleId}/insurances/${policyId}`, {method:'PUT',body:JSON.stringify(body)}, true);
     notifyPolicySaved(vehicleId,result.id);return result;
   },
   remove: (vehicleId: string, policyId: string) => request<null>(`/vehicles/${vehicleId}/insurances/${policyId}`, {
