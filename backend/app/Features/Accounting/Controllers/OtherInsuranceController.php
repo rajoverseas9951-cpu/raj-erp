@@ -2,6 +2,8 @@
 
 namespace App\Features\Accounting\Controllers;
 
+use App\Support\ErpControl\ErpSubmodule;
+use App\Support\ErpControl\SubmoduleAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -20,9 +22,18 @@ class OtherInsuranceController
         return $line;
     }
 
-    public function index(Request $request, string $line)
+    private function authorizeLine(Request $request, string $line): string
     {
         $line = $this->line($line);
+        $submodule = ErpSubmodule::forInsuranceLine($line);
+        abort_unless($submodule, 404);
+        app(SubmoduleAccess::class)->authorize($request->user(), $submodule);
+        return $line;
+    }
+
+    public function index(Request $request, string $line)
+    {
+        $line = $this->authorizeLine($request, $line);
         $q = DB::table('other_insurance_policies as p')
             ->leftJoin('customers as c', 'c.id', '=', 'p.customer_id')
             ->where('p.tenant_id', $this->tenant($request))
@@ -84,7 +95,7 @@ class OtherInsuranceController
 
     public function store(Request $request, string $line)
     {
-        $line = $this->line($line);
+        $line = $this->authorizeLine($request, $line);
         $data = $request->validate($this->rules(true));
         $id = (string) Str::uuid();
         $tenant = $this->tenant($request);
@@ -103,7 +114,7 @@ class OtherInsuranceController
 
     public function update(Request $request, string $line, string $id)
     {
-        $line = $this->line($line);
+        $line = $this->authorizeLine($request, $line);
         $tenant = $this->tenant($request);
         $existing = DB::table('other_insurance_policies')->where('id',$id)->where('tenant_id',$tenant)
             ->where('insurance_line',$line)->whereNull('deleted_at')->first();
@@ -123,7 +134,7 @@ class OtherInsuranceController
 
     public function destroy(Request $request, string $line, string $id)
     {
-        $this->line($line);
+        $this->authorizeLine($request, $line);
         $tenant = $this->tenant($request);
         DB::transaction(function () use ($request,$tenant,$id) {
             DB::table('other_insurance_policies')->where('id',$id)->where('tenant_id',$tenant)
