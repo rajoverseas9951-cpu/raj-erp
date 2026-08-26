@@ -89,7 +89,6 @@ class OtherInsuranceController
         $id = (string) Str::uuid();
         $tenant = $this->tenant($request);
         $now = now();
-
         $values = $this->normalise($tenant, $data, $line);
         DB::transaction(function () use ($request, $id, $tenant, $now, $values) {
             DB::table('other_insurance_policies')->insert([
@@ -156,14 +155,12 @@ class OtherInsuranceController
         $purchaseSourceId = $purchaseType === 'agent' ? ($data['purchase_source_id'] ?? null) : null;
         $receivableType = 'insurance_company';
         $receivableId = $companyId;
-        $tdsPercent = (float)($company?->tds_percent ?? 0);
         if ($purchaseType === 'agent') {
             $source = DB::table('insurance_purchase_sources')->where('tenant_id',$tenant)->where('id',$purchaseSourceId)
                 ->where('is_active',true)->whereNull('deleted_at')->first();
             if (!$source) throw ValidationException::withMessages(['purchase_source_id'=>['Select a valid active purchase source.']]);
             $receivableType = 'purchase_source';
             $receivableId = $source->id;
-            $tdsPercent = $source->tds_applicable ? (float)$source->tds_percent : 0;
             if (!$companyId && $source->linked_company_id) {
                 $companyId = $source->linked_company_id;
                 $company = DB::table('insurance_companies')->where('tenant_id',$tenant)->where('id',$companyId)->whereNull('deleted_at')->first();
@@ -171,7 +168,7 @@ class OtherInsuranceController
             }
         }
 
-        $commissionPercent = round((float)($data['commission_percent'] ?? 0),3);
+        $commissionPercent = round((float)($data['commission_percent'] ?? $company?->default_commission_percent ?? 0),3);
         $commissionAmount = array_key_exists('commission_amount',$data) && $data['commission_amount'] !== null && $data['commission_amount'] !== ''
             ? round((float)$data['commission_amount'],2)
             : round($premium * $commissionPercent / 100,2);
