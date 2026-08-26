@@ -41,7 +41,6 @@ return new class extends Migration {
             $table->uuid('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
-
             $table->index(['tenant_id', 'status']);
             $table->index(['tenant_id', 'claim_number']);
         });
@@ -57,10 +56,32 @@ return new class extends Migration {
             $table->timestamps();
             $table->index(['tenant_id', 'claim_id']);
         });
+
+        Schema::create('insurance_claim_documents', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->uuid('tenant_id')->index();
+            $table->uuid('claim_id')->index();
+            $table->string('document_type', 80)->index();
+            $table->string('label', 160);
+            $table->string('status', 30)->default('pending')->index(); // pending, received, verified, rejected
+            $table->boolean('is_required')->default(true);
+            $table->string('file_path')->nullable();
+            $table->string('file_name')->nullable();
+            $table->string('mime_type', 120)->nullable();
+            $table->unsignedBigInteger('size_bytes')->nullable();
+            $table->text('remarks')->nullable();
+            $table->uuid('uploaded_by')->nullable();
+            $table->uuid('verified_by')->nullable();
+            $table->timestamp('verified_at')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+            $table->unique(['tenant_id','claim_id','document_type']);
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('insurance_claim_documents');
         Schema::dropIfExists('insurance_claim_updates');
         Schema::dropIfExists('insurance_claims');
     }
