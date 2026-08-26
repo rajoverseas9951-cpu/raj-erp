@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { requiredModulesForPath } from "@/lib/erp-modules";
-import { organizationApi, type OrganizationModule } from "@/lib/organization";
+import { requiredModulesForPath, requiredSubmodulesForPath } from "@/lib/erp-modules";
+import { organizationApi, type OrganizationModule, type OrganizationSubmodule } from "@/lib/organization";
 
 function hide(el: Element | null | undefined, key: string) {
   if (!(el instanceof HTMLElement)) return;
@@ -15,15 +15,18 @@ export function ModuleRuntimeGuard() {
   const pathname = usePathname();
   const router = useRouter();
   const [modules, setModules] = useState<OrganizationModule[]>([]);
+  const [submodules, setSubmodules] = useState<OrganizationSubmodule[]>([]);
   const [ready, setReady] = useState(false);
 
   const disabled = useMemo(() => new Set(modules.filter((m) => !m.allowed || !m.enabled).map((m) => m.key)), [modules]);
+  const disabledSubmodules = useMemo(() => new Set(submodules.filter((m) => !m.allowed || !m.enabled).map((m) => m.key)), [submodules]);
 
   useEffect(() => {
     let active = true;
     const load = () => organizationApi.get().then((org) => {
       if (!active) return;
       setModules(org.modules || []);
+      setSubmodules(org.submodules || []);
       setReady(true);
     }).catch(() => setReady(true));
     void load();
@@ -34,9 +37,11 @@ export function ModuleRuntimeGuard() {
 
   useEffect(() => {
     if (!ready || pathname.startsWith("/settings/modules") || pathname === "/dashboard") return;
-    const blocked = requiredModulesForPath(pathname).find((moduleKey) => disabled.has(moduleKey));
+    const blockedModule = requiredModulesForPath(pathname).find((moduleKey) => disabled.has(moduleKey));
+    const blockedSubmodule = requiredSubmodulesForPath(pathname).find((moduleKey) => disabledSubmodules.has(moduleKey));
+    const blocked = blockedModule || blockedSubmodule;
     if (blocked) router.replace(`/dashboard?module=disabled&key=${encodeURIComponent(blocked)}`);
-  }, [disabled, pathname, ready, router]);
+  }, [disabled, disabledSubmodules, pathname, ready, router]);
 
   useEffect(() => {
     if (!ready) return;
@@ -49,7 +54,9 @@ export function ModuleRuntimeGuard() {
       document.querySelectorAll<HTMLAnchorElement>("nav a[href], aside a[href]").forEach((anchor) => {
         const href = anchor.getAttribute("href") || "";
         if (href === "/dashboard") return;
-        const blocked = requiredModulesForPath(href).find((moduleKey) => disabled.has(moduleKey));
+        const blockedModule = requiredModulesForPath(href).find((moduleKey) => disabled.has(moduleKey));
+        const blockedSubmodule = requiredSubmodulesForPath(href).find((moduleKey) => disabledSubmodules.has(moduleKey));
+        const blocked = blockedModule || blockedSubmodule;
         if (blocked) hide(anchor.closest("li") || anchor, blocked);
       });
 
@@ -62,10 +69,19 @@ export function ModuleRuntimeGuard() {
         VEHICLES: ["Vehicles"],
         RTO: ["Driving Licence"],
         FLEET: ["Fleet"],
+        INSURANCE_MOTOR: ["Motor Insurance", "Motor"],
+        INSURANCE_HEALTH: ["Health Insurance", "Health"],
+        INSURANCE_NON_MOTOR: ["Non-Motor Insurance", "Non-Motor"],
+        INSURANCE_LIFE: ["Life Insurance", "Life"],
+        RTO_PUC: ["PUC"],
+        RTO_FITNESS: ["Fitness"],
+        RTO_PERMIT: ["Permit"],
+        RTO_TAX: ["Tax"],
+        RTO_HSRP: ["HSRP"],
       };
 
       Object.entries(labelByKey).forEach(([key, labels]) => {
-        if (!disabled.has(key)) return;
+        if (!disabled.has(key) && !disabledSubmodules.has(key)) return;
         document.querySelectorAll<HTMLButtonElement>("nav button").forEach((button) => {
           if (labels.some((label) => button.textContent?.trim().startsWith(label))) hide(button.parentElement || button, key);
         });
@@ -76,7 +92,7 @@ export function ModuleRuntimeGuard() {
     const observer = new MutationObserver(apply);
     observer.observe(document.body, { childList: true, subtree: true });
     return () => observer.disconnect();
-  }, [disabled, ready]);
+  }, [disabled, disabledSubmodules, ready]);
 
   return null;
 }
