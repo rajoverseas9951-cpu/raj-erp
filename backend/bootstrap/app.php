@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         'active' => \App\Http\Middleware\EnsureUserIsActive::class,
         'erp.active' => \App\Http\Middleware\EnsureErpTenantIsActive::class,
         'erp.module' => \App\Http\Middleware\RequireErpModule::class,
+        'erp.submodule' => \App\Http\Middleware\RequireErpSubmodule::class,
         'erp.entitlements' => \App\Http\Middleware\EnsureRouteModuleEntitled::class,
     ]);
 })
