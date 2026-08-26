@@ -11,6 +11,15 @@ export type OrganizationModule = {
   blocked_by?: string[];
 };
 
+export type OrganizationSubmodule = {
+  key: string;
+  parent_key: string;
+  allowed: boolean;
+  enabled: boolean;
+  configured_enabled?: boolean;
+  blocked_by?: string[];
+};
+
 export type Organization = {
   id: string;
   name: string;
@@ -25,6 +34,7 @@ export type Organization = {
   gst_number: string | null;
   logo_url: string | null;
   modules?: OrganizationModule[];
+  submodules?: OrganizationSubmodule[];
 };
 
 export const organizationApi = {
