@@ -4,9 +4,13 @@ namespace App\Http\Middleware;
 
 use App\Support\ErpControl\BranchContext;
 use App\Support\ErpControl\ErpModule;
+use App\Support\ErpControl\ErpSubmodule;
 use App\Support\ErpControl\ModuleAccess;
+use App\Support\ErpControl\SubmoduleAccess;
 use Closure;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureRouteModuleEntitled
@@ -55,11 +59,19 @@ class EnsureRouteModuleEntitled
             $access->authorize($request->user(), $module, $branch);
         }
 
+        $this->authorizeSubmodule($request);
+
         if ($unique !== []) {
             $request->attributes->set('erp_branch', $branch);
         }
 
-        return $next($request);
+        $response = $next($request);
+
+        if ($response instanceof JsonResponse && $request->is('api/v1/vehicles/*/operational-profile')) {
+            $this->filterOperationalProfile($request, $response);
+        }
+
+        return $response;
     }
 
     /** @return array<ErpModule> */
@@ -86,5 +98,81 @@ class EnsureRouteModuleEntitled
         }
 
         return [];
+    }
+
+    private function authorizeSubmodule(Request $request): void
+    {
+        $submodule = null;
+
+        if ($request->is('api/v1/policies*') || $request->is('api/v1/vehicles/*/insurance-calculation*') || $request->is('api/v1/vehicles/*/insurances*')) {
+            $submodule = ErpSubmodule::INSURANCE_MOTOR;
+        } elseif ($request->is('api/v1/other-insurance/*')) {
+            $submodule = ErpSubmodule::forInsuranceLine((string) $request->route('line'));
+        } elseif ($request->is('api/v1/vehicles/*/operations/*')) {
+            $submodule = ErpSubmodule::forVehicleOperation((string) $request->route('module'));
+        } elseif ($request->is('api/v1/reports/hsrp*')) {
+            $submodule = ErpSubmodule::RTO_HSRP;
+        } elseif ($request->is('api/v1/vehicle-operation-masters/*') && (string) $request->route('type') === 'permit_type') {
+            $submodule = ErpSubmodule::RTO_PERMIT;
+        }
+
+        if (! $submodule && $request->is('api/v1/vehicles/*/operation-documents/*')) {
+            $documentId = (string) $request->route('document');
+            $module = DB::table('vehicle_operation_documents')
+                ->where('tenant_id', (string) $request->user()?->tenant_id)
+                ->where('id', $documentId)
+                ->whereNull('deleted_at')
+                ->value('module');
+            $submodule = $module ? ErpSubmodule::forVehicleOperation((string) $module) : null;
+        }
+
+        if ($submodule) {
+            app(SubmoduleAccess::class)->authorize($request->user(), $submodule);
+        }
+    }
+
+    private function filterOperationalProfile(Request $request, JsonResponse $response): void
+    {
+        $payload = $response->getData(true);
+        if (! is_array($payload) || ! isset($payload['data']) || ! is_array($payload['data'])) {
+            return;
+        }
+
+        $tenantId = (string) $request->user()?->tenant_id;
+        $access = app(SubmoduleAccess::class);
+        $enabled = fn (ErpSubmodule $submodule): bool => $access->enabled($tenantId, $submodule);
+
+        $moduleMap = [
+            'puc' => ErpSubmodule::RTO_PUC,
+            'fitness' => ErpSubmodule::RTO_FITNESS,
+            'permit' => ErpSubmodule::RTO_PERMIT,
+            'tax' => ErpSubmodule::RTO_TAX,
+            'counter_tax' => ErpSubmodule::RTO_TAX,
+            'hsrp' => ErpSubmodule::RTO_HSRP,
+            'insurance' => ErpSubmodule::INSURANCE_MOTOR,
+        ];
+
+        if (isset($payload['data']['modules']) && is_array($payload['data']['modules'])) {
+            foreach ($moduleMap as $key => $submodule) {
+                if (! $enabled($submodule)) {
+                    unset($payload['data']['modules'][$key]);
+                }
+            }
+        }
+
+        if (isset($payload['data']['applicability']['groups']) && is_array($payload['data']['applicability']['groups'])) {
+            foreach ($payload['data']['applicability']['groups'] as $group => $modules) {
+                if (! is_array($modules)) continue;
+                $payload['data']['applicability']['groups'][$group] = array_values(array_filter(
+                    $modules,
+                    function ($module) use ($moduleMap, $enabled) {
+                        $submodule = $moduleMap[(string) $module] ?? null;
+                        return ! $submodule || $enabled($submodule);
+                    }
+                ));
+            }
+        }
+
+        $response->setData($payload);
     }
 }
