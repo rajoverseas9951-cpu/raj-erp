@@ -6,6 +6,7 @@ use App\Models\ErpModuleEntitlement;
 use App\Models\ErpModulePreference;
 use App\Models\Tenant;
 use App\Support\ErpControl\ErpModule;
+use App\Support\ErpControl\ModuleAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -78,13 +79,21 @@ class OrganizationController
         $entitlements = ErpModuleEntitlement::query()->where('tenant_id', $tenant->id)->whereNull('branch_id')->get()->keyBy('module_key');
         $preferences = ErpModulePreference::query()->where('tenant_id', $tenant->id)->get()->keyBy('module_key');
         $hasEntitlements = $entitlements->isNotEmpty();
-        $modules = collect(ErpModule::cases())->map(function (ErpModule $module) use ($entitlements, $preferences, $hasEntitlements) {
-            $allowed = !$hasEntitlements || (bool) optional($entitlements->get($module->value))->is_enabled;
+        $access = app(ModuleAccess::class);
+
+        $modules = collect(ErpModule::cases())->map(function (ErpModule $module) use ($tenant, $entitlements, $preferences, $hasEntitlements, $access) {
+            $allowed = ! $hasEntitlements || (bool) optional($entitlements->get($module->value))->is_enabled;
             $preference = $preferences->get($module->value);
+            $configuredEnabled = $preference ? (bool) $preference->is_enabled : true;
+            $blockedBy = $access->blockedBy((string) $tenant->id, $module);
+
             return [
                 'key' => $module->value,
                 'allowed' => $allowed,
-                'enabled' => $allowed && ($preference ? (bool) $preference->is_enabled : true),
+                'configured_enabled' => $configuredEnabled,
+                'enabled' => $access->enabled((string) $tenant->id, $module),
+                'depends_on' => array_map(fn (ErpModule $dependency) => $dependency->value, $module->dependencies()),
+                'blocked_by' => $blockedBy,
             ];
         })->values()->all();
 
