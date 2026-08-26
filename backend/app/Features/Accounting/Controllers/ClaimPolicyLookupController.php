@@ -2,59 +2,79 @@
 
 namespace App\Features\Accounting\Controllers;
 
-use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class ClaimPolicyLookupController
 {
     public function index(Request $request): JsonResponse
     {
-        $tenant = (string) $request->user()?->tenant_id;
-        $q = trim((string) $request->input('q', ''));
-        $limit = min(250, max(20, (int) $request->input('limit', 120)));
-        $rows = collect();
-        $warnings = [];
+        try {
+            $tenant = (string) $request->user()?->tenant_id;
+            $q = trim((string) $request->input('q', ''));
+            $limit = min(250, max(20, (int) $request->input('limit', 120)));
+            $rows = collect();
+            $warnings = [];
 
-        if (Schema::hasTable('vehicle_insurances') && Schema::hasTable('vehicles')) {
-            try {
-                $rows = $rows->concat($this->motorPolicies($tenant, $q, $limit));
-            } catch (QueryException $e) {
-                Log::warning('Claim policy lookup: motor policies unavailable', [
-                    'tenant_id' => $tenant,
-                    'sql_state' => $e->errorInfo[0] ?? null,
-                    'message' => $e->getMessage(),
-                ]);
-                $warnings[] = 'motor';
+            if ($tenant === '') {
+                return response()->json(['success' => true, 'data' => [], 'warnings' => ['tenant']]);
             }
-        }
 
-        if (Schema::hasTable('other_insurance_policies')) {
-            try {
-                $rows = $rows->concat($this->otherPolicies($tenant, $q, $limit));
-            } catch (QueryException $e) {
-                Log::warning('Claim policy lookup: other insurance policies unavailable', [
-                    'tenant_id' => $tenant,
-                    'sql_state' => $e->errorInfo[0] ?? null,
-                    'message' => $e->getMessage(),
-                ]);
-                $warnings[] = 'other';
+            if (Schema::hasTable('vehicle_insurances') && Schema::hasTable('vehicles')) {
+                try {
+                    $rows = $rows->concat($this->motorPolicies($tenant, $q, $limit));
+                } catch (Throwable $e) {
+                    $this->logLookupFailure('motor', $tenant, $e);
+                    $warnings[] = 'motor';
+                }
             }
+
+            if (Schema::hasTable('other_insurance_policies')) {
+                try {
+                    $rows = $rows->concat($this->otherPolicies($tenant, $q, $limit));
+                } catch (Throwable $e) {
+                    $this->logLookupFailure('other', $tenant, $e);
+                    $warnings[] = 'other';
+                }
+            }
+
+            $rows = $rows
+                ->sortByDesc(fn ($row) => (string) ($row['expiry_date'] ?? ''))
+                ->values()
+                ->take($limit)
+                ->values();
+
+            return response()->json([
+                'success' => true,
+                'data' => $rows,
+                'warnings' => array_values(array_unique($warnings)),
+            ]);
+        } catch (Throwable $e) {
+            Log::error('Claim policy lookup failed safely', [
+                'tenant_id' => (string) $request->user()?->tenant_id,
+                'type' => $e::class,
+                'message' => $e->getMessage(),
+            ]);
+
+            // Claim creation must remain usable even if policy lookup has an unexpected issue.
+            return response()->json([
+                'success' => true,
+                'data' => [],
+                'warnings' => ['lookup'],
+            ]);
         }
+    }
 
-        $rows = $rows
-            ->sortByDesc(fn ($row) => (string) ($row['expiry_date'] ?? ''))
-            ->values()
-            ->take($limit)
-            ->values();
-
-        return response()->json([
-            'success' => true,
-            'data' => $rows,
-            'warnings' => $warnings,
+    private function logLookupFailure(string $source, string $tenant, Throwable $e): void
+    {
+        Log::warning("Claim policy lookup source unavailable: {$source}", [
+            'tenant_id' => $tenant,
+            'type' => $e::class,
+            'message' => $e->getMessage(),
         ]);
     }
 
