@@ -4,6 +4,7 @@ use App\Features\Accounting\Controllers\AccountingController;
 use App\Features\Accounting\Controllers\BusinessReportsController;
 use App\Features\Accounting\Controllers\FinanceControlController;
 use App\Features\Accounting\Controllers\InsuranceAccountingController;
+use App\Features\Accounting\Controllers\InsuranceClaimController;
 use App\Features\Accounting\Controllers\InsurancePolicySettlementController;
 use App\Features\Accounting\Controllers\LedgerController;
 use App\Features\Accounting\Controllers\OtherInsuranceController;
@@ -118,6 +119,13 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'active', 'erp.active', 'erp.en
     Route::post('insurance-accounting/commissions', [InsuranceAccountingController::class, 'storeCommission']);
     Route::post('insurance-accounting/commissions/{id}/receive', [InsuranceAccountingController::class, 'receiveCommission']);
     Route::get('insurance-accounting/summary', [InsuranceAccountingController::class, 'summary']);
+
+    Route::get('claims', [InsuranceClaimController::class, 'index']);
+    Route::post('claims', [InsuranceClaimController::class, 'store']);
+    Route::get('claims/{id}', [InsuranceClaimController::class, 'show']);
+    Route::put('claims/{id}', [InsuranceClaimController::class, 'update']);
+    Route::post('claims/{id}/updates', [InsuranceClaimController::class, 'addNote']);
+    Route::delete('claims/{id}', [InsuranceClaimController::class, 'destroy']);
 
     Route::get('vehicles/export', [VehicleController::class, 'export']);
     Route::get('vehicle-masters/{type}', [VehicleMasterController::class, 'index']);
