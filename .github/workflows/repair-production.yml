@@ -61,8 +61,14 @@ jobs:
             php artisan route:cache
             php artisan view:cache
 
+            echo "=== Reload backend with repaired code ==="
+            pm2 reload "$BACKEND_PM2" --update-env
+            pm2 save
+            sleep 3
+            pm2 describe "$BACKEND_PM2" >/dev/null
+
             echo "=== Verify operational roles ==="
-            php artisan tinker --execute="$tenant=env('ADMIN_TENANT_ID','00000000-0000-4000-8000-000000000001'); $count=\\App\\Models\\Role::where('tenant_id',$tenant)->whereIn('slug',['administrator','branch-manager','insurance-executive','claims-executive','accounts-executive','rto-executive','read-only'])->count(); if ($count < 7) { throw new RuntimeException('Operational roles missing: '.$count.'/7'); } echo 'Operational roles OK: '.$count.PHP_EOL;"
+            php artisan tinker --execute="\$tenant=env('ADMIN_TENANT_ID','00000000-0000-4000-8000-000000000001'); \$count=\\App\\Models\\Role::where('tenant_id',\$tenant)->whereIn('slug',['administrator','branch-manager','insurance-executive','claims-executive','accounts-executive','rto-executive','read-only'])->count(); if (\$count < 7) { throw new RuntimeException('Operational roles missing: '.\$count.'/7'); } echo 'Operational roles OK: '.\$count.PHP_EOL;"
 
             echo "=== Verify claims migration ==="
             php artisan tinker --execute="if (!\\Illuminate\\Support\\Facades\\Schema::hasTable('insurance_claims')) { throw new RuntimeException('insurance_claims table missing'); } echo 'insurance_claims table OK'.PHP_EOL;"
@@ -70,14 +76,11 @@ jobs:
             echo "=== Verify Claims API routes ==="
             php artisan route:list --path=api/v1/claims | tee /tmp/vimawallah-claims-routes.txt
             grep -Fq 'api/v1/claims' /tmp/vimawallah-claims-routes.txt
+            php artisan route:list --path=api/v1/claims/policies | tee /tmp/vimawallah-claim-policy-routes.txt
+            grep -Fq 'api/v1/claims/policies' /tmp/vimawallah-claim-policy-routes.txt
 
             echo "=== Verify other insurance payment routes ==="
             php artisan route:list --path=api/v1/other-insurance-payments | tee /tmp/vimawallah-other-insurance-payment-routes.txt || true
-
-            pm2 reload "$BACKEND_PM2" --update-env
-            pm2 save
-            sleep 3
-            pm2 describe "$BACKEND_PM2" >/dev/null
 
             echo "=== Public Claims API probe ==="
             CLAIM_STATUS="$(curl --silent --show-error --output /tmp/vimawallah-claims-probe.txt --write-out '%{http_code}' \
