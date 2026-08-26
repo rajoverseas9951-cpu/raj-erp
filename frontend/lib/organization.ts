@@ -1,7 +1,15 @@
 "use client";
+
 import { authenticatedRequest } from "@/lib/api-client";
 
-export type OrganizationModule = { key: string; allowed: boolean; enabled: boolean };
+export type OrganizationModule = {
+  key: string;
+  allowed: boolean;
+  enabled: boolean;
+  configured_enabled?: boolean;
+  depends_on?: string[];
+  blocked_by?: string[];
+};
 
 export type Organization = {
   id: string;
