@@ -131,10 +131,10 @@ function Workspace() {
           <div className="max-w-3xl">
             <p className="text-[10px] font-black uppercase tracking-[.18em] text-blue-600">Recommended workflow</p>
             <h2 className="mt-2 text-2xl font-black">Prepare data first, submit on the insurer&apos;s official form</h2>
-            <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">The ERP preparation form is a data-capture tool. It is not the insurer&apos;s official claim form. When an official insurer source is available, use that source for final submission.</p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">The ERP preparation screen is a data-capture tool. It is not the insurer&apos;s official claim form. When an exact insurer mapping is available, complete that mapped data set before generating the original PDF.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href={`/claims/universal-form?id=${encodeURIComponent(claim.id)}`} className="rounded-xl border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-black text-blue-700">Prepare / complete ERP data</Link>
+            {exactMapped ? <Link href={`/claims/official-form/bajaj-motor?id=${encodeURIComponent(claim.id)}`} className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-black text-emerald-800">Complete Bajaj exact-form data</Link> : <Link href={`/claims/universal-form?id=${encodeURIComponent(claim.id)}`} className="rounded-xl border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-black text-blue-700">Prepare / complete ERP data</Link>}
             {officialSource ? <a href={officialSource.url} target="_blank" rel="noreferrer" className="rounded-xl bg-[#0c3c78] px-5 py-3 text-sm font-black text-white">Open original insurer form ↗</a> : <span className="rounded-xl bg-slate-100 px-5 py-3 text-sm font-black text-slate-500">Official source not mapped</span>}
           </div>
         </div>
