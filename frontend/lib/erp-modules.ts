@@ -1,7 +1,7 @@
 export const ERP_MODULE_KEYS = ["CUSTOMERS","VEHICLES","POLICIES","RENEWALS","CLAIMS","RTO","ACCOUNTING","DOCUMENTS","REPORTS","AGENTS","DEALERS","FLEET","WHATSAPP","RC_API","PAYMENTS"] as const;
 export type ErpModuleKey = (typeof ERP_MODULE_KEYS)[number];
 
-export const ERP_SUBMODULE_KEYS = ["INSURANCE_MOTOR","INSURANCE_HEALTH","INSURANCE_NON_MOTOR","INSURANCE_LIFE","RTO_PUC","RTO_FITNESS","RTO_PERMIT","RTO_TAX","RTO_HSRP"] as const;
+export const ERP_SUBMODULE_KEYS = ["INSURANCE_MOTOR","INSURANCE_HEALTH","INSURANCE_NON_MOTOR","INSURANCE_LIFE","RTO_PUC","RTO_FITNESS","RTO_PERMIT","RTO_TAX","RTO_HSRP","ACCOUNTS_CASH_BANK","ACCOUNTS_RECEIVABLES","ACCOUNTS_INSURANCE_PAYMENTS","ACCOUNTS_INSURANCE_COMMISSION","ACCOUNTS_RTO_FINANCE","ACCOUNTS_LEDGERS_YEAR"] as const;
 export type ErpSubmoduleKey = (typeof ERP_SUBMODULE_KEYS)[number];
 
 export type ErpModuleDefinition = {
@@ -49,6 +49,12 @@ export const ERP_SUBMODULES: ErpSubmoduleDefinition[] = [
   { key: "RTO_PERMIT", parentKey: "RTO", name: "Permit", description: "Permit records and expiry workflow.", paths: ["/rto/permit", "/services/permit"] },
   { key: "RTO_TAX", parentKey: "RTO", name: "Tax", description: "Vehicle tax and counter-tax workflow.", paths: ["/rto/tax", "/services/tax"] },
   { key: "RTO_HSRP", parentKey: "RTO", name: "HSRP", description: "HSRP records, work queue and report workflow.", paths: ["/rto/hsrp", "/services/hsrp", "/reports/hsrp"] },
+  { key: "ACCOUNTS_CASH_BANK", parentKey: "ACCOUNTING", name: "Cash & Bank", description: "Routine cash receipt, bank receipt, payment and office expense entries.", paths: ["/accounts/cash-bank"] },
+  { key: "ACCOUNTS_RECEIVABLES", parentKey: "ACCOUNTING", name: "Customer Receipts & Dues", description: "Customer receipts, debit adjustments, party balances and outstanding collection control.", paths: ["/accounts/outstanding"] },
+  { key: "ACCOUNTS_INSURANCE_PAYMENTS", parentKey: "ACCOUNTING", name: "Insurance Payments", description: "Insurance company and purchase-source payable settlement for Motor, Health, Non-Motor and Life.", paths: ["/insurance/company-payments", "/accounts/insurance"] },
+  { key: "ACCOUNTS_INSURANCE_COMMISSION", parentKey: "ACCOUNTING", name: "Insurance Commission", description: "Commission statements, TDS and commission receipt reconciliation.", paths: ["/insurance/commissions", "/reports/insurance-commission"] },
+  { key: "ACCOUNTS_RTO_FINANCE", parentKey: "ACCOUNTING", name: "RTO Finance", description: "Government fee clearing, RTO service income, agent-paid fees and RTO financial control.", paths: ["/reports/rto-profit"] },
+  { key: "ACCOUNTS_LEDGERS_YEAR", parentKey: "ACCOUNTING", name: "Ledgers & Year Control", description: "Account heads, opening balances and financial-year locking controls.", paths: ["/accounts/ledgers", "/accounts/setup"] },
 ];
 
 export const ERP_ROUTE_DEPENDENCIES: Array<[string, ErpModuleKey[]]> = [
@@ -87,6 +93,7 @@ function dynamicVehicleSubmoduleForPath(path: string): ErpSubmoduleKey | undefin
   if (parts[2] !== "operations" || !parts[3]) return undefined;
 
   switch (parts[3].toLowerCase()) {
+    case "payment": return "ACCOUNTS_RECEIVABLES";
     case "puc": return "RTO_PUC";
     case "fitness": return "RTO_FITNESS";
     case "permit": return "RTO_PERMIT";
