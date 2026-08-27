@@ -15,6 +15,13 @@ enum ErpSubmodule: string
     case RTO_TAX = 'RTO_TAX';
     case RTO_HSRP = 'RTO_HSRP';
 
+    case ACCOUNTS_CASH_BANK = 'ACCOUNTS_CASH_BANK';
+    case ACCOUNTS_RECEIVABLES = 'ACCOUNTS_RECEIVABLES';
+    case ACCOUNTS_INSURANCE_PAYMENTS = 'ACCOUNTS_INSURANCE_PAYMENTS';
+    case ACCOUNTS_INSURANCE_COMMISSION = 'ACCOUNTS_INSURANCE_COMMISSION';
+    case ACCOUNTS_RTO_FINANCE = 'ACCOUNTS_RTO_FINANCE';
+    case ACCOUNTS_LEDGERS_YEAR = 'ACCOUNTS_LEDGERS_YEAR';
+
     public function parent(): ErpModule
     {
         return match ($this) {
@@ -28,6 +35,13 @@ enum ErpSubmodule: string
             self::RTO_PERMIT,
             self::RTO_TAX,
             self::RTO_HSRP => ErpModule::RTO,
+
+            self::ACCOUNTS_CASH_BANK,
+            self::ACCOUNTS_RECEIVABLES,
+            self::ACCOUNTS_INSURANCE_PAYMENTS,
+            self::ACCOUNTS_INSURANCE_COMMISSION,
+            self::ACCOUNTS_RTO_FINANCE,
+            self::ACCOUNTS_LEDGERS_YEAR => ErpModule::ACCOUNTING,
         };
     }
 
