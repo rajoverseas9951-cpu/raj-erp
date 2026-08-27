@@ -27,7 +27,6 @@ type PdfTextField = { setText: (value: string) => void; setFontSize?: (size: num
 type PdfForm = { getTextField: (name: string) => PdfTextField; updateFieldAppearances: (font?: unknown) => void };
 type PdfDoc = { getForm: () => PdfForm; embedFont: (font: string) => Promise<unknown>; save: () => Promise<Uint8Array> };
 type PdfLibGlobal = { PDFDocument: { load: (bytes: ArrayBuffer) => Promise<PdfDoc> }; StandardFonts: { Helvetica: string } };
-
 type PdfWindow = Window & { PDFLib?: PdfLibGlobal };
 
 const SECTIONS: Section[] = [
@@ -223,7 +222,9 @@ function ClaimForm() {
       const font = await pdfDoc.embedFont(pdfLib.StandardFonts.Helvetica);
       pdfForm.updateFieldAppearances(font);
       const filled = await pdfDoc.save();
-      const blob = new Blob([filled], { type: "application/pdf" });
+      const safeBytes = new Uint8Array(filled.byteLength);
+      safeBytes.set(filled);
+      const blob = new Blob([safeBytes.buffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
