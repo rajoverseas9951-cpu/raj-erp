@@ -8,22 +8,26 @@ import { organizationApi } from '@/lib/organization';
 import { isPathEnabled } from '@/lib/erp-modules';
 
 const money=(n:number|string|undefined)=>`₹${Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2})}`;
+type AccountAction=readonly [title:string,href:string,copy:string,icon:string];
 
 export default function AccountsPage(){
  const[pl,setPl]=useState<{income:number;expense:number;net_profit:number}|null>(null);const[bs,setBs]=useState<{assets:number;liabilities:number;difference:number}|null>(null);const[business,setBusiness]=useState<BusinessOverview|null>(null);const[out,setOut]=useState<OutstandingPayload|null>(null);const[enabledModules,setEnabledModules]=useState<string[]>([]);const[enabledSubmodules,setEnabledSubmodules]=useState<string[]>([]);const[ready,setReady]=useState(false);const[error,setError]=useState('');
  useEffect(()=>{let live=true;(async()=>{try{const org=await organizationApi.get();if(!live)return;const modules=(org.modules||[]).filter(m=>m.allowed&&m.enabled).map(m=>m.key);const submodules=(org.submodules||[]).filter(m=>m.allowed&&m.enabled).map(m=>m.key);setEnabledModules(modules);setEnabledSubmodules(submodules);const calls:[Promise<unknown>,string][]=[[accountingApi.profitLoss(),'pl'],[accountingApi.balanceSheet(),'bs'],[businessReportsApi.overview(),'business']];if(submodules.includes('ACCOUNTS_RECEIVABLES'))calls.push([financeControlApi.outstanding(),'out']);const settled=await Promise.allSettled(calls.map(([promise])=>promise));if(!live)return;settled.forEach((result,index)=>{if(result.status!=='fulfilled')return;const key=calls[index][1];if(key==='pl')setPl(result.value as {income:number;expense:number;net_profit:number});else if(key==='bs')setBs(result.value as {assets:number;liabilities:number;difference:number});else if(key==='business')setBusiness(result.value as BusinessOverview);else if(key==='out')setOut(result.value as OutstandingPayload)});const failures=settled.filter(x=>x.status==='rejected');if(failures.length===settled.length)setError('Accounts summary could not load.');}catch(e){if(live)setError(e instanceof Error?e.message:'Accounts could not load.')}finally{if(live)setReady(true)}})();return()=>{live=false}},[]);
- const actions=useMemo(()=>[
-  ['Cash & Bank Entry','/accounts/cash-bank','Record money received, money paid and office expense.','₹'],
-  ['Party Balance','/accounts/outstanding','See customer receivable and agent/vendor payable.','PB'],
-  ['Insurance Accounts','/accounts/insurance','Track company/source payment settlement.','IN'],
-  ['Insurance Commission','/insurance/commissions','Track insurer commission, TDS and receipts.','CM'],
-  ['RTO Profit','/reports/rto-profit','Review government-fee clearing and RTO service profitability.','RT'],
-  ['Account Heads','/accounts/ledgers','Manage cash, bank, customer, expense and income accounts.','AH'],
-  ['Opening Balance & Year Lock','/accounts/setup','Set opening figures and lock completed financial year.','FY'],
-  ['Profit & Loss','/reports/profit-loss','Yearly income, expense and net business profit.','PL'],
-  ['Balance Sheet','/reports/balance-sheet','Assets, liabilities and year-end financial position.','BS'],
-  ['All Reports','/reports','Insurance, RTO and financial reports.','RP'],
- ].filter(([,href])=>!ready||isPathEnabled(href,enabledModules,enabledSubmodules)) as readonly (readonly [string,string,string,string])[],[ready,enabledModules,enabledSubmodules]);
+ const actions=useMemo(()=>{
+  const allActions:AccountAction[]=[
+   ['Cash & Bank Entry','/accounts/cash-bank','Record money received, money paid and office expense.','₹'],
+   ['Party Balance','/accounts/outstanding','See customer receivable and agent/vendor payable.','PB'],
+   ['Insurance Accounts','/accounts/insurance','Track company/source payment settlement.','IN'],
+   ['Insurance Commission','/insurance/commissions','Track insurer commission, TDS and receipts.','CM'],
+   ['RTO Profit','/reports/rto-profit','Review government-fee clearing and RTO service profitability.','RT'],
+   ['Account Heads','/accounts/ledgers','Manage cash, bank, customer, expense and income accounts.','AH'],
+   ['Opening Balance & Year Lock','/accounts/setup','Set opening figures and lock completed financial year.','FY'],
+   ['Profit & Loss','/reports/profit-loss','Yearly income, expense and net business profit.','PL'],
+   ['Balance Sheet','/reports/balance-sheet','Assets, liabilities and year-end financial position.','BS'],
+   ['All Reports','/reports','Insurance, RTO and financial reports.','RP'],
+  ];
+  return allActions.filter(([,href])=>!ready||isPathEnabled(href,enabledModules,enabledSubmodules));
+ },[ready,enabledModules,enabledSubmodules]);
  const receivablesOn=enabledSubmodules.includes('ACCOUNTS_RECEIVABLES');
  return <main className="min-h-screen bg-[#eef4fb] p-4 sm:p-6 lg:p-8"><div className="mx-auto max-w-[1500px] space-y-6">
   <section className="rounded-[30px] bg-[linear-gradient(125deg,#06152f,#0b2f6b_55%,#1769e0)] p-7 text-white shadow-[0_28px_75px_rgba(7,26,60,.22)]"><p className="text-[10px] font-black uppercase tracking-[.24em] text-cyan-300">Business Accounts</p><h1 className="mt-2 text-4xl font-black">Accounts</h1><p className="mt-2 max-w-3xl text-sm text-blue-100/80">Simple daily हिसाब for insurance and RTO work. Financial tools shown here follow your Accounts child-module settings.</p></section>
