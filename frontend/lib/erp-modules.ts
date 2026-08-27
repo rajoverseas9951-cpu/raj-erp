@@ -78,8 +78,29 @@ export function moduleForPath(path: string): ErpModuleKey | undefined {
   return routeModules.find(([prefix]) => path === prefix || path.startsWith(`${prefix}/`))?.[1];
 }
 
+function dynamicVehicleSubmoduleForPath(path: string): ErpSubmoduleKey | undefined {
+  const cleanPath = path.split("?", 1)[0].replace(/\/+$/, "");
+  const parts = cleanPath.split("/").filter(Boolean);
+  if (parts[0] !== "vehicles" || !parts[1]) return undefined;
+
+  if (parts[2] === "insurance") return "INSURANCE_MOTOR";
+  if (parts[2] !== "operations" || !parts[3]) return undefined;
+
+  switch (parts[3].toLowerCase()) {
+    case "puc": return "RTO_PUC";
+    case "fitness": return "RTO_FITNESS";
+    case "permit": return "RTO_PERMIT";
+    case "tax":
+    case "counter_tax":
+      return "RTO_TAX";
+    case "hsrp": return "RTO_HSRP";
+    default: return undefined;
+  }
+}
+
 export function submoduleForPath(path: string): ErpSubmoduleKey | undefined {
-  return routeSubmodules.find(([prefix]) => path === prefix || path.startsWith(`${prefix}/`))?.[1];
+  return dynamicVehicleSubmoduleForPath(path)
+    ?? routeSubmodules.find(([prefix]) => path === prefix || path.startsWith(`${prefix}/`))?.[1];
 }
 
 export function dependenciesForPath(path: string): ErpModuleKey[] {
