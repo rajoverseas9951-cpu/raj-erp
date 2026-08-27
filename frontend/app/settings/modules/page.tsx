@@ -6,6 +6,7 @@ import { ERP_MODULES, ERP_SUBMODULES, moduleDefinition, submoduleDefinition } fr
 import { organizationApi, type Organization, type OrganizationModule, type OrganizationSubmodule } from "@/lib/organization";
 
 const categories = ["Core", "Insurance", "RTO", "Finance", "Distribution", "Integrations"] as const;
+const MODULE_UI_VERSION = "phase-2-child-controls";
 
 type ModuleState = OrganizationModule | OrganizationSubmodule;
 
@@ -56,10 +57,13 @@ export default function ModuleSettingsPage() {
 
   if (loading) return <main className="p-6 text-sm text-slate-500">Loading ERP modules…</main>;
 
-  return <main className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
+  return <main data-module-ui-version={MODULE_UI_VERSION} className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <p className="text-xs font-black uppercase tracking-[.18em] text-blue-600">ERP Administration</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-xs font-black uppercase tracking-[.18em] text-blue-600">ERP Administration</p>
+          <span className="rounded-full bg-violet-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[.08em] text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">9 child controls active</span>
+        </div>
         <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950 dark:text-white">Modules</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
           Control the ERP from parent module down to individual insurance and RTO services. Subscription entitlement stays above this layer; dependencies and role permissions remain enforced automatically.
@@ -95,7 +99,10 @@ export default function ModuleSettingsPage() {
             return <div key={definition.key}>
               <ModuleRow definitionName={definition.name} description={definition.description} state={state} dependencies={(state.depends_on?.length ? state.depends_on : definition.dependsOn || []).map(moduleName)} saving={saving} onToggle={toggle} />
               {children.length ? <div className="border-t border-slate-100 bg-slate-50/70 px-3 py-2 dark:border-white/10 dark:bg-white/[.025] sm:px-7">
-                <div className="mb-1 px-2 pt-2 text-[9px] font-black uppercase tracking-[.16em] text-slate-400">Child services</div>
+                <div className="mb-1 flex items-center justify-between gap-2 px-2 pt-2">
+                  <span className="text-[9px] font-black uppercase tracking-[.16em] text-slate-400">Child services</span>
+                  <span className="text-[9px] font-bold text-slate-400">{children.length} independent controls</span>
+                </div>
                 <div className="divide-y divide-slate-200/70 dark:divide-white/10">
                   {children.map((child) => {
                     const parentState = states.get(child.parentKey) || state;
