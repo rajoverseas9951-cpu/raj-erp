@@ -30,6 +30,7 @@ class EnsureRouteModuleEntitled
         'accounting' => ErpModule::ACCOUNTING,
         'ledgers' => ErpModule::ACCOUNTING,
         'insurance-accounting' => ErpModule::ACCOUNTING,
+        'insurance-operations' => ErpModule::ACCOUNTING,
         'payments' => ErpModule::PAYMENTS,
         'ocr' => ErpModule::RC_API,
         'service-works' => ErpModule::RTO,
@@ -97,6 +98,10 @@ class EnsureRouteModuleEntitled
             return [ErpModule::POLICIES];
         }
 
+        if ($request->is('api/v1/vehicles/*/rto-work-accounting*') || $request->is('api/v1/vehicles/*/operations/payment*')) {
+            return [ErpModule::ACCOUNTING];
+        }
+
         return [];
     }
 
@@ -104,7 +109,19 @@ class EnsureRouteModuleEntitled
     {
         $submodule = null;
 
-        if ($request->is('api/v1/policies*') || $request->is('api/v1/vehicles/*/insurance-calculation*') || $request->is('api/v1/vehicles/*/insurances*')) {
+        if ($request->is('api/v1/accounting/simple-entry*')) {
+            $submodule = ErpSubmodule::ACCOUNTS_CASH_BANK;
+        } elseif ($request->is('api/v1/accounting/outstanding*') || $request->is('api/v1/vehicles/*/operations/payment*')) {
+            $submodule = ErpSubmodule::ACCOUNTS_RECEIVABLES;
+        } elseif ($request->is('api/v1/insurance-operations/company-payments*') || $request->is('api/v1/vehicles/*/insurances/*/settlement*')) {
+            $submodule = ErpSubmodule::ACCOUNTS_INSURANCE_PAYMENTS;
+        } elseif ($request->is('api/v1/insurance-accounting/commissions*') || $request->is('api/v1/reports/insurance-commission*')) {
+            $submodule = ErpSubmodule::ACCOUNTS_INSURANCE_COMMISSION;
+        } elseif ($request->is('api/v1/vehicles/*/rto-work-accounting*') || $request->is('api/v1/reports/rto-profit*')) {
+            $submodule = ErpSubmodule::ACCOUNTS_RTO_FINANCE;
+        } elseif ($request->is('api/v1/ledgers*') || $request->is('api/v1/accounting/opening-balances*') || $request->is('api/v1/accounting/financial-year*')) {
+            $submodule = ErpSubmodule::ACCOUNTS_LEDGERS_YEAR;
+        } elseif ($request->is('api/v1/policies*') || $request->is('api/v1/vehicles/*/insurance-calculation*') || $request->is('api/v1/vehicles/*/insurances*')) {
             $submodule = ErpSubmodule::INSURANCE_MOTOR;
         } elseif ($request->is('api/v1/other-insurance/*')) {
             $submodule = ErpSubmodule::forInsuranceLine((string) $request->route('line'));
@@ -150,6 +167,7 @@ class EnsureRouteModuleEntitled
             'counter_tax' => ErpSubmodule::RTO_TAX,
             'hsrp' => ErpSubmodule::RTO_HSRP,
             'insurance' => ErpSubmodule::INSURANCE_MOTOR,
+            'payment' => ErpSubmodule::ACCOUNTS_RECEIVABLES,
         ];
 
         if (isset($payload['data']['modules']) && is_array($payload['data']['modules'])) {
