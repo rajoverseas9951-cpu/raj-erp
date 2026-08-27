@@ -66,12 +66,21 @@ jobs:
             grep -Fq 'api/v1/claims/policies' /tmp/vimawallah-claims-routes.txt
 
             cd "$APP_DIR/frontend"
+            grep -Fq 'phase-2-child-controls' app/settings/modules/page.tsx
+            grep -Fq 'INSURANCE_MOTOR' lib/erp-modules.ts
+            grep -Fq 'RTO_PUC' lib/erp-modules.ts
             npm ci
             rm -rf .next
             NEXT_PUBLIC_API_URL=https://erp.vimawallah.com npm run build
 
+            echo "=== Verify child-module UI made it into the Next build ==="
+            grep -R -Fq 'phase-2-child-controls' .next/server/app/settings/modules || {
+              echo 'Child-module settings marker missing from built Next output.'
+              exit 1
+            }
+
             pm2 reload "$BACKEND_PM2" --update-env
-            pm2 reload "$FRONTEND_PM2" --update-env
+            pm2 restart "$FRONTEND_PM2" --update-env
             if pm2 describe "$SCHEDULER_PM2" >/dev/null 2>&1; then
               pm2 restart "$SCHEDULER_PM2" --update-env
             fi
