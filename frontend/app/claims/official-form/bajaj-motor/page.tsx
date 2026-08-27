@@ -24,46 +24,46 @@ type Field = { key: string; label: string; type?: "text" | "date" | "time" | "te
 type Section = { title: string; fields: Field[] };
 
 const SECTIONS: Section[] = [
-  { title: "1. Policyholder / KYC", fields: [
+  { title: "Policyholder / KYC", fields: [
     { key: "ckyc_no", label: "CKYC No." }, { key: "pan", label: "PAN" }, { key: "dob", label: "DOB", type: "date" },
     { key: "voter_id", label: "Voter ID" }, { key: "uid_last4", label: "UID last 4 digits" }, { key: "policy_number", label: "Policy Number", wide: true },
     { key: "insured_name", label: "Name of Insured", wide: true }, { key: "mobile", label: "Mobile Number" },
     { key: "address", label: "Address", wide: true }, { key: "city", label: "City" }, { key: "state", label: "State" },
     { key: "pin_code", label: "PIN Code" }, { key: "email", label: "Email ID", wide: true },
   ]},
-  { title: "2. Vehicle loss details", fields: [
+  { title: "Vehicle & Accident Details", fields: [
     { key: "registration_number", label: "Vehicle Registration No." }, { key: "chassis_number", label: "Chassis Number", wide: true },
     { key: "loss_date", label: "Accident / Loss Date", type: "date" }, { key: "loss_time", label: "Time", type: "time" },
     { key: "occupants", label: "No. of Occupants" }, { key: "police_report", label: "Police Report", type: "select", options: ["", "Yes", "No"] },
     { key: "fir_number", label: "GD / FIR No." }, { key: "police_station", label: "Police Station", wide: true },
     { key: "loss_place", label: "Place of Accident", wide: true },
   ]},
-  { title: "3. Driver details", fields: [
+  { title: "Driver Details", fields: [
     { key: "driver_name", label: "Driver Name", wide: true }, { key: "driving_licence", label: "Driving Licence No.", wide: true },
     { key: "issuing_rto", label: "Issuing RTO" }, { key: "driver_mobile", label: "Driver Mobile" },
     { key: "driver_relation", label: "Relation with Insured", type: "select", options: ["", "Self", "Relative", "Friend", "Paid Driver", "Employee"] },
   ]},
-  { title: "4. Accident / theft statement", fields: [
-    { key: "accident_description", label: "Complete circumstances leading to accident / theft", type: "textarea", wide: true },
+  { title: "Accident / Theft Statement", fields: [
+    { key: "accident_description", label: "How the accident / theft happened", type: "textarea", wide: true },
     { key: "addon_claim", label: "Claim under Add-on endorsement?", type: "select", options: ["", "Yes", "No"] },
     { key: "addon_details", label: "Add-on details", wide: true },
     { key: "tp_involvement", label: "Third-party involvement?", type: "select", options: ["", "Yes", "No"] },
   ]},
-  { title: "5. Third-party details - first row", fields: [
+  { title: "Third-party Details", fields: [
     { key: "tp_vehicle_person_1", label: "Vehicle Make & Model / Person", wide: true }, { key: "tp_address_1", label: "Address", wide: true },
     { key: "tp_contact_1", label: "Contact Number" }, { key: "tp_id_1", label: "Vehicle No. / Person ID" },
-    { key: "tp_damage_1", label: "Description of Injury / Damage", type: "textarea", wide: true },
+    { key: "tp_damage_1", label: "Injury / Damage Details", type: "textarea", wide: true },
   ]},
-  { title: "6. Salvage & NEFT", fields: [
+  { title: "Bank / NEFT", fields: [
     { key: "salvage_retain", label: "Retain salvage?", type: "select", options: ["", "Yes", "No"] },
     { key: "account_holder_name", label: "Name on Bank Account", wide: true }, { key: "bank_name", label: "Bank Name", wide: true },
     { key: "bank_branch", label: "Branch" }, { key: "account_number", label: "Account Number", wide: true },
     { key: "account_type", label: "Account Type", type: "select", options: ["", "Savings", "Current", "Cash Credit"] },
     { key: "ifsc_code", label: "IFSC Code" }, { key: "micr_code", label: "MICR Code" },
-    { key: "bank_proof", label: "Bank proof", type: "select", options: ["", "Cancelled Cheque", "Bank passbook copy"] },
+    { key: "bank_proof", label: "Bank Proof", type: "select", options: ["", "Cancelled Cheque", "Bank passbook copy"] },
   ]},
-  { title: "7. Declaration / discharge voucher", fields: [
-    { key: "signature_name", label: "Insured Name near Signature", wide: true }, { key: "signature_date", label: "Declaration Date", type: "date" },
+  { title: "Declaration / Settlement", fields: [
+    { key: "signature_name", label: "Insured Name", wide: true }, { key: "signature_date", label: "Declaration Date", type: "date" },
     { key: "claim_number", label: "Claim No." }, { key: "settlement_amount", label: "Settlement Amount" },
     { key: "settlement_amount_words", label: "Settlement Amount in Words", wide: true },
     { key: "issuance_office", label: "Issuance Office / Seal", wide: true },
@@ -72,11 +72,11 @@ const SECTIONS: Section[] = [
 
 const s = (value: unknown) => String(value ?? "");
 
-export default function BajajMotorPrepPage() {
-  return <Suspense fallback={<Loading />}><Prep /></Suspense>;
+export default function BajajMotorClaimFormPage() {
+  return <Suspense fallback={<Loading />}><ClaimForm /></Suspense>;
 }
 
-function Prep() {
+function ClaimForm() {
   const search = useSearchParams();
   const id = search.get("id") || "";
   const [claim, setClaim] = useState<Claim | null>(null);
@@ -116,7 +116,7 @@ function Prep() {
       const merged = { ...(claim.form_data || {}), ...form, claim_form_insurer_key: "bajaj", claim_form_line: "motor", exact_template_key: "bajaj_motor_v1" };
       await authenticatedRequest(`/claims/${claim.id}`, { method: "PUT", body: JSON.stringify({ form_data: merged }) });
       setClaim({ ...claim, form_data: merged });
-      setMessage("Bajaj official-form data saved.");
+      setMessage("Details saved.");
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Details could not save.");
     } finally { setSaving(false); }
@@ -129,15 +129,30 @@ function Prep() {
     <div className="mx-auto max-w-6xl space-y-5">
       <section className="rounded-[30px] bg-[linear-gradient(125deg,#06152f,#0b3477_55%,#2878ef)] p-6 text-white shadow-xl sm:p-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div><p className="text-[10px] font-black uppercase tracking-[.22em] text-cyan-300">Bajaj General · Motor Claim</p><h1 className="mt-2 text-3xl font-black sm:text-4xl">Official PDF Data Preparation</h1><p className="mt-2 text-sm font-semibold text-blue-100/80">These fields map to the insurer&apos;s original 2-page fillable claim PDF. This screen itself is not the official PDF.</p></div>
-          <div className="flex gap-2"><Link href={`/claims/official-form?id=${encodeURIComponent(claim.id)}`} className="rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-black">← Workspace</Link><button onClick={() => void save()} disabled={saving} className="rounded-xl bg-white px-5 py-3 text-sm font-black text-[#0b3477] disabled:opacity-60">{saving ? "Saving…" : "Save exact-form data"}</button></div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[.22em] text-cyan-300">Bajaj General · Motor Claim</p>
+            <h1 className="mt-2 text-3xl font-black sm:text-4xl">Claim Form</h1>
+            <p className="mt-2 text-sm font-semibold text-blue-100/80">ERP details are filled automatically. Complete only the missing fields.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/claims" className="rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-black">← Back</Link>
+            <button onClick={() => void save()} disabled={saving} className="rounded-xl bg-white px-5 py-3 text-sm font-black text-[#0b3477] disabled:opacity-60">{saving ? "Saving…" : "Save Details"}</button>
+            <a href="/api/official-claim-forms/bajaj-motor" className="rounded-xl bg-emerald-500 px-5 py-3 text-sm font-black text-white">Download Original PDF ↓</a>
+          </div>
         </div>
       </section>
 
-      <section className={`rounded-[22px] border p-4 ${missing.length ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}><p className="text-sm font-black">{missing.length ? `${missing.length} key fields still pending` : "Core Bajaj form data ready"}</p><p className="mt-1 text-xs font-semibold opacity-75">Missing fields stay highlighted below. Save any time; remaining details can be completed later.</p></section>
+      <section className={`rounded-[22px] border p-4 ${missing.length ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}>
+        <p className="text-sm font-black">{missing.length ? `${missing.length} important fields still pending` : "Details ready"}</p>
+        <p className="mt-1 text-xs font-semibold opacity-75">Yellow fields are missing. Fill them and save.</p>
+      </section>
+
       {message ? <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm font-bold text-blue-700">{message}</div> : null}
 
-      {SECTIONS.map((section) => <section key={section.title} className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_12px_35px_rgba(24,59,110,.05)] sm:p-6"><h2 className="text-lg font-black text-[#0c3c78]">{section.title}</h2><div className="mt-4 grid gap-4 md:grid-cols-2">{section.fields.map((field) => <FieldInput key={field.key} field={field} value={s(form[field.key])} onChange={(value) => setForm((prev) => ({ ...prev, [field.key]: value }))} />)}</div></section>)}
+      {SECTIONS.map((section) => <section key={section.title} className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_12px_35px_rgba(24,59,110,.05)] sm:p-6">
+        <h2 className="text-lg font-black text-[#0c3c78]">{section.title}</h2>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">{section.fields.map((field) => <FieldInput key={field.key} field={field} value={s(form[field.key])} onChange={(value) => setForm((prev) => ({ ...prev, [field.key]: value }))} />)}</div>
+      </section>)}
     </div>
   </main>;
 }
@@ -148,4 +163,4 @@ function FieldInput({ field, value, onChange }: { field: Field; value: string; o
   return <label className={field.wide ? "md:col-span-2" : ""}><span className="text-[10px] font-black uppercase tracking-[.12em] text-slate-500">{field.label}</span>{field.type === "textarea" ? <textarea rows={3} value={value} onChange={(e) => onChange(e.target.value)} className={`${cls} p-3`} /> : field.type === "select" ? <select value={value} onChange={(e) => onChange(e.target.value)} className={`${cls} h-12`}>{(field.options || [""]).map((option) => <option key={option || "empty"} value={option}>{option || "Select"}</option>)}</select> : <input type={field.type || "text"} value={value} onChange={(e) => onChange(e.target.value)} className={`${cls} h-12`} />}</label>;
 }
 
-function Loading() { return <main className="grid min-h-screen place-items-center bg-[#eef3f8] p-6 text-sm font-bold text-slate-500">Loading Bajaj official-form data…</main>; }
+function Loading() { return <main className="grid min-h-screen place-items-center bg-[#eef3f8] p-6 text-sm font-bold text-slate-500">Loading Bajaj claim form…</main>; }
