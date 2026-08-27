@@ -5,6 +5,12 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authenticatedRequest } from "@/lib/api-client";
 import { resolveInsurer, type ClaimLine } from "@/lib/claim-form-registry";
+import {
+  BAJAJ_MOTOR_PDF_CHOICES,
+  BAJAJ_MOTOR_PDF_FIELDS,
+  BAJAJ_MOTOR_REQUIRED_PREP_KEYS,
+  isBajajMotorExactTemplate,
+} from "@/lib/claim-form-templates/bajaj-motor";
 
 type Claim = {
   id: string;
@@ -39,6 +45,19 @@ const lineName: Record<ClaimLine, string> = {
   other: "Other",
 };
 
+function claimValue(claim: Claim, key: string): unknown {
+  const form = claim.form_data || {};
+  if (String(form[key] ?? "").trim()) return form[key];
+  if (key === "policy_number") return claim.policy_number;
+  if (key === "insured_name") return claim.customer_name;
+  if (key === "mobile") return claim.customer_mobile;
+  if (key === "registration_number") return claim.registration_number;
+  if (key === "loss_date") return claim.loss_date;
+  if (key === "loss_place") return claim.loss_place;
+  if (key === "claim_number") return claim.claim_number;
+  return null;
+}
+
 export default function OfficialClaimFormPage() {
   return <Suspense fallback={<Loading />}><Workspace /></Suspense>;
 }
@@ -62,15 +81,18 @@ function Workspace() {
   const line = safeLine(claim?.insurance_line);
   const insurer = resolveInsurer(claim?.insurance_company);
   const officialSource = insurer.officialSources?.find((source) => source.line === line) || null;
+  const exactMapped = isBajajMotorExactTemplate(insurer.key, line);
 
   const readiness = useMemo(() => {
     if (!claim) return { done: 0, total: 5, percent: 0 };
-    const fields = line === "motor"
-      ? [claim.policy_number, claim.customer_name, claim.customer_mobile, claim.registration_number, claim.loss_date]
-      : [claim.policy_number, claim.customer_name, claim.customer_mobile, claim.loss_date, claim.loss_place];
-    const done = fields.filter((v) => String(v || "").trim()).length;
-    return { done, total: fields.length, percent: Math.round((done / fields.length) * 100) };
-  }, [claim, line]);
+    const keys = exactMapped
+      ? [...BAJAJ_MOTOR_REQUIRED_PREP_KEYS]
+      : line === "motor"
+        ? ["policy_number", "insured_name", "mobile", "registration_number", "loss_date"]
+        : ["policy_number", "insured_name", "mobile", "loss_date", "loss_place"];
+    const done = keys.filter((key) => String(claimValue(claim, key) || "").trim()).length;
+    return { done, total: keys.length, percent: Math.round((done / keys.length) * 100) };
+  }, [claim, line, exactMapped]);
 
   if (loading) return <Loading />;
   if (!claim) return <main className="min-h-screen bg-[#eef3f8] p-6"><button onClick={() => router.back()} className="font-black">← Back</button><p className="mt-5 text-sm font-bold text-rose-700">{error || "Claim not found."}</p></main>;
@@ -91,15 +113,25 @@ function Workspace() {
       <section className="grid gap-4 md:grid-cols-3">
         <StatusCard title="ERP data readiness" value={`${readiness.percent}%`} copy={`${readiness.done}/${readiness.total} key claim details available before form preparation.`} tone={readiness.percent === 100 ? "good" : "warn"} />
         <StatusCard title="Official insurer source" value={officialSource ? "Available" : "Not mapped"} copy={officialSource ? officialSource.label : "Use ERP data-prep form while the official source is being mapped."} tone={officialSource ? "good" : "neutral"} />
-        <StatusCard title="Final submission" value="Manual verification" copy="Employee must verify, print/fill where required, obtain signature and upload the signed copy." tone="neutral" />
+        <StatusCard title="Exact PDF automation" value={exactMapped ? "Field map ready" : "Pending"} copy={exactMapped ? `${BAJAJ_MOTOR_PDF_FIELDS.length} text fields + ${BAJAJ_MOTOR_PDF_CHOICES.length} choice groups mapped on the original fillable PDF.` : "Official source is tracked; exact AcroForm/overlay mapping will be added insurer-by-insurer."} tone={exactMapped ? "good" : "neutral"} />
       </section>
+
+      {exactMapped ? <section className="rounded-[26px] border border-emerald-200 bg-emerald-50 p-5 text-emerald-900">
+        <p className="text-[10px] font-black uppercase tracking-[.18em]">Bajaj Motor · exact-template implementation</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <Fact label="Official PDF" value="2 pages · fillable AcroForm" />
+          <Fact label="Mapped fields" value={`${BAJAJ_MOTOR_PDF_FIELDS.length} text + ${BAJAJ_MOTOR_PDF_CHOICES.length} choices`} />
+          <Fact label="Current step" value="ERP → official PDF field filling" />
+        </div>
+        <p className="mt-3 text-xs font-semibold leading-5 text-emerald-800/80">Only verified/high-confidence AcroForm positions are automated first. Ambiguous generated PDF field names stay manual until visually verified, so ERP data is never written into the wrong box.</p>
+      </section> : null}
 
       <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_14px_40px_rgba(24,59,110,.06)]">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-3xl">
             <p className="text-[10px] font-black uppercase tracking-[.18em] text-blue-600">Recommended workflow</p>
-            <h2 className="mt-2 text-2xl font-black">Prepare data first, submit on the insurer's official form</h2>
-            <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">The ERP preparation form is a data-capture tool. It is not the insurer's official claim form. When an official insurer source is available, use that source for final submission.</p>
+            <h2 className="mt-2 text-2xl font-black">Prepare data first, submit on the insurer&apos;s official form</h2>
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">The ERP preparation form is a data-capture tool. It is not the insurer&apos;s official claim form. When an official insurer source is available, use that source for final submission.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Link href={`/claims/universal-form?id=${encodeURIComponent(claim.id)}`} className="rounded-xl border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-black text-blue-700">Prepare / complete ERP data</Link>
@@ -145,5 +177,5 @@ function StatusCard({ title, value, copy, tone }: { title: string; value: string
 }
 
 function Fact({ label, value }: { label: string; value?: string | null }) {
-  return <div className="rounded-xl bg-slate-50 p-3"><p className="text-[9px] font-black uppercase tracking-[.14em] text-slate-400">{label}</p><p className="mt-1 text-sm font-black text-slate-800">{String(value || "Missing")}</p></div>;
+  return <div className="rounded-xl bg-white/70 p-3"><p className="text-[9px] font-black uppercase tracking-[.14em] text-slate-400">{label}</p><p className="mt-1 text-sm font-black text-slate-800">{String(value || "Missing")}</p></div>;
 }
