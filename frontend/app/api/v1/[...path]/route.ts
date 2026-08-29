@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import http from 'node:http';
+import https from 'node:https';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 120;
 
 const BACKEND_IP = process.env.BACKEND_IP?.trim() || '50.6.45.3';
-const BACKEND_HOST = process.env.BACKEND_HOST?.trim() || 'erp.vimawallah.com';
+const BACKEND_HOST = process.env.BACKEND_HOST?.trim() || 'api.vimawallah.com';
+const BACKEND_PORT = Number(process.env.BACKEND_PORT || 443);
 
 type Context = { params: Promise<{ path: string[] }> };
 
 type ProxyResult = {
   status: number;
-  headers: http.IncomingHttpHeaders;
+  headers: https.IncomingHttpHeaders;
   body: Buffer;
 };
 
@@ -24,11 +25,11 @@ async function proxy(request: NextRequest, context: Context) {
   const body = method === 'GET' || method === 'HEAD' ? undefined : Buffer.from(await request.arrayBuffer());
 
   const result = await new Promise<ProxyResult>((resolve, reject) => {
-    const headers: http.OutgoingHttpHeaders = {
+    const headers: https.OutgoingHttpHeaders = {
       host: BACKEND_HOST,
       accept: request.headers.get('accept') || 'application/json',
       'user-agent': request.headers.get('user-agent') || 'Vimawallah-Vercel-Proxy',
-      'x-forwarded-host': BACKEND_HOST,
+      'x-forwarded-host': request.nextUrl.host,
       'x-forwarded-proto': 'https',
       'x-forwarded-for': request.headers.get('x-forwarded-for') || '127.0.0.1',
     };
@@ -46,13 +47,15 @@ async function proxy(request: NextRequest, context: Context) {
     if (ocrToken) headers['x-vimawallah-ocr-token'] = ocrToken;
     if (body) headers['content-length'] = body.length;
 
-    const upstream = http.request(
+    const upstream = https.request(
       {
         hostname: BACKEND_IP,
-        port: 80,
+        port: BACKEND_PORT,
+        servername: BACKEND_HOST,
         method,
         path: pathname,
         headers,
+        rejectUnauthorized: true,
       },
       (response) => {
         const chunks: Buffer[] = [];
@@ -73,7 +76,7 @@ async function proxy(request: NextRequest, context: Context) {
     if (body) upstream.write(body);
     upstream.end();
   }).catch((error: unknown) => {
-    console.error('Backend proxy failed', { pathname, error });
+    console.error('Backend proxy failed', { pathname, backendHost: BACKEND_HOST, backendPort: BACKEND_PORT, error });
     return null;
   });
 
@@ -81,16 +84,21 @@ async function proxy(request: NextRequest, context: Context) {
     return NextResponse.json({ message: 'Backend is temporarily unavailable.' }, { status: 502 });
   }
 
+  if (result.status >= 300 && result.status < 400) {
+    const location = Array.isArray(result.headers.location) ? result.headers.location[0] : result.headers.location;
+    console.error('Unexpected backend redirect', { pathname, status: result.status, location });
+    return NextResponse.json({ message: 'Backend routing returned an unexpected redirect.' }, { status: 502 });
+  }
+
   const responseHeaders = new Headers();
   for (const [key, value] of Object.entries(result.headers)) {
     if (!value) continue;
     const lower = key.toLowerCase();
-    if (['content-length', 'transfer-encoding', 'connection', 'content-encoding'].includes(lower)) continue;
+    if (['content-length', 'transfer-encoding', 'connection', 'content-encoding', 'location'].includes(lower)) continue;
     responseHeaders.set(key, Array.isArray(value) ? value.join(', ') : String(value));
   }
 
-  const responseBody = new Uint8Array(result.body);
-  return new NextResponse(responseBody, {
+  return new NextResponse(new Uint8Array(result.body), {
     status: result.status,
     headers: responseHeaders,
   });
