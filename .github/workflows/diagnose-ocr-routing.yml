@@ -42,7 +42,6 @@ jobs:
             api_marker = '    location /api/ {\n        proxy_pass http://127.0.0.1:8000/api/;\n'
             if api_marker not in s:
                 raise SystemExit('ERP /api/ location marker not found')
-            replacement = api_marker + '        proxy_connect_timeout 10s;\n        proxy_send_timeout 120s;\n        proxy_read_timeout 120s;\n        proxy_request_buffering on;\n'
             for line in [
                 '        proxy_connect_timeout 10s;\n',
                 '        proxy_send_timeout 120s;\n',
@@ -50,6 +49,7 @@ jobs:
                 '        proxy_request_buffering on;\n',
             ]:
                 s = s.replace(line, '')
+            replacement = api_marker + '        proxy_connect_timeout 10s;\n        proxy_send_timeout 120s;\n        proxy_read_timeout 120s;\n        proxy_request_buffering on;\n'
             s = s.replace(api_marker, replacement, 1)
             p.write_text(s)
             PY
@@ -58,7 +58,7 @@ jobs:
             sudo -n systemctl reload nginx
 
             echo '=== EFFECTIVE ERP NGINX LIMIT ==='
-            sudo -n nginx -T 2>&1 | grep -n -A24 -B3 -E 'server_name erp\.vimawallah\.com api\.vimawallah\.com|client_max_body_size 40m|location /api/' | head -n 80
+            sudo -n nginx -T 2>&1 | grep -n -A18 -B2 -E 'server_name erp\.vimawallah\.com api\.vimawallah\.com|client_max_body_size 40m|location /api/' || true
 
             echo '=== INTERNAL OCR HEALTH ==='
             curl -sS --fail http://127.0.0.1:8001/health
