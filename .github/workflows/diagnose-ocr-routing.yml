@@ -12,36 +12,73 @@ permissions:
 
 jobs:
   diagnose:
-    name: Verify direct OCR API route
+    name: Repair OCR upload gateway
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 8
     steps:
-      - name: Verify production over SSH
+      - name: Repair production Nginx and verify upload
         uses: appleboy/ssh-action@v1.2.4
         with:
           host: ${{ secrets.PRODUCTION_SSH_HOST }}
           username: ${{ secrets.PRODUCTION_SSH_USER }}
           password: ${{ secrets.PRODUCTION_SSH_PASSWORD }}
           port: ${{ secrets.PRODUCTION_SSH_PORT || '22' }}
-          command_timeout: 4m
+          command_timeout: 6m
           script: |
             set -Eeuo pipefail
+            SITE=/etc/nginx/sites-enabled/erp.vimawallah.com
+            sudo -n cp "$SITE" "${SITE}.bak-ocr-upload"
+            sudo -n python3 - <<'PY'
+            from pathlib import Path
+            p = Path('/etc/nginx/sites-enabled/erp.vimawallah.com')
+            s = p.read_text()
+            marker = '    server_name erp.vimawallah.com api.vimawallah.com;\n'
+            if marker not in s:
+                raise SystemExit('ERP server_name marker not found')
+            first, rest = s.split(marker, 1)
+            rest = rest.replace('    client_max_body_size 40m;\n', '', 1)
+            rest = rest.replace('    client_body_timeout 120s;\n', '', 1)
+            s = first + marker + '    client_max_body_size 40m;\n    client_body_timeout 120s;\n' + rest
+            api_marker = '    location /api/ {\n        proxy_pass http://127.0.0.1:8000/api/;\n'
+            if api_marker not in s:
+                raise SystemExit('ERP /api/ location marker not found')
+            replacement = api_marker + '        proxy_connect_timeout 10s;\n        proxy_send_timeout 120s;\n        proxy_read_timeout 120s;\n        proxy_request_buffering on;\n'
+            for line in [
+                '        proxy_connect_timeout 10s;\n',
+                '        proxy_send_timeout 120s;\n',
+                '        proxy_read_timeout 120s;\n',
+                '        proxy_request_buffering on;\n',
+            ]:
+                s = s.replace(line, '')
+            s = s.replace(api_marker, replacement, 1)
+            p.write_text(s)
+            PY
+
+            sudo -n nginx -t
+            sudo -n systemctl reload nginx
+
+            echo '=== EFFECTIVE ERP NGINX LIMIT ==='
+            sudo -n nginx -T 2>&1 | grep -n -A24 -B3 -E 'server_name erp\.vimawallah\.com api\.vimawallah\.com|client_max_body_size 40m|location /api/' | head -n 80
+
             echo '=== INTERNAL OCR HEALTH ==='
             curl -sS --fail http://127.0.0.1:8001/health
             echo
             curl -sS --fail http://127.0.0.1:8081/health
             echo
 
-            echo '=== DIRECT VPS API OCR PROBE ==='
-            STATUS="$(curl -ksS --max-redirs 0 --output /tmp/api-ocr-body --dump-header /tmp/api-ocr-headers --write-out '%{http_code}' \
+            echo '=== LARGE REQUEST GATEWAY PROBE ==='
+            dd if=/dev/zero of=/tmp/ocr-gateway-test.jpg bs=1M count=2 status=none
+            STATUS="$(curl -ksS --max-redirs 0 --output /tmp/api-large-body --write-out '%{http_code}' \
               -X POST https://api.vimawallah.com/api/v1/public-policy-ocr \
               -H 'Accept: application/json' \
-              -H 'X-Vimawallah-Source: policy-analyzer' || true)"
+              -H 'X-Vimawallah-Source: policy-analyzer' \
+              -F 'images[]=@/tmp/ocr-gateway-test.jpg;type=image/jpeg' || true)"
             echo "HTTP=$STATUS"
-            cat /tmp/api-ocr-headers || true
-            cat /tmp/api-ocr-body || true
+            cat /tmp/api-large-body || true
             echo
+            rm -f /tmp/ocr-gateway-test.jpg
             case "$STATUS" in
-              301|302|307|308|000|404|5??) echo 'Direct API route is unhealthy'; exit 1;;
+              413) echo 'ERROR: public API still rejects uploads at Nginx'; exit 1;;
+              301|302|307|308|000|404|5??) echo 'ERROR: direct API route unhealthy'; exit 1;;
             esac
-            echo 'Direct API route is healthy and does not redirect.'
+            echo 'OCR public gateway now accepts multi-megabyte request bodies.'
