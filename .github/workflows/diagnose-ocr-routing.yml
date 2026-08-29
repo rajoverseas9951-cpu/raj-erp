@@ -10,75 +10,38 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: vimawallah-ocr-routing-repair
-  cancel-in-progress: true
-
 jobs:
   diagnose:
-    name: Diagnose and repair OCR routing
+    name: Verify direct OCR API route
     runs-on: ubuntu-latest
-    timeout-minutes: 12
-
+    timeout-minutes: 6
     steps:
-      - name: Diagnose production over SSH
+      - name: Verify production over SSH
         uses: appleboy/ssh-action@v1.2.4
         with:
           host: ${{ secrets.PRODUCTION_SSH_HOST }}
           username: ${{ secrets.PRODUCTION_SSH_USER }}
           password: ${{ secrets.PRODUCTION_SSH_PASSWORD }}
           port: ${{ secrets.PRODUCTION_SSH_PORT || '22' }}
-          command_timeout: 10m
+          command_timeout: 4m
           script: |
             set -Eeuo pipefail
-            APP_DIR=/var/www/raj-erp
-            BACKEND_PM2=raj-erp-backend
-
-            echo '=== DNS / PUBLIC ROUTING ==='
-            getent hosts erp.vimawallah.com || true
-            echo '-- public health, no redirects --'
-            curl -ksS -D - -o /tmp/erp-health-body --max-redirs 0 https://erp.vimawallah.com/api/health || true
-            cat /tmp/erp-health-body || true
+            echo '=== INTERNAL OCR HEALTH ==='
+            curl -sS --fail http://127.0.0.1:8001/health
             echo
-            echo '-- public OCR POST, no redirects --'
-            curl -ksS -D - -o /tmp/erp-ocr-body --max-redirs 0 -X POST https://erp.vimawallah.com/api/v1/public-policy-ocr -H 'Accept: application/json' -H 'X-Vimawallah-Source: policy-analyzer' || true
-            cat /tmp/erp-ocr-body || true
-            echo
-
-            echo '=== LOCAL OCR ==='
-            curl -sS -D - http://127.0.0.1:8001/health -o /tmp/ocr8001 || true
-            cat /tmp/ocr8001 || true
-            echo
-            curl -sS -D - http://127.0.0.1:8081/health -o /tmp/ocr8081 || true
-            cat /tmp/ocr8081 || true
-            echo
-
-            echo '=== ERP NGINX CONFIG ==='
-            sudo -n nginx -T 2>&1 | grep -n -A35 -B8 -E 'server_name .*erp\.vimawallah\.com|listen .*8081|location /api' || true
-
-            echo '=== BACKEND ENV / CONFIG ==='
-            cd "$APP_DIR/backend"
-            grep '^PADDLEOCR_URL=' .env || true
-            grep '^APP_URL=' .env || true
-            php artisan tinker --execute="echo 'paddle='.config('services.paddleocr.url').PHP_EOL; echo 'app='.config('app.url').PHP_EOL;" || true
-
-            echo '=== NORMALIZE OCR URL ==='
-            if grep -q '^PADDLEOCR_URL=' .env; then
-              sed -i 's#^PADDLEOCR_URL=.*#PADDLEOCR_URL=http://127.0.0.1:8081#' .env
-            else
-              printf '\nPADDLEOCR_URL=http://127.0.0.1:8081\n' >> .env
-            fi
-            php artisan optimize:clear
-            php artisan config:cache
-            pm2 reload "$BACKEND_PM2" --update-env
-            sleep 3
-
-            echo '=== VERIFY AFTER REPAIR ==='
-            php artisan tinker --execute="echo config('services.paddleocr.url').PHP_EOL;"
             curl -sS --fail http://127.0.0.1:8081/health
             echo
-            curl -ksS -D - -o /tmp/erp-ocr-after --max-redirs 0 -X POST https://erp.vimawallah.com/api/v1/public-policy-ocr -H 'Accept: application/json' -H 'X-Vimawallah-Source: policy-analyzer' || true
-            cat /tmp/erp-ocr-after || true
+
+            echo '=== DIRECT VPS API OCR PROBE ==='
+            STATUS="$(curl -ksS --max-redirs 0 --output /tmp/api-ocr-body --dump-header /tmp/api-ocr-headers --write-out '%{http_code}' \
+              -X POST https://api.vimawallah.com/api/v1/public-policy-ocr \
+              -H 'Accept: application/json' \
+              -H 'X-Vimawallah-Source: policy-analyzer' || true)"
+            echo "HTTP=$STATUS"
+            cat /tmp/api-ocr-headers || true
+            cat /tmp/api-ocr-body || true
             echo
-            echo '=== RECENT BACKEND ERRORS ==='
-            pm2 logs "$BACKEND_PM2" --err --lines 80 --nostream || true
+            case "$STATUS" in
+              301|302|307|308|000|404|5??) echo 'Direct API route is unhealthy'; exit 1;;
+            esac
+            echo 'Direct API route is healthy and does not redirect.'
